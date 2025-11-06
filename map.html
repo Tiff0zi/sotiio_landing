@@ -149,6 +149,36 @@
     view:{hmargin:140, vmargin:30, line_style:'curved'},
     layout:{hspace:80, vspace:20, pspace:10, direction:'right'}
   });
+  // Expose jm and helpers globally for other scripts
+  window.__jm = jm;
+  window.showMindGlobal = async function(mind) {
+    const jm = window.__jm;
+    if (!jm) { console.error('jsMind instance not ready'); return; }
+    if (mind && mind.format === 'node_tree' && mind.data) {
+      jm.show(mind);
+    } else {
+      const conv = await fetch('/json_2_jm', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(mind)
+      });
+      const converted = await conv.json();
+      jm.show(converted);
+    }
+    jm.collapse_all();
+    const root = jm.get_root();
+    if (root) jm.expand_node(root.id);
+    setTimeout(()=>{ tagLevels(); jm.resize(); }, 100);
+    window.addEventListener('resize', ()=> jm.resize());
+  };
+  window.withLoader = async function(feedbackEl, fn) {
+    const prev = feedbackEl.textContent;
+    feedbackEl.style.color = '#333';
+    feedbackEl.textContent = 'Готовим карту…';
+    try { return await fn(); }
+    finally { /* keep message */ }
+  };
+
 
   // Функция для добавления классов уровней
   function tagLevels() {
@@ -646,7 +676,7 @@ function renderMeta(node){
 
     const map_id = mapIdFromNow();
 
-    await withLoader(feedback, async () => {
+    await window.withLoader(feedback, async () => {
       try {
         const payload = {
           source: 'sotiio_web_survey',
@@ -681,7 +711,7 @@ function renderMeta(node){
           try { mind = JSON.parse(raw); } catch { throw new Error('Вебхук вернул не-JSON'); }
         }
 
-        await showMind(mind);
+        await window.showMindGlobal(mind);
 
         feedback.style.color='green';
         feedback.textContent='Карта готова.';
