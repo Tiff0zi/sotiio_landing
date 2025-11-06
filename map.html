@@ -174,7 +174,36 @@
     walk(root, 0);
   }
 
-  function renderMeta(node){
+  
+  // === UTILITIES: render jsMind from webhook response ===
+  async function showMind(mind) {
+    if (mind && mind.format === 'node_tree' && mind.data) {
+      jm.show(mind);
+    } else {
+      const conv = await fetch('/json_2_jm', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(mind)
+      });
+      const converted = await conv.json();
+      jm.show(converted);
+    }
+    // Common layout tweaks
+    jm.collapse_all();
+    const root = jm.get_root();
+    if (root) jm.expand_node(root.id);
+    setTimeout(()=>{ tagLevels(); jm.resize(); }, 100);
+    window.addEventListener('resize', ()=> jm.resize());
+  }
+
+  async function withLoader(feedbackEl, fn) {
+    const prev = feedbackEl.textContent;
+    feedbackEl.style.color = '#333';
+    feedbackEl.textContent = 'Готовим карту…';
+    try { return await fn(); }
+    finally { /* keep message */ }
+  }
+function renderMeta(node){
     const box=document.getElementById('tab-meta');
     const d=node?.data?.data || node?.data || {};
     const rows=[
@@ -600,36 +629,63 @@
      — POST JSON на https://n8n.sotiio.com/webhook/us
      — добавлен map_id = ssmmhhddmmyy
      ========================================================= */
+  
   submitBtn.addEventListener('click', async ()=>{
     const role = document.querySelector('input[name="role"]:checked')?.value;
     const subject = document.getElementById('sotiio_subject').value.trim();
-    const chosen = Array.from(optionsBox.querySelectorAll('.option-card.selected')).map(x=>x.dataset.value);
-
+    const chosen = Array.from(document.querySelectorAll('#sotiio_options .option-card.selected')).map(x=>x.dataset.value);
     if(!role){ feedback.style.color='crimson'; feedback.textContent='Выберите роль.'; return; }
     if(!subject){ feedback.style.color='crimson'; feedback.textContent='Укажите тему/вселенную.'; return; }
     if(chosen.length===0){ feedback.style.color='crimson'; feedback.textContent='Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.'; return; }
 
     const map_id = mapIdFromNow();
 
-    feedback.style.color='#333'; feedback.textContent='Отправляем…';
-    try{
-      const payload = {
-        source: 'sotiio_web_survey',
-        map_id, // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< добавлен map_id
-        user_story: {
-          "I_as...": role,
-          "Want_to_discover_a_universe...": subject,
-          "So_that...": chosen,
-          timestamp: (new Date()).toISOString()
-        }
-      };
+    await withLoader(feedback, async () => {
+      try {
+        const payload = {
+          source: 'sotiio_web_survey',
+          map_id,
+          user_story: {
+            "I_as...": role,
+            "Want_to_discover_a_universe...": subject,
+            "So_that...": chosen,
+            timestamp: (new Date()).toISOString()
+          }
+        };
 
-      const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
-        method:'POST',
-        mode:'cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
+        const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
+          method:'POST',
+          mode:'cors',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          let t = '';
+          try { t = await resp.text(); } catch {}
+          throw new Error(`HTTP ${resp.status}${t ? ' — ' + t : ''}`);
+        }
+
+        let mind;
+        const ct = resp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          mind = await resp.json();
+        } else {
+          const raw = await resp.text();
+          try { mind = JSON.parse(raw); } catch { throw new Error('Вебхук вернул не-JSON'); }
+        }
+
+        await showMind(mind);
+
+        feedback.style.color='green';
+        feedback.textContent='Карта готова.';
+        setTimeout(()=>{ try{ document.getElementById('sotiio_close').click(); }catch{} }, 900);
+      } catch (err) {
+        feedback.style.color='crimson';
+        feedback.textContent = 'Ошибка: ' + (err?.message || err);
+      }
+    });
+  });
 
       if(!resp.ok){ throw new Error('HTTP '+resp.status+' '+await resp.text()); }
       await resp.text().catch(()=>{});
