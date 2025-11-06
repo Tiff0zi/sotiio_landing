@@ -541,6 +541,12 @@ function renderMeta(node){
   function surveyOpen(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); feedback.textContent=''; document.body.style.overflow='hidden'; }
   function surveyClose(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); clear(); document.body.style.overflow=''; }
 
+  /* Клики по кнопкам/фон/esc */
+  btn.addEventListener('click', surveyOpen);
+  closeBtn.addEventListener('click', surveyClose);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) surveyClose(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') surveyClose(); });
+
   /* =========================================================
      СБРОС ФОРМЫ
      — снимаем роль, очищаем тему, список карточек и чипов
