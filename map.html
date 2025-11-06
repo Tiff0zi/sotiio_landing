@@ -1,664 +1,181 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>sotiio map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/static/style/jsmind.css" />
+  <title>jsMind — webhook wait mode</title>
+  <!-- jsMind (CDN). При желании замените на локальные пути к вашей сборке. -->
+  <script src="https://unpkg.com/jsmind@0.8.6/es6/jsmind.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jsmind@0.8.6/style/jsmind.css"/>
   <style>
-    html, body { 
-      height: 100%; 
-      margin: 0; 
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    html, body { height: 100%; margin: 0; }
+    #jsmind_container { position: absolute; inset: 0; }
+    /* Лоадер поверх всей страницы */
+    #loader {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(255,255,255,.6); z-index: 10000;
+      font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
     }
-    
-    #wrap { 
-      height: 100vh; 
-      display: grid;
-      grid-template-columns: 1fr;
-      position: relative;
-    }
-    
-    #jsmind_container { 
-      height: 100%; 
-      width: 100%;
-      background: #ece0d1 !important;
-      position: relative;
-      overflow: visible;
-    }
-
-    /* === Кофейная палитра === */
-    :root {
-      --bg: #ece0d1;
-      --lvl0: #dbc1ac; /* root */
-      --lvl1: #967259; /* level 2 */
-      --lvl2: #634832; /* level 3 */
-      --lvl3: #38220f; /* level 4 */
-      --sel:  #ff622b; /* selected */
-    }
-
-    /* Стили для узлов */
-    jmnode {
-      border-radius: 10px !important;
-      border: 1px solid rgba(0,0,0,.10) !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,.10) !important;
-      font-family: inherit;
-    }
-
-    jmnode.jsmind-root { 
-      background: var(--lvl0) !important; 
-      color: #1f1f1f !important; 
-      font-size: 20px !important;
-    }
-    
-    jmnode.lvl-1 { 
-      background: var(--lvl1) !important; 
-      color: #fff !important; 
-    }
-    
-    jmnode.lvl-2 { 
-      background: var(--lvl2) !important; 
-      color: #fff !important; 
-    }
-    
-    jmnode.lvl-3 { 
-      background: var(--lvl3) !important; 
-      color: #fff !important; 
-    }
-
-    jmnode.selected { 
-      background: var(--sel) !important; 
-      border-color: var(--sel) !important; 
-      color: #fff !important; 
-      outline: none !important;
-    }
-
-    /* === Drawer (правый выезжающий, 40% ширины) === */
-    #drawer{
-      position: fixed; 
-      right: 0; 
-      top: 0; 
-      height: 100vh;
-      width: 40vw; 
-      max-width: 880px; 
-      min-width: 320px;
-      background: #ece6df !important;
-      color: #131313 !important;
-      z-index: 9999;
-      box-shadow: -12px 0 32px rgba(0,0,0,.18), -1px 0 0 rgba(0,0,0,.08);
-      transform: translateX(100%); 
-      transition: transform .25s ease;
-      display: flex; 
-      flex-direction: column; 
-      overflow: hidden;
-      border-left: 1px solid rgba(0,0,0,.08);
-      font-family: inherit;
-    }
-    
-    #drawer.open{ 
-      transform: translateX(0); 
-    }
-
-    /* Вкладки */
-    .dw-tabs{display:flex;background:#f7f7f7;border-bottom:1px solid #eee}
-    .dw-tab{flex:1;padding:12px 10px;text-align:center;cursor:pointer;border:0;background:transparent;font-weight:500;color:#666;border-bottom:2px solid transparent}
-    .dw-tab.active{background:#ece6df;border-bottom:2px solid #ff622b;color:#111}
-    .dw-body{padding:12px 16px;overflow:auto;height:100%}
-    .tab-content{display:none}.tab-content.active{display:block}
-    pre{margin:0;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace}
-    table.meta{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:12px}
-    table.meta th,table.meta td{padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}
-    table.meta th{width:30%;background:#fafafa;text-align:left;color:#444}
-    .wiki-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin:0 0 10px}
-    .wiki-item h3{margin:0 0 6px;font-size:15px;color:#222}
-    .wiki-item div{font-size:14px;color:#333;line-height:1.4}
-    .empty{color:#777;font-style:italic;padding:16px 0}
   </style>
 </head>
 <body>
-<div id="wrap">
   <div id="jsmind_container"></div>
+  <div id="loader">Ждём ответ от вебхука…</div>
 
-  <aside id="drawer" aria-hidden="true">
-    <div class="dw-tabs">
-      <button class="dw-tab" data-tab="wiki">Wiki</button>
-      <button class="dw-tab active" data-tab="meta">Meta</button>
-      <button class="dw-tab" data-tab="links">Links</button>
-      <button class="dw-tab" data-tab="raw">Raw Data</button>
-    </div>
-    <div class="dw-body">
-      <div id="tab-wiki" class="tab-content"><div class="empty">Для этого узла нет информации Wiki.</div></div>
-      <div id="tab-meta" class="tab-content active"><div class="empty">Нет мета-данных.</div></div>
-      <div id="tab-links" class="tab-content"><div class="empty">Пусто.</div></div>
-      <div id="tab-raw" class="tab-content"><pre id="raw-pre">Выдели узел — здесь покажется node.data</pre></div>
-    </div>
-  </aside>
-</div>
+  <script>
+    // ────────────────────────────
+    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ UI
+    // ────────────────────────────
+    function showLoader(msg='Загружаем карту…'){
+      const el = document.getElementById('loader');
+      if (el) { el.textContent = msg; el.style.display = 'flex'; }
+    }
+    function hideLoader(){
+      const el = document.getElementById('loader');
+      if (el) el.style.display = 'none';
+    }
 
-<script src="/static/js/jsmind.js"></script>
-<script>
-(function(){
-  const qs=new URLSearchParams(location.search);
-  const task_id=qs.get('task');
-  const filename=qs.get('name');
+    // Лёгкая маркировка уровней по node_id (опционально)
+    function tagLevels(){
+      try {
+        const all = document.querySelectorAll('#jsmind_container jmnode');
+        all.forEach(n => {
+          const id = n.getAttribute('nodeid') || '';
+          if (/^L1-/.test(id)) n.classList.add('lvl-1');
+          else if (/^L2-/.test(id)) n.classList.add('lvl-2');
+          else if (/^L3-/.test(id)) n.classList.add('lvl-3');
+          else if (/^L4-/.test(id)) n.classList.add('lvl-4');
+        });
+      } catch(e) { /* no-op */ }
+    }
 
-  const jm=new jsMind({
-    container:'jsmind_container',
-    editable:false, support_html:true,
-    view:{hmargin:140, vmargin:30, line_style:'curved'},
-    layout:{hspace:80, vspace:20, pspace:10, direction:'right'}
-  });
-
-  // Функция для добавления классов уровней
-  function tagLevels() {
-    const root = jm.get_root();
-    if (!root) return;
-    
-    const walk = (node, level) => {
-      const el = document.querySelector(`.jmnode[nodeid="${node.id}"]`);
-      if (el) {
-        el.classList.remove('lvl-0', 'lvl-1', 'lvl-2', 'lvl-3');
-        if (level === 0) {
-          el.classList.add('jsmind-root');
-        } else {
-          el.classList.add('lvl-' + Math.min(level, 3));
+    // ────────────────────────────
+    // ПОЛЛИНГ СТАТУСА (для 202 Accepted)
+    // ────────────────────────────
+    async function pollUntilReady(url, {timeout=60000, interval=1500} = {}){
+      const start = Date.now();
+      while (true) {
+        const r = await fetch(url, { cache: 'no-store' });
+        const ct = r.headers.get('content-type') || '';
+        if (r.ok && ct.includes('application/json')) {
+          const j = await r.json();
+          // Считаем готовым, если пришёл jsMind или флаг ready
+          if (j?.format === 'node_tree' || j?.data || j?.ready) return j;
         }
+        if (Date.now() - start > timeout) throw new Error('Timeout ожидания результата вебхука');
+        await new Promise(res => setTimeout(res, interval));
       }
-      
-      if (node.children) {
-        node.children.forEach(child => walk(child, level + 1));
-      }
-    };
-    
-    walk(root, 0);
-  }
-
-  function renderMeta(node){
-    const box=document.getElementById('tab-meta');
-    const d=node?.data?.data || node?.data || {};
-    const rows=[
-      ['ID', d.node_id || d.id || '—'],
-      ['Название', d.label || d.topic || '—'],
-      ['Уровень', d.level || (d.node_id && d.node_id.startsWith('L1') ? 'Корневой':'Дочерний') || '—'],
-    ];
-    const meta= d.meta && typeof d.meta==='object' ? d.meta : {};
-    const pre=JSON.stringify(meta,null,2);
-    box.innerHTML=`<table class="meta"><tbody>
-      ${rows.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')}
-      </tbody></table>
-      <div class="empty">Мета-данные</div><pre>${pre}</pre>`;
-  }
-
-  function renderWiki(node){
-    const box=document.getElementById('tab-wiki');
-    const d=node?.data?.data || node?.data || {};
-    const meta=d.meta;
-    if(!meta||typeof meta!=='object'){ box.innerHTML='<div class="empty">Для этого узла нет информации Wiki.</div>'; return; }
-    const inner=(meta.meta && typeof meta.meta==='object')? meta.meta:{};
-    const piles=[inner.text,inner.number,inner.select,inner.checkbox,inner.date,
-      meta.meta_text,meta.meta_number,meta.meta_select,meta.meta_checkbox,meta.meta_date].filter(Array.isArray);
-    const items=[];
-    for(const arr of piles){for(const it of arr){if(it&&typeof it==='object'){items.push({n:it.name??'',v:it.value??''})}}}
-    if(!items.length){box.innerHTML='<div class="empty">Для этого узла нет информации Wiki.</div>';return;}
-    box.innerHTML=items.map(({n,v})=>
-      `<div class="wiki-item"><h3>${escapeHtml(n)}</h3><div>${escapeHtml(v)}</div></div>`
-    ).join('');
-  }
-
-  function renderRaw(node){
-    const pre=document.getElementById('raw-pre');
-    let txt='null'; try{ txt=JSON.stringify(node?.data??null,null,2);}catch(e){txt=String(node?.data);}
-    pre.textContent=txt;
-  }
-
-  function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;")}
-
-  (function initDrawer(){
-    const cont=document.getElementById('jsmind_container');
-    const drawer=document.getElementById('drawer');
-    let last=null;
-    document.querySelectorAll('.dw-tab').forEach(t=>{
-      t.addEventListener('click',()=>{
-        const id=t.getAttribute('data-tab');
-        document.querySelectorAll('.dw-tab').forEach(x=>x.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-        t.classList.add('active'); document.getElementById('tab-'+id).classList.add('active');
-      });
-    });
-    function open(node,el){
-      if(last) last.classList.remove('selected');
-      if(el){el.classList.add('selected');last=el;}
-      renderMeta(node);renderWiki(node);renderRaw(node);
-      drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
     }
-    function close(){drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');if(last)last.classList.remove('selected');last=null;}
-    cont.addEventListener('click',e=>{const el=e.target.closest('jmnode');if(!el){close();return;}const node=jm.get_node(el.getAttribute('nodeid'));if(node)open(node,el);});
-    document.addEventListener('click',e=>{if(!drawer.contains(e.target)&&!e.target.closest('jmnode'))close();});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
-  })();
 
-  async function main(){
-    const url=`/download_files_pyrus?task_id=${encodeURIComponent(task_id)}&filename=${encodeURIComponent(filename)}&match_mode=exact&versions=latest`;
-    const res=await fetch(url); const raw=await res.json();
-    const conv=await fetch('/json_2_jm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(raw)});
-    const mind=await conv.json();
-    jm.show(mind); jm.collapse_all(); const root=jm.get_root(); if(root) jm.expand_node(root.id);
-    
-    // Добавляем классы уровням после отрисовки
-    setTimeout(() => {
-      tagLevels();
-      jm.resize();
-    }, 100);
-    
-    window.addEventListener('resize',()=>{jm.resize();});
-  }
-  main();
-})();
-</script>
+    // ────────────────────────────
+    // ЗАПРОС К ВЕБХУКУ С ОЖИДАНИЕМ
+    // ────────────────────────────
+    async function fetchMindFromWebhook(webhookUrl, payload, {timeout=60000, expect='auto'} = {}){
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeout);
+      try{
+        // Шаг 1: пробуем синхронный ответ
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload ?? {}),
+          signal: controller.signal
+        });
 
-// ++++++++++++++++++++++++++++++++ USER STORY ++++++++++++++++++++++++++++++++++++++++
-  
-<!-- === START: Sotiio inline survey (final with left-own + dividers) — WITH COMMENTS & RENAMED PAYLOAD KEYS === -->
-<style>
-  /* =========================================
-     БАЗОВОЕ: предотвращаем «расползание» из-за box-sizing
-     ========================================= */
-  #sotiio_modal, #sotiio_modal * { box-sizing: border-box; }
-
-  /* =========================================
-     Плавающая кнопка открытия модалки
-     ========================================= */
-  #sotiio_survey_btn{
-    position: fixed; right: 20px; bottom: 24px; z-index:11000;
-    background: var(--sel,#ff622b); color:#fff; border:none; padding:12px 16px;
-    border-radius:12px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18);
-    font-weight:600; font-family:inherit;
-  }
-
-  /* =========================================
-     Модалка-оверлей + карточка внутри
-     ========================================= */
-  #sotiio_modal{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    z-index:11010; background: rgba(0,0,0,0.45); padding:16px; overflow-x:hidden; /* убираем горизонтальный скролл */
-  }
-  #sotiio_modal .card{
-    width:min(820px,96vw); max-height:90vh; overflow:auto; background:#fff;
-    border-radius:12px; padding:18px 22px; box-shadow:0 12px 40px rgba(0,0,0,.22);
-    font-family:inherit; position:relative; overflow-x:hidden; /* доп. защита от h-scroll */
-  }
-
-  /* =========================================
-     Кнопка закрытия (крестик) в правом верхнем углу
-     ========================================= */
-  .close-btn{
-    position:absolute; top:10px; right:12px; font-size:24px; font-weight:800;
-    line-height:1; border:none; background:transparent; cursor:pointer; color:#444;
-  }
-  .close-btn:hover{ color:#000; transform:scale(1.06); }
-
-  /* =========================================
-     Общая сетка и подписи
-     ========================================= */
-  .row{ margin:14px 0; }
-  .label{ font-weight:700; margin-bottom:8px; }
-  .roles{ display:flex; flex-direction:column; gap:8px; }
-  .roles label{ display:flex; align-items:center; gap:10px; font-size:15px; }
-
-  /* =========================================
-     Узкие блоки на 60% ширины:
-     .narrow — центр, .narrow-left — прижато влево
-     ========================================= */
-  .narrow{ width:60%; min-width:300px; margin-inline:auto; }
-  .narrow-left{ width:60%; max-width:640px; margin-left:0; margin-right:auto; }
-
-  /* Текстовое поле */
-  .text-input{
-    width:100%; padding:12px 14px; border-radius:10px; border:1px solid #ddd; font-size:15px;
-  }
-
-  /* =========================================
-     Карточки «Чтобы…»: сетка 2 колонки (на мобилке схлопнется)
-     ========================================= */
-  .options-grid{ display:grid; grid-template-columns:repeat(2,minmax(240px,1fr)); gap:10px; }
-  .option-card{
-    border:1px solid #e6e6e6; padding:10px 12px; border-radius:10px;
-    cursor:pointer; user-select:none; background:#fff; font-size:14px;
-  }
-  .option-card.selected{ border-color:var(--sel,#ff622b); background:rgba(255,98,43,0.06); }
-
-  /* =========================================
-     Собственный вариант (инпут + «＋» внутри поля)
-     ========================================= */
-  .add-own.narrow-left{ position:relative; }
-  .add-own .text-input{ padding-right:46px; } /* место для кнопки справа */
-  .add-own .add-btn{
-    position:absolute; right:6px; top:50%; transform:translateY(-50%);
-    height:34px; min-width:34px; padding:0 10px;
-    background:#f7f7f7; border:1px solid #ddd; border-radius:8px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; font-size:16px;
-  }
-  .add-own .add-btn:hover{ background:#ececec; }
-
-  /* Чипы выбранных пунктов (необязательно, но визуально удобно) */
-  .chiplist{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .chip{ background:#f3f4f6; border:1px solid #e5e7eb; padding:6px 10px; border-radius:16px; font-size:13px; }
-
-  /* Нижняя панель: статус + кнопка отправки */
-  .actions{ display:flex; justify-content:flex-end; align-items:center; margin-top:16px; gap:10px; }
-  .primary-btn{
-    background:var(--sel,#ff622b); color:#fff; border:none; padding:10px 16px;
-    border-radius:10px; cursor:pointer; font-weight:600;
-  }
-  .muted{ font-size:13px; color:#666; }
-
-  /* =========================================
-     Разделители между тремя основными блоками (тонкие чёрные ~5% непрозрачности)
-     ========================================= */
-  .divider{
-    height:1px; background:rgba(0,0,0,0.05); border:0; margin:16px 0; width:100%;
-  }
-
-  /* =========================================
-     Адаптив для мобилки
-     ========================================= */
-  @media (max-width: 640px){
-    #sotiio_modal .card{ width:100%; height:auto; max-height:88vh; padding:16px; border-radius:12px; }
-    .options-grid{ grid-template-columns:1fr; }  /* карточки «Чтобы…» в одну колонку */
-    .roles label{ font-size:16px; }
-    .text-input{ font-size:16px; }
-    .narrow, .narrow-left{ width:100%; min-width:0; max-width:none; } /* узкие блоки во всю ширину */
-    #sotiio_survey_btn{ right:16px; bottom:18px; }
-  }
-</style>
-
-<!-- Плавающая кнопка вызова формы -->
-<button id="sotiio_survey_btn" title="Заполнить параметры">🧭 Параметры</button>
-
-<!-- Модалка-оверлей -->
-<div id="sotiio_modal" role="dialog" aria-hidden="true">
-  <div class="card" role="document" aria-modal="true">
-    <!-- Крестик закрытия -->
-    <button class="close-btn" id="sotiio_close" aria-label="Закрыть">&times;</button>
-
-    <!-- Блок 1: выбор роли -->
-    <div class="row">
-      <div class="label">Я как…</div>
-      <div class="roles narrow-left">
-        <label><input type="radio" name="role" value="Novice"> Новичок</label>
-        <label><input type="radio" name="role" value="Enthusiast"> Увлекающийся</label>
-        <label><input type="radio" name="role" value="Geek"> Гик</label>
-        <label><input type="radio" name="role" value="Pro"> Профи</label>
-      </div>
-    </div>
-
-    <!-- Разделитель -->
-    <div class="divider"></div>
-
-    <!-- Блок 2: тема/вселенная -->
-    <div class="row">
-      <div class="label">Хочу изучить…</div>
-      <div class="narrow-left">
-        <input id="sotiio_subject" class="text-input"
-               placeholder="Например: Киновселенную Marvel, мир крипто-активов, Эволюцию человека…">
-        <div class="muted" style="margin-top:6px">Укажите любую вселенную для изучения.</div>
-      </div>
-    </div>
-
-    <!-- Разделитель -->
-    <div class="divider"></div>
-
-    <!-- Блок 3: «Чтобы…» (варианты по выбранной роли) -->
-    <div class="row">
-      <div class="label">Чтобы…</div>
-
-      <!-- Сюда динамически добавляются карточки вариантов -->
-      <div id="sotiio_options" class="options-grid"></div>
-
-      <!-- Собственный вариант: инпут слева + «＋» справа -->
-      <div class="add-own narrow-left" style="margin-top:10px;">
-        <input id="sotiio_own" class="text-input" placeholder="Предложите свой вариант и нажмите Enter">
-        <button class="add-btn" id="sotiio_add_own" title="Добавить">＋</button>
-      </div>
-
-      <!-- Чипы выбранных вариантов (для наглядности) -->
-      <div id="sotiio_selected_chips" class="chiplist narrow"></div>
-    </div>
-
-    <!-- Нижняя панель: статус + Отправить -->
-    <div class="actions">
-      <div class="muted" id="sotiio_feedback"></div>
-      <button id="sotiio_submit" class="primary-btn">Отправить</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  /* =========================================================
-     ССЫЛКИ НА DOM-ЭЛЕМЕНТЫ (используем по id/class)
-     ========================================================= */
-  const btn = document.getElementById('sotiio_survey_btn');   // плавающая кнопка «Параметры»
-  const modal = document.getElementById('sotiio_modal');      // оверлей модалки
-  const closeBtn = document.getElementById('sotiio_close');   // крестик закрытия
-  const optionsBox = document.getElementById('sotiio_options'); // контейнер для карточек «Чтобы…»
-  const feedback = document.getElementById('sotiio_feedback');  // текстовый статус/ошибки
-  const submitBtn = document.getElementById('sotiio_submit');   // кнопка «Отправить»
-  const ownInput = document.getElementById('sotiio_own');       // поле собственного варианта
-  const addOwnBtn = document.getElementById('sotiio_add_own');  // кнопка «＋» для добавления
-  const chips = document.getElementById('sotiio_selected_chips'); // список чипов выбранных пунктов
-
-  /* =========================================================
-     СЛОВАРЬ ПРЕСЕТОВ «Чтобы…» ПО РОЛЯМ (RU)
-     — при выборе роли формируем список карточек
-     ========================================================= */
-  const roleTexts = {
-    "Novice": [
-      "Быстро сориентироваться в теме и не чувствовать себя потерянным",
-      "Понимать, о чём говорят другие, и поддерживать базовый разговор",
-      "Отличать ключевые понятия от второстепенных и не тратить время зря",
-      "Иметь надёжную «шпаргалку» по основам",
-      "Понять, интересна ли тема для дальнейшего углубления",
-      "Избежать элементарных ошибок и неловких ситуаций",
-      "Удовлетворить любопытство и получить общий обзор",
-      "Понять, как это связано с реальной жизнью и где применяется",
-      "Быть в курсе текущих трендов и популярных тем",
-      "Упорядочить начальные знания и почувствовать уверенность"
-    ],
-    "Enthusiast": [
-      "Разобраться, как всё устроено внутри, а не только знать факты",
-      "Видеть логические связи между частями системы",
-      "Уметь просто и ясно объяснять сложные вещи другим",
-      "Начать применять знания в повседневной жизни или работе",
-      "Научиться рассуждать самостоятельно и делать обоснованные выводы",
-      "Структурировать знания и понять, что изучать дальше",
-      "Видеть целостную картину: историю и возможное развитие",
-      "Сравнивать систему с альтернативами и видеть сильные и слабые стороны",
-      "Получать интеллектуальное удовольствие от освоения сложного",
-      "Превратить хаос разрозненных фактов в стройную систему"
-    ],
-    "Geek": [
-      "Эффективно использовать инструменты и техники для решения задач",
-      "Получать конкурентное преимущество за счёт глубоких знаний",
-      "Стать признанным экспертом, к которому обращаются за советом",
-      "Находить и применять лучшие практики для максимального результата",
-      "Монетизировать знания и навыки в этой области",
-      "Критически оценивать решения, находя слабые места и уязвимости",
-      "Эффективно обучать и наставлять других, передавая опыт",
-      "Принимать продуманные тактические решения и управлять процессами",
-      "Адаптировать стандартные подходы под нестандартные задачи",
-      "Уверенно побеждать в дискуссиях, опираясь на факты"
-    ],
-    "Pro": [
-      "Видеть систему целиком и задавать стратегию её развития",
-      "Создавать новые концепции, системы и продукты на основе глубокого анализа",
-      "Находить «белые пятна» и точки прорыва для инноваций",
-      "Проектировать сложные системы с нуля, понимая их фундаментальные принципы",
-      "Трансформировать существующие системы, а не только оптимизировать",
-      "Принимать взвешенные стратегические решения с высокой ценой ошибки",
-      "Формировать видение будущего и вести за собой команду или отрасль",
-      "Выступать мыслительным лидером, влияя на развитие индустрии",
-      "Оставлять значимый след и вносить фундаментальный вклад в область",
-      "Видеть скрытые рычаги влияния и прогнозировать долгосрочные последствия"
-    ]
-  };
-
-  /* =========================================================
-     ОТКРЫТИЕ/ЗАКРЫТИЕ МОДАЛКИ
-     — open(): показывает модалку и запрещает скролл body
-     — close(): скрывает, очищает форму, возвращает скролл
-     ========================================================= */
-  function open(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); feedback.textContent=''; document.body.style.overflow='hidden'; }
-  function close(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); clear(); document.body.style.overflow=''; }
-
-  /* =========================================================
-     СБРОС ФОРМЫ
-     — снимаем роль, очищаем тему, список карточек и чипов
-     ========================================================= */
-  function clear(){
-    document.querySelectorAll('input[name="role"]').forEach(r=>r.checked=false);
-    document.getElementById('sotiio_subject').value='';
-    optionsBox.innerHTML='';
-    chips.innerHTML='';
-    ownInput.value='';
-  }
-
-  /* =========================================================
-     РЕАКЦИЯ НА ВЫБОР РОЛИ
-     — генерируем карточки «Чтобы…» на основе roleTexts[role]
-     ========================================================= */
-  document.querySelectorAll('input[name="role"]').forEach(r=>{
-    r.addEventListener('change', ()=>{
-      const role = document.querySelector('input[name="role"]:checked')?.value;
-      optionsBox.innerHTML='';
-      const list = roleTexts[role] || [];
-      for(const v of list){
-        const div = document.createElement('div');
-        div.className='option-card';
-        div.textContent = v;
-        div.dataset.value = v;
-        optionsBox.appendChild(div);
-      }
-      syncChips();
-    });
-  });
-
-  /* =========================================================
-     ПЕРЕКЛЮЧЕНИЕ ВЫБОРА КАРТОЧКИ
-     — щёлчок по карточке -> toggle selected + обновить чипы
-     ========================================================= */
-  optionsBox.addEventListener('click', e=>{
-    const card = e.target.closest('.option-card'); if(!card) return;
-    card.classList.toggle('selected'); syncChips();
-  });
-
-  /* =========================================================
-     ОТРИСОВКА ЧИПОВ ВЫБРАННЫХ ПУНКТОВ
-     ========================================================= */
-  function syncChips(){
-    chips.innerHTML='';
-    const selected = Array.from(optionsBox.querySelectorAll('.option-card.selected')).map(x=>x.dataset.value);
-    for(const s of selected){
-      const c = document.createElement('span'); c.className='chip'; c.textContent = s; chips.appendChild(c);
-    }
-  }
-
-  /* =========================================================
-     ДОБАВЛЕНИЕ СОБСТВЕННОГО ВАРИАНТА
-     — если такого текста ещё нет — создаём карточку и выделяем
-     — если уже есть — просто выделяем существующую
-     ========================================================= */
-  function addOwn(){
-    const val = ownInput.value.trim(); if(!val) return;
-    let existing = Array.from(optionsBox.children).find(x=>x.dataset.value===val);
-    if(!existing){
-      const div = document.createElement('div');
-      div.className='option-card selected'; div.textContent = val; div.dataset.value = val; optionsBox.prepend(div);
-    }else{ existing.classList.add('selected'); }
-    ownInput.value=''; syncChips();
-  }
-  ownInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addOwn(); }});
-  addOwnBtn.addEventListener('click', addOwn);
-
-// ===== ОТПРАВКА ДАННЫХ В ОРКЕСТРАТОР =====
-  
-  function two(n){ return String(n).padStart(2,'0'); }
-  function mapIdFromNow(){
-    const d = new Date();
-    const ss = two(d.getSeconds());
-    const mm = two(d.getMinutes());
-    const hh = two(d.getHours());
-    const dd = two(d.getDate());
-    const MM = two(d.getMonth()+1);
-    const yy = two(d.getFullYear()%100);
-    return `${ss}${mm}${hh}${dd}${MM}${yy}`;
-  }
-
-  /* =========================================================
-     ОТПРАВКА ДАННЫХ В WEBHOOK
-     — POST JSON на https://n8n.sotiio.com/webhook/us
-     — добавлен map_id = ssmmhhddmmyy
-     ========================================================= */
-  submitBtn.addEventListener('click', async ()=>{
-    const role = document.querySelector('input[name="role"]:checked')?.value;
-    const subject = document.getElementById('sotiio_subject').value.trim();
-    const chosen = Array.from(optionsBox.querySelectorAll('.option-card.selected')).map(x=>x.dataset.value);
-
-    if(!role){ feedback.style.color='crimson'; feedback.textContent='Выберите роль.'; return; }
-    if(!subject){ feedback.style.color='crimson'; feedback.textContent='Укажите тему/вселенную.'; return; }
-    if(chosen.length===0){ feedback.style.color='crimson'; feedback.textContent='Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.'; return; }
-
-    const map_id = mapIdFromNow();
-
-    feedback.style.color='#333'; feedback.textContent='Отправляем…';
-    try{
-      const payload = {
-        source: 'sotiio_web_survey',
-        map_id, // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< добавлен map_id
-        user_story: {
-          "I_as...": role,
-          "Want_to_discover_a_universe...": subject,
-          "So_that...": chosen,
-          timestamp: (new Date()).toISOString()
+        // Если оркестратор отвечает 202 и даёт URL для поллинга — ждём
+        if (res.status === 202) {
+          const pollUrl = res.headers.get('Location') || res.headers.get('status_url');
+          if (!pollUrl) throw new Error('202 Accepted без Location/status_url');
+          const j = await pollUntilReady(pollUrl, {timeout});
+          return j;
         }
-      };
 
-      const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
-        method:'POST',
-        mode:'cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
+        // Иначе читаем JSON сразу
+        const data = await res.json();
 
-      if(!resp.ok){ throw new Error('HTTP '+resp.status+' '+await resp.text()); }
-      await resp.text().catch(()=>{});
+        // Если это уже jsMind (format:"node_tree") — возвращаем как есть
+        if (expect === 'jm' || (expect === 'auto' && data?.format === 'node_tree' && data?.data)) {
+          return data;
+        }
 
-      feedback.style.color='green'; feedback.textContent='Отправлено.'; setTimeout(close, 900);
-    }catch(err){
-      feedback.style.color='crimson'; feedback.textContent = 'Ошибка при отправке: ' + (err.message||err);
+        // Иначе конвертируем через ваш локальный эндпойнт
+        const conv = await fetch('/json_2_jm', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(data)
+        });
+        return await conv.json();
+      } finally {
+        clearTimeout(t);
+      }
     }
-  });
 
-  /* =========================================================
-     БИНДИНГИ ОТКРЫТИЯ/ЗАКРЫТИЯ
-     — клик по фоновой подложке, по кресту или Esc — закрыть
-     ========================================================= */
-  btn.addEventListener('click', open);
-  closeBtn.addEventListener('click', close);
-  modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
-  // Авто-открытие формы ТОЛЬКО на точном адресе https://www.sotiio.com/map.html
-  if (location.hostname === 'www.sotiio.com' && location.pathname === '/map.html') {
-  setTimeout(open, 0); // чуть позже, чтобы DOM успел прогрузиться
-}
+    // ────────────────────────────
+    // ИНИЦИАЛИЗАЦИЯ jsMind
+    // ────────────────────────────
+    const jm = new jsMind({
+      container: 'jsmind_container',
+      editable: false,
+      theme: 'primary'
+    });
 
-})();
-</script>
-<!-- === END: Sotiio inline survey === -->
+    // ────────────────────────────
+    // ОСНОВНОЙ ПОТОК
+    // ────────────────────────────
+    async function main(){
+      const qs = new URLSearchParams(location.search);
+      const task_id = qs.get('task');
+      const filename = qs.get('name');
 
+      const webhook = qs.get('webhook');             // напр.: https://n8n.sotiio.com/webhook/jm
+      const timeout = +(qs.get('timeout') || 60000); // мс
 
+      if (webhook) {
+        showLoader('Ждём ответ от вебхука…');
+        const payload = {
+          task_id,
+          filename,
+          map_id: qs.get('map_id') || undefined
+        };
+        try{
+          const mind = await fetchMindFromWebhook(webhook, payload, {timeout, expect:'auto'});
+          jm.show(mind);
+          jm.collapse_all();
+          const root = jm.get_root(); if (root) jm.expand_node(root.id);
+          setTimeout(() => { tagLevels(); jm.resize(); hideLoader(); }, 100);
+          window.addEventListener('resize', ()=> jm.resize());
+        }catch(e){
+          hideLoader();
+          alert('Ошибка загрузки карты через вебхук: ' + (e.message || e));
+        }
+        return; // выходим — обычный путь не нужен
+      }
 
-  
+      // === Fallback: старый поток скачивания + локальный конвертер ===
+      try{
+        showLoader('Загружаем карту…');
+        const url = `/download_files_pyrus?task_id=${encodeURIComponent(task_id||'')}&filename=${encodeURIComponent(filename||'')}&match_mode=exact&versions=latest`;
+        const res = await fetch(url);
+        const raw = await res.json();
+        const conv = await fetch('/json_2_jm', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(raw)
+        });
+        const mind = await conv.json();
+        jm.show(mind);
+        jm.collapse_all();
+        const root = jm.get_root(); if (root) jm.expand_node(root.id);
+        setTimeout(() => { tagLevels(); jm.resize(); hideLoader(); }, 100);
+        window.addEventListener('resize', ()=> jm.resize());
+      }catch(err){
+        hideLoader();
+        alert('Ошибка загрузки карты: ' + (err.message || err));
+      }
+    }
+
+    main();
+  </script>
 </body>
 </html>
