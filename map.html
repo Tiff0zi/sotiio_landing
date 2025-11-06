@@ -149,36 +149,6 @@
     view:{hmargin:140, vmargin:30, line_style:'curved'},
     layout:{hspace:80, vspace:20, pspace:10, direction:'right'}
   });
-  // Expose jm and helpers globally for other scripts
-  window.__jm = jm;
-  window.showMindGlobal = async function(mind) {
-    const jm = window.__jm;
-    if (!jm) { console.error('jsMind instance not ready'); return; }
-    if (mind && mind.format === 'node_tree' && mind.data) {
-      jm.show(mind);
-    } else {
-      const conv = await fetch('/json_2_jm', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(mind)
-      });
-      const converted = await conv.json();
-      jm.show(converted);
-    }
-    jm.collapse_all();
-    const root = jm.get_root();
-    if (root) jm.expand_node(root.id);
-    setTimeout(()=>{ tagLevels(); jm.resize(); }, 100);
-    window.addEventListener('resize', ()=> jm.resize());
-  };
-  window.withLoader = async function(feedbackEl, fn) {
-    const prev = feedbackEl.textContent;
-    feedbackEl.style.color = '#333';
-    feedbackEl.textContent = 'Готовим карту…';
-    try { return await fn(); }
-    finally { /* keep message */ }
-  };
-
 
   // Функция для добавления классов уровней
   function tagLevels() {
@@ -204,36 +174,7 @@
     walk(root, 0);
   }
 
-  
-  // === UTILITIES: render jsMind from webhook response ===
-  async function showMind(mind) {
-    if (mind && mind.format === 'node_tree' && mind.data) {
-      jm.show(mind);
-    } else {
-      const conv = await fetch('/json_2_jm', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(mind)
-      });
-      const converted = await conv.json();
-      jm.show(converted);
-    }
-    // Common layout tweaks
-    jm.collapse_all();
-    const root = jm.get_root();
-    if (root) jm.expand_node(root.id);
-    setTimeout(()=>{ tagLevels(); jm.resize(); }, 100);
-    window.addEventListener('resize', ()=> jm.resize());
-  }
-
-  async function withLoader(feedbackEl, fn) {
-    const prev = feedbackEl.textContent;
-    feedbackEl.style.color = '#333';
-    feedbackEl.textContent = 'Готовим карту…';
-    try { return await fn(); }
-    finally { /* keep message */ }
-  }
-function renderMeta(node){
+  function renderMeta(node){
     const box=document.getElementById('tab-meta');
     const d=node?.data?.data || node?.data || {};
     const rows=[
@@ -568,14 +509,8 @@ function renderMeta(node){
      — open(): показывает модалку и запрещает скролл body
      — close(): скрывает, очищает форму, возвращает скролл
      ========================================================= */
-  function surveyOpen(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); feedback.textContent=''; document.body.style.overflow='hidden'; }
-  function surveyClose(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); clear(); document.body.style.overflow=''; }
-
-  /* Клики по кнопкам/фон/esc */
-  btn.addEventListener('click', surveyOpen);
-  closeBtn.addEventListener('click', surveyClose);
-  modal.addEventListener('click', (e)=>{ if(e.target===modal) surveyClose(); });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') surveyClose(); });
+  function open(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); feedback.textContent=''; document.body.style.overflow='hidden'; }
+  function close(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); clear(); document.body.style.overflow=''; }
 
   /* =========================================================
      СБРОС ФОРМЫ
@@ -665,64 +600,181 @@ function renderMeta(node){
      — POST JSON на https://n8n.sotiio.com/webhook/us
      — добавлен map_id = ssmmhhddmmyy
      ========================================================= */
-  
   submitBtn.addEventListener('click', async ()=>{
     const role = document.querySelector('input[name="role"]:checked')?.value;
     const subject = document.getElementById('sotiio_subject').value.trim();
-    const chosen = Array.from(document.querySelectorAll('#sotiio_options .option-card.selected')).map(x=>x.dataset.value);
+    const chosen = Array.from(optionsBox.querySelectorAll('.option-card.selected')).map(x=>x.dataset.value);
+
     if(!role){ feedback.style.color='crimson'; feedback.textContent='Выберите роль.'; return; }
     if(!subject){ feedback.style.color='crimson'; feedback.textContent='Укажите тему/вселенную.'; return; }
     if(chosen.length===0){ feedback.style.color='crimson'; feedback.textContent='Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.'; return; }
 
     const map_id = mapIdFromNow();
 
-    await window.withLoader(feedback, async () => {
-      try {
-        const payload = {
-          source: 'sotiio_web_survey',
-          map_id,
-          user_story: {
-            "I_as...": role,
-            "Want_to_discover_a_universe...": subject,
-            "So_that...": chosen,
-            timestamp: (new Date()).toISOString()
-          }
-        };
+    feedback.style.color='#333'; feedback.textContent='Отправляем…';
+    try{
+      const payload = {
+        source: 'sotiio_web_survey',
+        map_id, // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< добавлен map_id
+        user_story: {
+          "I_as...": role,
+          "Want_to_discover_a_universe...": subject,
+          "So_that...": chosen,
+          timestamp: (new Date()).toISOString()
+        }
+      };
 
+      const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+
+      if(!resp.ok){ throw new Error('HTTP '+resp.status+' '+await resp.text()); }
+      await resp.text().catch(()=>{});
+
+      feedback.style.color='green'; feedback.textContent='Отправлено.'; setTimeout(close, 900);
+    }catch(err){
+      feedback.style.color='crimson'; feedback.textContent = 'Ошибка при отправке: ' + (err.message||err);
+    }
+  });
+
+  /* =========================================================
+     БИНДИНГИ ОТКРЫТИЯ/ЗАКРЫТИЯ
+     — клик по фоновой подложке, по кресту или Esc — закрыть
+     ========================================================= */
+  btn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+  // Авто-открытие формы ТОЛЬКО на точном адресе https://www.sotiio.com/map.html
+  if (location.hostname === 'www.sotiio.com' && location.pathname === '/map.html') {
+  setTimeout(open, 0); // чуть позже, чтобы DOM успел прогрузиться
+}
+
+})();
+</script>
+<!-- === END: Sotiio inline survey === -->
+
+
+
+  
+</body>
+</html>
+
+
+<!-- ==== SOTIIO SURVEY HOTFIX (safe & self-contained) ==== -->
+<script>
+(function(){
+  // Run after DOM ready
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+
+    // DOM nodes
+    const btn = document.getElementById('sotiio_survey_btn');
+    const modal = document.getElementById('sotiio_modal');
+    const closeBtn = document.getElementById('sotiio_close');
+    const feedback = document.getElementById('sotiio_feedback');
+    const submitBtn = document.getElementById('sotiio_submit');
+    const optionsBox = document.getElementById('sotiio_options');
+
+    if(!btn || !modal || !closeBtn || !submitBtn){ console.warn('survey hotfix: some nodes missing'); return; }
+
+    // Open/close (unique names to avoid collisions)
+    function surveyOpen(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+    function surveyClose(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+    // (Re)bind events unconditionally
+    btn.onclick = surveyOpen;
+    closeBtn.onclick = surveyClose;
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) surveyClose(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') surveyClose(); });
+
+    // Helpers (all local, no external deps)
+    function two(n){ return String(n).padStart(2,'0'); }
+    function mapIdFromNow(){
+      const d = new Date();
+      return `${two(d.getSeconds())}${two(d.getMinutes())}${two(d.getHours())}${two(d.getDate())}${two(d.getMonth()+1)}${two(d.getFullYear()%100)}`;
+    }
+    async function showMindUniversal(mind){
+      const jm = window.__jm; // use existing jsMind created elsewhere
+      if(!jm){ console.warn('survey hotfix: jsMind instance not found (window.__jm)'); return; }
+      if (mind && mind.format === 'node_tree' && mind.data) {
+        jm.show(mind);
+      } else {
+        const conv = await fetch('/json_2_jm', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(mind)
+        });
+        const converted = await conv.json();
+        jm.show(converted);
+      }
+      jm.collapse_all();
+      const root = jm.get_root();
+      if(root) jm.expand_node(root.id);
+      try{ if (typeof tagLevels==='function') { setTimeout(()=>{ tagLevels(); jm.resize(); }, 100); } }catch{}
+      window.addEventListener('resize', ()=> jm.resize());
+    }
+
+    // Submit handler — always reassign directly
+    submitBtn.onclick = async function(){
+      const role = (document.querySelector('input[name=\"role\"]:checked')||{}).value;
+      const subjectEl = document.getElementById('sotiio_subject');
+      const subject = subjectEl ? subjectEl.value.trim() : '';
+      const chosen = Array.from((optionsBox||document).querySelectorAll('.option-card.selected')).map(x=>x.dataset.value);
+
+      if(!feedback) { console.warn('survey hotfix: no feedback element'); }
+      const setMsg = (msg, color)=>{ if(feedback){ feedback.style.color=color||'#333'; feedback.textContent=msg; }};
+
+      if(!role){ setMsg('Выберите роль.', 'crimson'); return; }
+      if(!subject){ setMsg('Укажите тему/вселенную.', 'crimson'); return; }
+      if(!chosen.length){ setMsg('Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.', 'crimson'); return; }
+
+      const payload = {
+        source: 'sotiio_web_survey',
+        map_id: mapIdFromNow(),
+        user_story: {
+          "I_as...": role,
+          "Want_to_discover_a_universe...": subject,
+          "So_that...": chosen,
+          timestamp: (new Date()).toISOString()
+        }
+      };
+
+      setMsg('Отправляем…','#333');
+      submitBtn.disabled = true;
+      try {
         const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
           method:'POST',
           mode:'cors',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
-
-        if (!resp.ok) {
-          let t = '';
-          try { t = await resp.text(); } catch {}
-          throw new Error(`HTTP ${resp.status}${t ? ' — ' + t : ''}`);
+        if(!resp.ok){
+          let t=''; try{ t = await resp.text(); }catch{}
+          throw new Error(`HTTP ${resp.status}${t? ' — '+t : ''}`);
         }
-
         let mind;
         const ct = resp.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          mind = await resp.json();
-        } else {
-          const raw = await resp.text();
-          try { mind = JSON.parse(raw); } catch { throw new Error('Вебхук вернул не-JSON'); }
-        }
+        if(ct.includes('application/json')) mind = await resp.json();
+        else { const raw = await resp.text(); try{ mind = JSON.parse(raw); }catch{ throw new Error('Вебхук вернул не-JSON'); } }
 
-        await window.showMindGlobal(mind);
-
-        feedback.style.color='green';
-        feedback.textContent='Карта готова.';
-        setTimeout(()=>{ try{ document.getElementById('sotiio_close').click(); }catch{} }, 900);
+        await showMindUniversal(mind);
+        setMsg('Карта готова.','green');
+        setTimeout(surveyClose, 900);
       } catch (err) {
-        feedback.style.color='crimson';
-        feedback.textContent = 'Ошибка: ' + (err?.message || err);
+        setMsg('Ошибка при отправке: ' + (err?.message || err), 'crimson');
+      } finally {
+        submitBtn.disabled = false;
       }
-    });
+    };
+
+    // Экспорт на всякий случай
+    window.surveyOpen = surveyOpen;
+    window.surveyClose = surveyClose;
   });
 })();
 </script>
-<!-- === END: Sotiio inline survey === -->
-
+<!-- ==== END SOTIIO SURVEY HOTFIX ==== -->
