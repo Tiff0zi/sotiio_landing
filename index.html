@@ -20,67 +20,171 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>sotiio — index (viewer + glue)</title>
+  <title>sotiio — index</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/static/style/jsmind.css" />
   <style>
-    /* reset и базовая геометрия */
-    *,*::before,*::after{ box-sizing:border-box }
-    html, body { height:100%; margin:0; }
-    body { height:100dvh; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif; background:#ece0d1; }
-    body.no-scroll{ overflow:hidden; }
+    * { box-sizing: border-box; }
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #ece0d1;
+    }
+    
+    .layout { 
+      display: grid;
+      grid-template-columns: 1fr clamp(360px, 40vw, 880px);
+      height: 100vh;
+      position: relative;
+    }
 
-    /* сетка: карта + фикс правая панель */
-    .layout { display:grid; grid-template-columns: 1fr clamp(360px, 38vw, 560px); height:100dvh; }
+    /* Viewer */
+    #viewerWrap {
+      position: relative;
+      background: #ece0d1;
+      overflow: hidden;
+    }
+    
+    #jsmind_container { 
+      height: 100%; 
+      width: 100%;
+      position: absolute;
+      inset: 0;
+    }
 
-    /* viewer (лево) */
-    #viewerWrap { position:relative; background:#ece0d1; overflow:hidden; }
-    #jsmind_container { position:absolute; inset:0; }
+    /* Topbar */
+    .topbar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      background: #ff622b;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
 
-    /* контейнер (право) */
-    aside { overflow:hidden; border-left:1px solid rgba(0,0,0,.08); background:#ece6df; }
-    #containerFrame { width:100%; height:100%; display:block; border:0; background:#ece6df; }
+    /* Container iframe */
+    aside {
+      border-left: 1px solid rgba(0,0,0,0.08);
+      background: #ece6df;
+      overflow: hidden;
+    }
+    
+    #containerFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
 
-    /* topbar */
-    .topbar { position:absolute; top:12px; left:12px; display:flex; gap:8px; z-index:5 }
-    .btn { background:#ff622b; color:#fff; border:0; padding:9px 12px; border-radius:10px; font-weight:600; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15) }
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 4vh 4vw;
+    }
+    
+    .modal.open {
+      display: flex;
+    }
+    
+    .modal-card {
+      width: min(820px, 96vw);
+      height: min(640px, 88vh);
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    
+    #userstoryFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
 
-    /* модалка userstory */
-    .modal { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:50; padding:4vh 4vw; }
-    .modal.open{ display:flex; }
-    .modal-card{ width:min(920px, 92vw); height:min(640px, 88vh); background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.35); display:flex; }
-    #userstoryFrame{ width:100%; height:100%; border:0; display:block; background:#fff; }
+    /* === Кофейная палитра для карты === */
+    :root {
+      --bg: #ece0d1;
+      --lvl0: #dbc1ac;
+      --lvl1: #967259;
+      --lvl2: #634832;
+      --lvl3: #38220f;
+      --sel: #ff622b;
+    }
 
-    /* палитра уровней для jmnode */
-    :root { --bg:#ece0d1; --lvl0:#dbc1ac; --lvl1:#967259; --lvl2:#634832; --lvl3:#38220f; --sel:#ff622b; }
-    jmnode{ border-radius:10px!important; border:1px solid rgba(0,0,0,.1)!important; box-shadow:0 2px 4px rgba(0,0,0,.1)!important; font-family:inherit; }
-    jmnode.jsmind-root { background:var(--lvl0)!important; color:#1f1f1f!important; font-size:20px!important; }
-    jmnode.lvl-1 { background:var(--lvl1)!important; color:#fff!important; }
-    jmnode.lvl-2 { background:var(--lvl2)!important; color:#fff!important; }
-    jmnode.lvl-3 { background:var(--lvl3)!important; color:#fff!important; }
-    jmnode.selected { background:var(--sel)!important; border-color:var(--sel)!important; color:#fff!important; outline:none!important; }
+    jmnode {
+      border-radius: 10px !important;
+      border: 1px solid rgba(0,0,0,.10) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,.10) !important;
+      font-family: inherit !important;
+    }
+
+    jmnode.jsmind-root { 
+      background: var(--lvl0) !important; 
+      color: #1f1f1f !important; 
+      font-size: 20px !important;
+    }
+    
+    jmnode.lvl-1 { 
+      background: var(--lvl1) !important; 
+      color: #fff !important; 
+    }
+    
+    jmnode.lvl-2 { 
+      background: var(--lvl2) !important; 
+      color: #fff !important; 
+    }
+    
+    jmnode.lvl-3 { 
+      background: var(--lvl3) !important; 
+      color: #fff !important; 
+    }
+
+    jmnode.selected { 
+      background: var(--sel) !important; 
+      border-color: var(--sel) !important; 
+      color: #fff !important; 
+      outline: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="layout">
-    <!-- Левая часть: jsMind viewer -->
     <section id="viewerWrap">
       <div class="topbar">
-        <button class="btn" onclick="window.UI.openUserStory()">Новое исследование (user story)</button>
+        <button class="btn" onclick="window.UI.openUserStory()">🧭 Новое исследование</button>
       </div>
       <div id="jsmind_container"></div>
     </section>
 
-    <!-- Правая часть: независимый контейнер во фрейме -->
     <aside>
-      <iframe id="containerFrame" src="container.html" title="sotiio container"></iframe>
+      <iframe id="containerFrame" src="container.html" title="Детали узла"></iframe>
     </aside>
   </div>
 
-  <!-- Модалка с userstory.html как iframe -->
   <div id="modalUS" class="modal" aria-hidden="true">
     <div class="modal-card">
-      <iframe id="userstoryFrame" src="userstory.html" title="sotiio userstory"></iframe>
+      <iframe id="userstoryFrame" src="userstory.html" title="Форма исследования"></iframe>
     </div>
   </div>
 
@@ -89,37 +193,64 @@
   (function(){
     // --- 1) jsMind viewer ---
     const jm = new jsMind({
-      container:'jsmind_container', editable:false, support_html:true,
-      view:{ hmargin:140, vmargin:30, line_style:'curved' },
-      layout:{ hspace:80, vspace:20, pspace:10, direction:'right' }
+      container:'jsmind_container',
+      editable:false,
+      support_html:true,
+      view:{hmargin:140, vmargin:30, line_style:'curved'},
+      layout:{hspace:80, vspace:20, pspace:10, direction:'right'}
     });
 
     function tagLevels(){
-      const root = jm.get_root(); if(!root) return;
+      const root = jm.get_root();
+      if (!root) return;
+      
       const walk = (node, level) => {
         const el = document.querySelector(`.jmnode[nodeid="${node.id}"]`);
         if (el) {
-          el.classList.remove('lvl-0','lvl-1','lvl-2','lvl-3','jsmind-root');
-          if (level === 0) el.classList.add('jsmind-root');
-          else el.classList.add('lvl-'+Math.min(level,3));
+          el.classList.remove('lvl-0', 'lvl-1', 'lvl-2', 'lvl-3', 'jsmind-root');
+          if (level === 0) {
+            el.classList.add('jsmind-root');
+          } else {
+            el.classList.add('lvl-' + Math.min(level, 3));
+          }
         }
-        (node.children||[]).forEach(ch=>walk(ch, level+1));
+        
+        if (node.children) {
+          node.children.forEach(child => walk(child, level + 1));
+        }
       };
+      
       walk(root, 0);
     }
 
     function toNodeTreeIfPossible(src){
       try{
         if (src && src.format==='node_tree' && src.data) return src;
+        
         const looksLike = (n)=> n && (n.label || n.topic) && (n.node_id || n.id);
+        
         function mapNode(n){
-          if(!n||typeof n!=='object') return null;
-          const out={ id:String(n.node_id||n.id), topic:String(n.label||n.topic||'') };
-          const {label,node_id,topic,children,...rest}=n;
-          const dataPack={ data:{ node_id: node_id||n.id, label: label||topic||'', ...(rest||{}) } };
-          if(Array.isArray(children)){ out.children=children.map(mapNode).filter(Boolean); }
+          if(!n || typeof n!=='object') return null;
+          const out = { 
+            id: String(n.node_id || n.id), 
+            topic: String(n.label || n.topic || '') 
+          };
+          
+          const {label, node_id, topic, children, ...rest} = n;
+          const dataPack = { 
+            data: { 
+              node_id: node_id || n.id, 
+              label: label || topic || '', 
+              ...(rest || {}) 
+            } 
+          };
+          
+          if(Array.isArray(children)){
+            out.children = children.map(mapNode).filter(Boolean);
+          }
           return Object.assign(out, { data: dataPack });
         }
+        
         if (looksLike(src)) return { format:'node_tree', data: mapNode(src) };
         if (src && src.map && looksLike(src.map)) return { format:'node_tree', data: mapNode(src.map) };
         if (Array.isArray(src)){
@@ -128,7 +259,9 @@
             if (looksLike(it)) return { format:'node_tree', data: mapNode(it) };
           }
         }
-      }catch(e){}
+      }catch(e){
+        console.warn('Conversion failed:', e);
+      }
       return src;
     }
 
@@ -138,43 +271,90 @@
         console.error('index.html: нужен {format:"node_tree", data:{...}}');
         throw new Error('Неверный формат карты: нужен node_tree');
       }
-      jm.show(safe); jm.collapse_all();
-      const root = jm.get_root(); if(root) jm.expand_node(root.id);
-      setTimeout(()=>{ tagLevels(); jm.resize(); }, 80);
+      
+      jm.show(safe); 
+      jm.collapse_all(); 
+      const root = jm.get_root(); 
+      if(root) jm.expand_node(root.id);
+      
+      setTimeout(() => {
+        tagLevels();
+        jm.resize();
+      }, 100);
+      
       window.addEventListener('resize', ()=> jm.resize());
     }
 
-    // клик по узлу -> в контейнер
+    // Клик по узлу -> отправляем в контейнер
     document.getElementById('jsmind_container').addEventListener('click', (e)=>{
-      const el = e.target.closest('jmnode'); if(!el) return;
-      const node = jm.get_node(el.getAttribute('nodeid')); if(!node) return;
-      const envelope = { type:'container:set', payload:(node.data||{}) };
-      try{ document.getElementById('containerFrame').contentWindow.postMessage(envelope, '*'); }catch(err){ console.warn('containerFrame PM failed', err); }
+      const el = e.target.closest('jmnode');
+      if(!el) return;
+      
+      const node = jm.get_node(el.getAttribute('nodeid'));
+      if(!node) return;
+      
+      const envelope = { 
+        type: 'container:set', 
+        payload: (node.data || {}) 
+      };
+      
+      try{
+        document.getElementById('containerFrame').contentWindow.postMessage(envelope, '*');
+      }catch(err){
+        console.warn('containerFrame postMessage failed', err);
+      }
     });
 
-    // публичный API viewer-а
-    window.MapViewer = { setData, getInstance(){ return jm; } };
+    // Публичный API
+    window.MapViewer = { 
+      setData, 
+      getInstance(){ return jm; } 
+    };
 
-    // --- 2) Склейка postMessage (сюда летит из userstory) ---
+    // --- 2) Обработка сообщений ---
     window.addEventListener('message', (ev)=>{
       const msg = ev.data || {};
+      
       if (msg.type === 'map:set') {
-        setData(msg.payload).catch(err=> alert('Ошибка показа карты: '+err.message));
+        setData(msg.payload).catch(err=>{
+          alert('Ошибка показа карты: ' + err.message);
+        });
       }
+      
       if (msg.type === 'container:set') {
-        try{ document.getElementById('containerFrame').contentWindow.postMessage(msg, '*'); }catch(err){}
+        try{
+          document.getElementById('containerFrame').contentWindow.postMessage(msg, '*');
+        }catch(err){
+          console.warn('Forward to container failed', err);
+        }
       }
     });
 
-    // --- 3) Модалка userstory ---
+    // --- 3) Управление модалкой ---
     const modal = document.getElementById('modalUS');
-    function openUserStory(){ document.body.classList.add('no-scroll'); modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
-    function closeUserStory(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.classList.remove('no-scroll'); }
-    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeUserStory(); });
+    
+    function openUserStory(){
+      document.body.style.overflow = 'hidden';
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    
+    function closeUserStory(){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    
+    modal.addEventListener('click', (e)=>{
+      if(e.target === modal) closeUserStory();
+    });
+    
     window.UI = { openUserStory, closeUserStory };
 
-    // опционально: стартовая карта
-    // setData({ format:'node_tree', data:{ id:'root', topic:'Hello', children:[{id:'c1',topic:'node 1'}] } });
+    // Авто-открытие формы на продакшене
+    if (location.hostname === 'www.sotiio.com' && location.pathname === '/index.html') {
+      setTimeout(openUserStory, 500);
+    }
   })();
   </script>
 </body>
