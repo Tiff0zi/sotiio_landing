@@ -1,12 +1,13 @@
 <!doctype html>
 <!--
-  FILE: container.html
-  ROLE: Самостоятельная правая панель (Wiki / Meta / Links / Raw).
-        Ни о карте, ни о вебхуках не знает. Просто принимает объект узла.
+  FILE: container.html (Независимый правый контейнер)
+  ROLE:
+    • Самодостаточная панель (Meta / Wiki / Links / Raw).
+    • Не знает про карту и вебхуки.
+  COMMUNICATION:
+    • Слушает: postMessage({type:'container:set', payload: nodeLike})
   API:
-    - window.ContainerAPI.setData(nodeLike)
-  Связь:
-    - Слушает postMessage({type:'container:set', payload: nodeLike}) и рендерит вкладки.
+    • window.ContainerAPI.setData(nodeLike)
 -->
 <html lang="ru">
 <head>
@@ -15,7 +16,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:#ece6df}
-    #drawer{position:fixed;right:0;top:0;height:100vh;width:40vw;max-width:880px;min-width:320px;background:#ece6df;color:#131313;
+    #drawer{position:fixed;right:0;top:0;height:100vh;width:100%;background:#ece6df;color:#131313;
       box-shadow:-12px 0 32px rgba(0,0,0,.18), -1px 0 0 rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden;border-left:1px solid rgba(0,0,0,.08)}
     .dw-tabs{display:flex;background:#f7f7f7;border-bottom:1px solid #eee}
     .dw-tab{flex:1;padding:12px 10px;text-align:center;cursor:pointer;border:0;background:transparent;font-weight:500;color:#666;border-bottom:2px solid transparent}
@@ -50,7 +51,7 @@
 
   <script>
   (function(){
-    // --- Переключение вкладок ---
+    // вкладки
     document.querySelectorAll('.dw-tab').forEach(t=>{
       t.addEventListener('click',()=>{
         const id=t.getAttribute('data-tab');
@@ -98,23 +99,13 @@
       pre.textContent=txt;
     }
 
-    function setData(nodeLike){
-      renderMeta(nodeLike);
-      renderWiki(nodeLike);
-      renderRaw(nodeLike);
-    }
+    function setData(nodeLike){ renderMeta(nodeLike); renderWiki(nodeLike); renderRaw(nodeLike); }
 
-    // --- Слушатель внешних сообщений ---
-    window.addEventListener('message', (ev)=>{
-      const msg = ev.data || {};
-      if (msg && msg.type === 'container:set') {
-        setData(msg.payload);
-      }
-    });
+    // связь с index.html
+    window.addEventListener('message', (ev)=>{ const msg=ev.data||{}; if(msg.type==='container:set') setData(msg.payload); });
 
-    // --- Публичный API контейнера ---
+    // ручной API (на всякий случай)
     window.ContainerAPI = { setData };
-
   })();
   </script>
 </body>
