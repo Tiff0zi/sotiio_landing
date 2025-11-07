@@ -12,100 +12,341 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>sotiio container</title>
+  <title>sotiio — index</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style/jsmind.css" />
   <style>
-    html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:#ece6df}
-    #drawer{position:fixed;right:0;top:0;height:100vh;width:100%;background:#ece6df;color:#131313;
-      box-shadow:-12px 0 32px rgba(0,0,0,.18), -1px 0 0 rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden;border-left:1px solid rgba(0,0,0,.08)}
-    .dw-tabs{display:flex;background:#f7f7f7;border-bottom:1px solid #eee}
-    .dw-tab{flex:1;padding:12px 10px;text-align:center;cursor:pointer;border:0;background:transparent;font-weight:500;color:#666;border-bottom:2px solid transparent}
-    .dw-tab.active{background:#ece6df;border-bottom:2px solid #ff622b;color:#111}
-    .dw-body{padding:12px 16px;overflow:auto;height:100%}
-    .tab-content{display:none}.tab-content.active{display:block}
-    pre{margin:0;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace}
-    table.meta{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:12px}
-    table.meta th,table.meta td{padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}
-    table.meta th{width:30%;background:#fafafa;text-align:left;color:#444}
-    .wiki-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin:0 0 10px}
-    .wiki-item h3{margin:0 0 6px;font-size:15px;color:#222}
-    .wiki-item div{font-size:14px;color:#333;line-height:1.4}
-    .empty{color:#777;font-style:italic;padding:16px 0}
+    * { box-sizing: border-box; }
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #ece0d1;
+    }
+    
+    .layout { 
+      display: grid;
+      grid-template-columns: 1fr clamp(360px, 40vw, 880px);
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Viewer */
+    #viewerWrap {
+      position: relative;
+      background: #ece0d1;
+      overflow: hidden;
+    }
+    
+    #jsmind_container { 
+      height: 100%; 
+      width: 100%;
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Topbar */
+    .topbar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      background: #ff622b;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Container iframe */
+    aside {
+      border-left: 1px solid rgba(0,0,0,0.08);
+      background: #ece6df;
+      overflow: hidden;
+    }
+    
+    #containerFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 4vh 4vw;
+    }
+    
+    .modal.open {
+      display: flex;
+    }
+    
+    .modal-card {
+      width: min(820px, 96vw);
+      height: min(640px, 88vh);
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    
+    #userstoryFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    /* === Кофейная палитра для карты === */
+    :root {
+      --bg: #ece0d1;
+      --lvl0: #dbc1ac;
+      --lvl1: #967259;
+      --lvl2: #634832;
+      --lvl3: #38220f;
+      --sel: #ff622b;
+    }
+
+    jmnode {
+      border-radius: 10px !important;
+      border: 1px solid rgba(0,0,0,.10) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,.10) !important;
+      font-family: inherit !important;
+    }
+
+    jmnode.jsmind-root { 
+      background: var(--lvl0) !important; 
+      color: #1f1f1f !important; 
+      font-size: 20px !important;
+    }
+    
+    jmnode.lvl-1 { 
+      background: var(--lvl1) !important; 
+      color: #fff !important; 
+    }
+    
+    jmnode.lvl-2 { 
+      background: var(--lvl2) !important; 
+      color: #fff !important; 
+    }
+    
+    jmnode.lvl-3 { 
+      background: var(--lvl3) !important; 
+      color: #fff !important; 
+    }
+
+    jmnode.selected { 
+      background: var(--sel) !important; 
+      border-color: var(--sel) !important; 
+      color: #fff !important; 
+      outline: none !important;
+    }
   </style>
 </head>
 <body>
-  <aside id="drawer" aria-hidden="false">
-    <div class="dw-tabs">
-      <button class="dw-tab active" data-tab="meta">Meta</button>
-      <button class="dw-tab" data-tab="wiki">Wiki</button>
-      <button class="dw-tab" data-tab="links">Links</button>
-      <button class="dw-tab" data-tab="raw">Raw Data</button>
-    </div>
-    <div class="dw-body">
-      <div id="tab-meta"  class="tab-content active"><div class="empty">Нет мета-данных.</div></div>
-      <div id="tab-wiki"  class="tab-content"><div class="empty">Для этого узла нет информации Wiki.</div></div>
-      <div id="tab-links" class="tab-content"><div class="empty">Пусто.</div></div>
-      <div id="tab-raw"   class="tab-content"><pre id="raw-pre">Здесь появится node.data</pre></div>
-    </div>
-  </aside>
+  <div class="layout">
+    <section id="viewerWrap">
+      <div class="topbar">
+        <button class="btn" onclick="window.UI.openUserStory()">🧭 Новое исследование</button>
+      </div>
+      <div id="jsmind_container"></div>
+    </section>
 
+    <aside>
+      <iframe id="containerFrame" src="container.html" title="Детали узла"></iframe>
+    </aside>
+  </div>
+
+  <div id="modalUS" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <iframe id="userstoryFrame" src="userstory.html" title="Форма исследования"></iframe>
+    </div>
+  </div>
+
+  <script src="/static/js/jsmind.js"></script>
   <script>
   (function(){
-    // вкладки
-    document.querySelectorAll('.dw-tab').forEach(t=>{
-      t.addEventListener('click',()=>{
-        const id=t.getAttribute('data-tab');
-        document.querySelectorAll('.dw-tab').forEach(x=>x.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-        t.classList.add('active'); document.getElementById('tab-'+id).classList.add('active');
-      });
+    // --- 1) jsMind viewer ---
+    const jm = new jsMind({
+      container:'jsmind_container',
+      editable:false,
+      support_html:true,
+      view:{hmargin:140, vmargin:30, line_style:'curved'},
+      layout:{hspace:80, vspace:20, pspace:10, direction:'right'}
     });
 
-    function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;")}
-
-    function renderMeta(nodeLike){
-      const box=document.getElementById('tab-meta');
-      const d = nodeLike?.data?.data || nodeLike?.data || nodeLike || {};
-      const rows=[
-        ['ID', d.node_id || d.id || '—'],
-        ['Название', d.label || d.topic || '—'],
-        ['Уровень', d.level || (d.node_id && d.node_id.startsWith('L1') ? 'Корневой':'Дочерний') || '—'],
-      ];
-      const meta= (d.meta && typeof d.meta==='object') ? d.meta : {};
-      const pre=JSON.stringify(meta,null,2);
-      box.innerHTML=`<table class="meta"><tbody>
-        ${rows.map(r=>`<tr><th>${r[0]}</th><td>${escapeHtml(r[1])}</td></tr>`).join('')}
-        </tbody></table>
-        <div class="empty">Мета-данные</div><pre>${escapeHtml(pre)}</pre>`;
+    function tagLevels(){
+      const root = jm.get_root();
+      if (!root) return;
+      
+      const walk = (node, level) => {
+        const el = document.querySelector(`.jmnode[nodeid="${node.id}"]`);
+        if (el) {
+          el.classList.remove('lvl-0', 'lvl-1', 'lvl-2', 'lvl-3', 'jsmind-root');
+          if (level === 0) {
+            el.classList.add('jsmind-root');
+          } else {
+            el.classList.add('lvl-' + Math.min(level, 3));
+          }
+        }
+        
+        if (node.children) {
+          node.children.forEach(child => walk(child, level + 1));
+        }
+      };
+      
+      walk(root, 0);
     }
 
-    function renderWiki(nodeLike){
-      const box=document.getElementById('tab-wiki');
-      const d=nodeLike?.data?.data || nodeLike?.data || nodeLike || {};
-      const meta=d.meta;
-      if(!meta||typeof meta!=='object'){ box.innerHTML='<div class="empty">Для этого узла нет информации Wiki.</div>'; return; }
-      const inner=(meta.meta && typeof meta.meta==='object')? meta.meta:{};
-      const piles=[inner.text,inner.number,inner.select,inner.checkbox,inner.date,
-        meta.meta_text,meta.meta_number,meta.meta_select,meta.meta_checkbox,meta.meta_date].filter(Array.isArray);
-      const items=[];
-      for(const arr of piles){ for(const it of arr){ if(it&&typeof it==='object'){ items.push({n:it.name??'',v:it.value??''}); } } }
-      if(!items.length){ box.innerHTML='<div class="empty">Для этого узла нет информации Wiki.</div>';return; }
-      box.innerHTML=items.map(({n,v})=>`<div class="wiki-item"><h3>${escapeHtml(n)}</h3><div>${escapeHtml(v)}</div></div>`).join('');
+    function toNodeTreeIfPossible(src){
+      try{
+        if (src && src.format==='node_tree' && src.data) return src;
+        
+        const looksLike = (n)=> n && (n.label || n.topic) && (n.node_id || n.id);
+        
+        function mapNode(n){
+          if(!n || typeof n!=='object') return null;
+          const out = { 
+            id: String(n.node_id || n.id), 
+            topic: String(n.label || n.topic || '') 
+          };
+          
+          const {label, node_id, topic, children, ...rest} = n;
+          const dataPack = { 
+            data: { 
+              node_id: node_id || n.id, 
+              label: label || topic || '', 
+              ...(rest || {}) 
+            } 
+          };
+          
+          if(Array.isArray(children)){
+            out.children = children.map(mapNode).filter(Boolean);
+          }
+          return Object.assign(out, { data: dataPack });
+        }
+        
+        if (looksLike(src)) return { format:'node_tree', data: mapNode(src) };
+        if (src && src.map && looksLike(src.map)) return { format:'node_tree', data: mapNode(src.map) };
+        if (Array.isArray(src)){
+          for(const it of src){
+            if (it && it.map && looksLike(it.map)) return { format:'node_tree', data: mapNode(it.map) };
+            if (looksLike(it)) return { format:'node_tree', data: mapNode(it) };
+          }
+        }
+      }catch(e){
+        console.warn('Conversion failed:', e);
+      }
+      return src;
     }
 
-    function renderRaw(nodeLike){
-      const pre=document.getElementById('raw-pre');
-      let txt='null'; try{ txt=JSON.stringify(nodeLike??null,null,2);}catch(e){txt=String(nodeLike);}
-      pre.textContent=txt;
+    async function setData(mind){
+      const safe = toNodeTreeIfPossible(mind);
+      if (!safe || safe.format!=='node_tree' || !safe.data) {
+        console.error('index.html: нужен {format:"node_tree", data:{...}}');
+        throw new Error('Неверный формат карты: нужен node_tree');
+      }
+      
+      jm.show(safe); 
+      jm.collapse_all(); 
+      const root = jm.get_root(); 
+      if(root) jm.expand_node(root.id);
+      
+      setTimeout(() => {
+        tagLevels();
+        jm.resize();
+      }, 100);
+      
+      window.addEventListener('resize', ()=> jm.resize());
     }
 
-    function setData(nodeLike){ renderMeta(nodeLike); renderWiki(nodeLike); renderRaw(nodeLike); }
+    // Клик по узлу -> отправляем в контейнер
+    document.getElementById('jsmind_container').addEventListener('click', (e)=>{
+      const el = e.target.closest('jmnode');
+      if(!el) return;
+      
+      const node = jm.get_node(el.getAttribute('nodeid'));
+      if(!node) return;
+      
+      const envelope = { 
+        type: 'container:set', 
+        payload: (node.data || {}) 
+      };
+      
+      try{
+        document.getElementById('containerFrame').contentWindow.postMessage(envelope, '*');
+      }catch(err){
+        console.warn('containerFrame postMessage failed', err);
+      }
+    });
 
-    // связь с index.html
-    window.addEventListener('message', (ev)=>{ const msg=ev.data||{}; if(msg.type==='container:set') setData(msg.payload); });
+    // Публичный API
+    window.MapViewer = { 
+      setData, 
+      getInstance(){ return jm; } 
+    };
 
-    // ручной API (на всякий случай)
-    window.ContainerAPI = { setData };
+    // --- 2) Обработка сообщений ---
+    window.addEventListener('message', (ev)=>{
+      const msg = ev.data || {};
+      
+      if (msg.type === 'map:set') {
+        setData(msg.payload).catch(err=>{
+          alert('Ошибка показа карты: ' + err.message);
+        });
+      }
+      
+      if (msg.type === 'container:set') {
+        try{
+          document.getElementById('containerFrame').contentWindow.postMessage(msg, '*');
+        }catch(err){
+          console.warn('Forward to container failed', err);
+        }
+      }
+    });
+
+    // --- 3) Управление модалкой ---
+    const modal = document.getElementById('modalUS');
+    
+    function openUserStory(){
+      document.body.style.overflow = 'hidden';
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    
+    function closeUserStory(){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    
+    modal.addEventListener('click', (e)=>{
+      if(e.target === modal) closeUserStory();
+    });
+    
+    window.UI = { openUserStory, closeUserStory };
+
+    // Авто-открытие формы на продакшене
+    if (location.hostname === 'www.sotiio.com' && location.pathname === '/index.html') {
+      setTimeout(openUserStory, 500);
+    }
   })();
   </script>
 </body>
