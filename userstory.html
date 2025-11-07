@@ -15,28 +15,188 @@
   <title>sotiio user story</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    *,*::before,*::after{ box-sizing:border-box }
-    html,body{height:100%;margin:0;background:#f6f6f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif}
-    .wrap{max-width:760px;margin:32px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.08);padding:18px 22px}
-    h1{margin:6px 0 12px 0;font-size:20px}
-    .row{margin:12px 0}
-    .label{font-weight:700;margin-bottom:8px}
-    .roles{display:flex;gap:14px;flex-wrap:wrap}
-    .roles label{display:flex;align-items:center;gap:8px}
-    .text-input{width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:15px}
-    .options{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:10px;margin-top:8px}
-    .opt{border:1px solid #e6e6e6;padding:10px 12px;border-radius:10px;cursor:pointer;background:#fff;font-size:14px}
-    .opt.selected{border-color:#ff622b;background:rgba(255,98,43,0.06)}
-    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .chip{background:#f3f4f6;border:1px solid #e5e7eb;padding:6px 10px;border-radius:16px;font-size:13px}
-    .actions{display:flex;justify-content:flex-end;align-items:center;margin-top:16px;gap:10px}
-    .primary{background:#ff622b;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer}
-    .muted{font-size:13px;color:#666}
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #f6f6f6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow: auto;
+    }
+    
+    .wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.08);
+      padding: 22px 26px;
+      height: auto;
+      min-height: 100%;
+    }
+    
+    h1 {
+      margin: 6px 0 18px 0;
+      font-size: 22px;
+      color: #1f1f1f;
+    }
+    
+    .row {
+      margin: 18px 0;
+    }
+    
+    .label {
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    
+    .roles {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .roles label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+    }
+    
+    .text-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    
+    .option-card {
+      border: 1px solid #e6e6e6;
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #fff;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .option-card.selected {
+      border-color: #ff622b;
+      background: rgba(255, 98, 43, 0.06);
+    }
+    
+    .add-own {
+      margin-top: 12px;
+      position: relative;
+    }
+    
+    .add-own .text-input {
+      padding-right: 46px;
+    }
+    
+    .add-own .add-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 34px;
+      min-width: 34px;
+      padding: 0 10px;
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .add-own .add-btn:hover {
+      background: #ececec;
+    }
+    
+    .chiplist {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    
+    .chip {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 13px;
+    }
+    
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 20px;
+      gap: 12px;
+    }
+    
+    .primary-btn {
+      background: #ff622b;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    
+    .muted {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    /* Разделители */
+    .divider {
+      height: 1px;
+      background: rgba(0,0,0,0.05);
+      border: 0;
+      margin: 20px 0;
+      width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .wrap {
+        margin: 0;
+        padding: 18px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      h1 {
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>User Story</h1>
+    <h1>Новое исследование</h1>
+    
+    <!-- Блок 1: выбор роли -->
     <div class="row">
       <div class="label">Я как…</div>
       <div class="roles">
@@ -46,122 +206,267 @@
         <label><input type="radio" name="role" value="Pro"> Профи</label>
       </div>
     </div>
+
+    <div class="divider"></div>
+
+    <!-- Блок 2: тема/вселенная -->
     <div class="row">
       <div class="label">Хочу изучить…</div>
-      <input id="subject" class="text-input" placeholder="Например: Киновселенную Marvel, мир крипто-активов…">
+      <input id="subject" class="text-input" 
+             placeholder="Например: Киновселенную Marvel, мир крипто-активов, Эволюцию человека…">
+      <div class="muted" style="margin-top:6px">Укажите любую вселенную для изучения.</div>
     </div>
+
+    <div class="divider"></div>
+
+    <!-- Блок 3: «Чтобы…» -->
     <div class="row">
       <div class="label">Чтобы…</div>
-      <div id="opts" class="options"></div>
-      <div style="margin-top:8px"><input id="own" class="text-input" placeholder="Свой вариант — Enter чтобы добавить"></div>
-      <div id="chips" class="chips"></div>
+      
+      <div id="opts" class="options-grid"></div>
+      
+      <div class="add-own">
+        <input id="own" class="text-input" placeholder="Предложите свой вариант и нажмите Enter">
+        <button class="add-btn" id="addOwn" title="Добавить">＋</button>
+      </div>
+      
+      <div id="chips" class="chiplist"></div>
     </div>
+
     <div class="actions">
       <div id="status" class="muted"></div>
-      <button id="submit" class="primary">Отправить</button>
+      <button id="submit" class="primary-btn">Отправить</button>
     </div>
   </div>
 
   <script>
   (function(){
-    const optsBox=document.getElementById('opts');
-    const ownInput=document.getElementById('own');
-    const chips=document.getElementById('chips');
-    const status=document.getElementById('status');
-    const submit=document.getElementById('submit');
+    const optsBox = document.getElementById('opts');
+    const ownInput = document.getElementById('own');
+    const addOwnBtn = document.getElementById('addOwn');
+    const chips = document.getElementById('chips');
+    const status = document.getElementById('status');
+    const submit = document.getElementById('submit');
 
-    const roleTexts={
-      Novice:["Быстро сориентироваться в теме","Понимать базовый разговор","Отличать ключевые понятия","Иметь шпаргалку по основам","Понять, интересна ли тема","Избежать элементарных ошибок","Общий обзор","Связь с реальной жизнью","Быть в курсе трендов","Упорядочить начальные знания"],
-      Enthusiast:["Разобраться, как всё устроено","Видеть логические связи","Просто объяснять сложное","Применять знания","Рассуждать и делать выводы","Структурировать знания","Видеть целостную картину","Сравнивать с альтернативами","Получать удовольствие","Навести порядок"],
-      Geek:["Эффективно использовать инструменты","Получать преимущ. от глубины","Стать экспертом","Лучшие практики","Монетизировать знания","Критически оценивать решения","Наставничество","Тактические решения","Адаптация подходов","Побеждать в дискуссиях"],
-      Pro:["Видеть систему целиком","Создавать новые концепции","Находить точки прорыва","Проектировать системы","Трансформировать системы","Стратегические решения","Видение будущего","Мыслительное лидерство","Вносить вклад","Видеть рычаги влияния"]
+    const roleTexts = {
+      "Novice": [
+        "Быстро сориентироваться в теме и не чувствовать себя потерянным",
+        "Понимать, о чём говорят другие, и поддерживать базовый разговор",
+        "Отличать ключевые понятия от второстепенных и не тратить время зря",
+        "Иметь надёжную «шпаргалку» по основам",
+        "Понять, интересна ли тема для дальнейшего углубления",
+        "Избежать элементарных ошибок и неловких ситуаций",
+        "Удовлетворить любопытство и получить общий обзор",
+        "Понять, как это связано с реальной жизнью и где применяется",
+        "Быть в курсе текущих трендов и популярных тем",
+        "Упорядочить начальные знания и почувствовать уверенность"
+      ],
+      "Enthusiast": [
+        "Разобраться, как всё устроено внутри, а не только знать факты",
+        "Видеть логические связи между частями системы",
+        "Уметь просто и ясно объяснять сложные вещи другим",
+        "Начать применять знания в повседневной жизни или работе",
+        "Научиться рассуждать самостоятельно и делать обоснованные выводы",
+        "Структурировать знания и понять, что изучать дальше",
+        "Видеть целостную картину: историю и возможное развитие",
+        "Сравнивать систему с альтернативами и видеть сильные и слабые стороны",
+        "Получать интеллектуальное удовольствие от освоения сложного",
+        "Превратить хаос разрозненных фактов в стройную систему"
+      ],
+      "Geek": [
+        "Эффективно использовать инструменты и техники для решения задач",
+        "Получать конкурентное преимущество за счёт глубоких знаний",
+        "Стать признанным экспертом, к которому обращаются за советом",
+        "Находить и применять лучшие практики для максимального результата",
+        "Монетизировать знания и навыки в этой области",
+        "Критически оценивать решения, находя слабые места и уязвимости",
+        "Эффективно обучать и наставлять других, передавая опыт",
+        "Принимать продуманные тактические решения и управлять процессами",
+        "Адаптировать стандартные подходы под нестандартные задачи",
+        "Уверенно побеждать в дискуссиях, опираясь на факты"
+      ],
+      "Pro": [
+        "Видеть систему целиком и задавать стратегию её развития",
+        "Создавать новые концепции, системы и продукты на основе глубокого анализа",
+        "Находить «белые пятна» и точки прорыва для инноваций",
+        "Проектировать сложные системы с нуля, понимая их фундаментальные принципы",
+        "Трансформировать существующие системы, а не только оптимизировать",
+        "Принимать взвешенные стратегические решения с высокой ценой ошибки",
+        "Формировать видение будущего и вести за собой команду или отрасль",
+        "Выступать мыслительным лидером, влияя на развитие индустрии",
+        "Оставлять значимый след и вносить фундаментальный вклад в область",
+        "Видеть скрытые рычаги влияния и прогнозировать долгосрочные последствия"
+      ]
     };
 
-    // опции по роли
+    // Реакция на выбор роли
     document.querySelectorAll('input[name="role"]').forEach(r=>{
-      r.addEventListener('change',()=>{
-        const role=document.querySelector('input[name="role"]:checked')?.value;
-        optsBox.innerHTML='';
-        for(const t of (roleTexts[role]||[])){
-          const d=document.createElement('div'); d.className='opt'; d.textContent=t; d.dataset.value=t; optsBox.appendChild(d);
+      r.addEventListener('change', ()=>{
+        const role = document.querySelector('input[name="role"]:checked')?.value;
+        optsBox.innerHTML = '';
+        const list = roleTexts[role] || [];
+        
+        for(const v of list){
+          const div = document.createElement('div');
+          div.className = 'option-card';
+          div.textContent = v;
+          div.dataset.value = v;
+          optsBox.appendChild(div);
         }
+        
         syncChips();
       });
     });
 
-    // выбор карточек
-    optsBox.addEventListener('click',e=>{
-      const card=e.target.closest('.opt'); if(!card) return;
-      card.classList.toggle('selected'); syncChips();
+    // Переключение выбора карточки
+    optsBox.addEventListener('click', e=>{
+      const card = e.target.closest('.option-card');
+      if(!card) return;
+      card.classList.toggle('selected');
+      syncChips();
     });
 
+    // Отрисовка чипов выбранных пунктов
     function syncChips(){
-      chips.innerHTML='';
-      const sel=Array.from(optsBox.querySelectorAll('.opt.selected')).map(x=>x.dataset.value);
-      for(const s of sel){ const c=document.createElement('span'); c.className='chip'; c.textContent=s; chips.appendChild(c); }
+      chips.innerHTML = '';
+      const selected = Array.from(optsBox.querySelectorAll('.option-card.selected'))
+                          .map(x => x.dataset.value);
+      
+      for(const s of selected){
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.textContent = s;
+        chips.appendChild(c);
+      }
     }
 
-    // собственный вариант
+    // Добавление собственного варианта
     function addOwn(){
-      const v=ownInput.value.trim(); if(!v) return;
-      let ex=Array.from(optsBox.children).find(x=>x.dataset.value===v);
-      if(!ex){
-        const d=document.createElement('div'); d.className='opt selected'; d.textContent=v; d.dataset.value=v;
-        optsBox.prepend(d);
-      } else { ex.classList.add('selected'); }
-      ownInput.value=''; syncChips();
+      const val = ownInput.value.trim();
+      if(!val) return;
+      
+      let existing = Array.from(optsBox.children).find(x => x.dataset.value === val);
+      if(!existing){
+        const div = document.createElement('div');
+        div.className = 'option-card selected';
+        div.textContent = val;
+        div.dataset.value = val;
+        optsBox.prepend(div);
+      } else {
+        existing.classList.add('selected');
+      }
+      
+      ownInput.value = '';
+      syncChips();
     }
-    ownInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addOwn(); } });
+    
+    ownInput.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        addOwn();
+      }
+    });
+    
+    addOwnBtn.addEventListener('click', addOwn);
 
-    // helpers
+    // Helpers
     function two(n){ return String(n).padStart(2,'0'); }
-    function mapIdFromNow(){ const d=new Date(); return `${two(d.getSeconds())}${two(d.getMinutes())}${two(d.getHours())}${two(d.getDate())}${two(d.getMonth()+1)}${two(d.getFullYear()%100)}`; }
-    const say=(m,c)=>{ status.textContent=m; status.style.color=c||'#333'; };
+    
+    function mapIdFromNow(){
+      const d = new Date();
+      const ss = two(d.getSeconds());
+      const mm = two(d.getMinutes());
+      const hh = two(d.getHours());
+      const dd = two(d.getDate());
+      const MM = two(d.getMonth()+1);
+      const yy = two(d.getFullYear()%100);
+      return `${ss}${mm}${hh}${dd}${MM}${yy}`;
+    }
+    
+    const say = (m, c) => {
+      status.textContent = m;
+      status.style.color = c || '#333';
+    };
 
-    // отправка
+    // Отправка данных
     submit.addEventListener('click', async ()=>{
-      const role=document.querySelector('input[name="role"]:checked')?.value;
-      const subject=document.getElementById('subject').value.trim();
-      const chosen=Array.from(optsBox.querySelectorAll('.opt.selected')).map(x=>x.dataset.value);
+      const role = document.querySelector('input[name="role"]:checked')?.value;
+      const subject = document.getElementById('subject').value.trim();
+      const chosen = Array.from(optsBox.querySelectorAll('.option-card.selected'))
+                         .map(x => x.dataset.value);
 
-      if(!role){ say('Выберите роль.','crimson'); return; }
-      if(!subject){ say('Укажите тему.','crimson'); return; }
-      if(chosen.length===0){ say('Выберите хотя бы один вариант.','crimson'); return; }
+      if(!role){
+        say('Выберите роль.', 'crimson');
+        return;
+      }
+      
+      if(!subject){
+        say('Укажите тему/вселенную.', 'crimson');
+        return;
+      }
+      
+      if(chosen.length === 0){
+        say('Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.', 'crimson');
+        return;
+      }
 
-      const payload={
-        source:'sotiio_web_survey',
-        map_id: mapIdFromNow(),
-        user_story: {
-          "I_as...": role,
-          "Want_to_discover_a_universe...": subject,
-          "So_that...": chosen,
-          timestamp: (new Date()).toISOString()
-        }
-      };
+      const map_id = mapIdFromNow();
 
-      submit.disabled = true; say('Отправляем…');
+      submit.disabled = true;
+      say('Отправляем…');
+      
       try{
+        const payload = {
+          source: 'sotiio_web_survey',
+          map_id,
+          user_story: {
+            "I_as...": role,
+            "Want_to_discover_a_universe...": subject,
+            "So_that...": chosen,
+            timestamp: (new Date()).toISOString()
+          }
+        };
+
         const resp = await fetch('https://n8n.sotiio.com/webhook/us', {
-          method:'POST', mode:'cors',
-          headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
         if(!resp.ok){
-          let t=''; try{ t=await resp.text(); }catch{}
-          throw new Error(`HTTP ${resp.status}${t? ' — '+t:''}`);
+          let t = '';
+          try{ t = await resp.text(); }catch{}
+          throw new Error(`HTTP ${resp.status}${t ? ' — ' + t : ''}`);
         }
+        
         let data;
         const ct = resp.headers.get('content-type') || '';
-        if (ct.includes('application/json')) data = await resp.json();
-        else { const raw=await resp.text(); try{ data=JSON.parse(raw); }catch{ throw new Error('Вебхук вернул не-JSON'); } }
+        if(ct.includes('application/json')){
+          data = await resp.json();
+        } else {
+          const raw = await resp.text();
+          try{ data = JSON.parse(raw); }catch{
+            throw new Error('Вебхук вернул не-JSON');
+          }
+        }
 
-        // шлём наружу — index поймает map:set и отрисует
-        if (window.parent && window.parent !== window) window.parent.postMessage({ type:'map:set', payload:data }, '*');
-        say('Готово. Карта отправлена в index.','green');
+        // Отправляем данные в родительское окно
+        if(window.parent && window.parent !== window){
+          window.parent.postMessage({ type: 'map:set', payload: data }, '*');
+        }
+        
+        say('Готово. Карта отправлена.', 'green');
+        setTimeout(() => {
+          if(window.parent && window.parent.UI){
+            window.parent.UI.closeUserStory();
+          }
+        }, 1200);
+        
       }catch(err){
-        say('Ошибка: '+(err?.message||err), 'crimson');
+        say('Ошибка: ' + (err?.message || err), 'crimson');
       }finally{
-        submit.disabled=false;
+        submit.disabled = false;
       }
     });
   })();
