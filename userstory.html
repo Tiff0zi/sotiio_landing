@@ -160,6 +160,7 @@
       color: #666;
     }
     
+    /* Разделители */
     .divider {
       height: 1px;
       background: rgba(0,0,0,0.05);
@@ -168,6 +169,7 @@
       width: 100%;
     }
     
+    /* Стили для индикатора загрузки */
     .loading-overlay {
       position: absolute;
       top: 0;
@@ -275,6 +277,7 @@
     
     <h1>Новое исследование</h1>
     
+    <!-- Блок 1: выбор роли -->
     <div class="row">
       <div class="label">Я как…</div>
       <div class="roles">
@@ -287,6 +290,7 @@
 
     <div class="divider"></div>
 
+    <!-- Блок 2: тема/вселенная -->
     <div class="row">
       <div class="label">Хочу изучить…</div>
       <input id="subject" class="text-input" 
@@ -296,13 +300,17 @@
 
     <div class="divider"></div>
 
+    <!-- Блок 3: «Чтобы…» -->
     <div class="row">
       <div class="label">Чтобы…</div>
+      
       <div id="opts" class="options-grid"></div>
+      
       <div class="add-own">
         <input id="own" class="text-input" placeholder="Предложите свой вариант и нажмите Enter">
         <button class="add-btn" id="addOwn" title="Добавить">＋</button>
       </div>
+      
       <div id="chips" class="chiplist"></div>
     </div>
 
@@ -328,7 +336,6 @@
     let currentMapId = null;
     let startTime = null;
     let timerInterval = null;
-    let showElapsedInDetails = false; // только для текста статуса, структура не меняется
 
     const roleTexts = {
       "Novice": [
@@ -381,11 +388,13 @@
       ]
     };
 
+    // Реакция на выбор роли
     document.querySelectorAll('input[name="role"]').forEach(r=>{
       r.addEventListener('change', ()=>{
         const role = document.querySelector('input[name="role"]:checked')?.value;
         optsBox.innerHTML = '';
         const list = roleTexts[role] || [];
+        
         for(const v of list){
           const div = document.createElement('div');
           div.className = 'option-card';
@@ -393,10 +402,12 @@
           div.dataset.value = v;
           optsBox.appendChild(div);
         }
+        
         syncChips();
       });
     });
 
+    // Переключение выбора карточки
     optsBox.addEventListener('click', e=>{
       const card = e.target.closest('.option-card');
       if(!card) return;
@@ -404,10 +415,12 @@
       syncChips();
     });
 
+    // Отрисовка чипов выбранных пунктов
     function syncChips(){
       chips.innerHTML = '';
       const selected = Array.from(optsBox.querySelectorAll('.option-card.selected'))
                           .map(x => x.dataset.value);
+      
       for(const s of selected){
         const c = document.createElement('span');
         c.className = 'chip';
@@ -416,9 +429,11 @@
       }
     }
 
+    // Добавление собственного варианта
     function addOwn(){
       const val = ownInput.value.trim();
       if(!val) return;
+      
       let existing = Array.from(optsBox.children).find(x => x.dataset.value === val);
       if(!existing){
         const div = document.createElement('div');
@@ -429,18 +444,23 @@
       } else {
         existing.classList.add('selected');
       }
+      
       ownInput.value = '';
       syncChips();
     }
+    
     ownInput.addEventListener('keydown', e=>{
       if(e.key === 'Enter'){
         e.preventDefault();
         addOwn();
       }
     });
+    
     addOwnBtn.addEventListener('click', addOwn);
 
+    // Helpers
     function two(n){ return String(n).padStart(2,'0'); }
+    
     function mapIdFromNow(){
       const d = new Date();
       const ss = two(d.getSeconds());
@@ -451,48 +471,102 @@
       const yy = two(d.getFullYear()%100);
       return `${ss}${mm}${hh}${dd}${MM}${yy}`;
     }
+    
     const say = (m, c) => {
       status.textContent = m;
       status.style.color = c || '#333';
     };
 
-    // таймер + прогресс; добавил вывод elapsed в loadingDetails по флагу
+    // Таймер
     function updateTimer() {
       if (!startTime) return;
+      
       const now = new Date();
       const diff = Math.floor((now - startTime) / 1000);
       const minutes = Math.floor(diff / 60);
       const seconds = diff % 60;
-      const mmss = `${minutes}:${two(seconds)}`;
-      timer.textContent = `Прошло: ${mmss}`;
+      
+      timer.textContent = `Прошло: ${minutes}:${two(seconds)}`;
+      
+      // Обновляем прогресс-бар (максимум 10 минут)
       const progress = Math.min((diff / 600) * 100, 100);
       progressFill.style.width = `${progress}%`;
-      if (showElapsedInDetails) {
-        loadingDetails.textContent = `Ожидаем создание карты… (прошло ${mmss})`;
-      }
     }
 
-    // fetch с таймаутом 5с
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        return await fetch(url, { ...options, signal: controller.signal });
-      } finally {
-        clearTimeout(id);
+    // Универсальная функция для извлечения данных карты из различных форматов n8n
+    function extractMapData(responseData) {
+      console.log('Получен ответ от сервера:', responseData);
+      
+      // Если ответ - массив (самый частый случай от n8n)
+      if (Array.isArray(responseData)) {
+        if (responseData.length === 0) {
+          throw new Error('Пустой массив в ответе');
+        }
+        
+        // Ищем данные карты в первом элементе массива
+        const firstItem = responseData[0];
+        
+        // Различные возможные структуры от n8n
+        if (firstItem && firstItem.map) {
+          return firstItem.map;
+        } else if (firstItem && firstItem.data && firstItem.data.map) {
+          return firstItem.data.map;
+        } else if (firstItem && firstItem.payload) {
+          return firstItem.payload;
+        } else if (firstItem && typeof firstItem === 'object') {
+          // Если весь первый элемент - это карта
+          return firstItem;
+        } else if (typeof firstItem === 'string') {
+          // Если это JSON строка
+          try {
+            const parsed = JSON.parse(firstItem);
+            return extractMapData(parsed); // Рекурсивно обрабатываем
+          } catch (e) {
+            console.warn('Не удалось распарсить строку:', e);
+          }
+        }
       }
+      
+      // Если ответ - объект (не массив)
+      if (responseData && typeof responseData === 'object') {
+        if (responseData.map) {
+          return responseData.map;
+        } else if (responseData.data && responseData.data.map) {
+          return responseData.data.map;
+        } else if (responseData.payload) {
+          return responseData.payload;
+        } else {
+          // Если весь объект - это карта
+          return responseData;
+        }
+      }
+      
+      // Если ничего не подошло
+      console.warn('Не удалось извлечь данные карты из ответа:', responseData);
+      return null;
     }
 
-    // ОТПРАВКА
+    // Отправка данных
     submit.addEventListener('click', async ()=>{
       const role = document.querySelector('input[name="role"]:checked')?.value;
       const subject = document.getElementById('subject').value.trim();
       const chosen = Array.from(optsBox.querySelectorAll('.option-card.selected'))
                          .map(x => x.dataset.value);
 
-      if(!role){ say('Выберите роль.', 'crimson'); return; }
-      if(!subject){ say('Укажите тему/вселенную.', 'crimson'); return; }
-      if(chosen.length === 0){ say('Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.', 'crimson'); return; }
+      if(!role){
+        say('Выберите роль.', 'crimson');
+        return;
+      }
+      
+      if(!subject){
+        say('Укажите тему/вселенную.', 'crimson');
+        return;
+      }
+      
+      if(chosen.length === 0){
+        say('Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.', 'crimson');
+        return;
+      }
 
       currentMapId = mapIdFromNow();
       startTime = new Date();
@@ -500,10 +574,12 @@
       submit.disabled = true;
       loadingOverlay.classList.add('active');
       say('');
-
+      
+      // Запускаем таймер
       timerInterval = setInterval(updateTimer, 1000);
       updateTimer();
 
+      // Создаем payload
       const payload = {
         source: 'sotiio_web_survey',
         map_id: currentMapId,
@@ -515,97 +591,88 @@
         }
       };
 
-      // 1. создание карты (как было)
-      fetch('https://n8n.sotiio.com/webhook/us', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(() => {
-        loadingDetails.textContent = 'Запрос на создание карты отправлен...';
-      })
-      .catch((error) => {
-        console.warn('Предупреждение при отправке:', error);
-      })
-      .finally(async () => {
-        // 2. БЕЗ задержки в 10с — сразу один запрос за картой с таймаутом 5с
-        showElapsedInDetails = true;
-        updateTimer();
+      try {
+        // 1. Отправляем запрос на создание карты
+        loadingDetails.textContent = 'Отправляем запрос на создание карты...';
+        
+        await fetch('https://n8n.sotiio.com/webhook/us', {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
-        try {
-          const response = await fetchWithTimeout('https://n8n.sotiio.com/webhook/getmap', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ map_id: currentMapId })
-          }, 5000);
+        loadingDetails.textContent = 'Запрос отправлен. Ожидаем создание карты...';
+        
+        // 2. Ждем 10 секунд и запрашиваем карту
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        
+        loadingDetails.textContent = 'Получаем данные карты...';
+        
+        // 3. Запрашиваем карту
+        const response = await fetch('https://n8n.sotiio.com/webhook/getmap', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ map_id: currentMapId })
+        });
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.text().then(text => {
-            try { return text ? JSON.parse(text) : []; }
-            catch { throw new Error('Невалидный JSON ответ от сервера'); }
-          });
-
-          clearInterval(timerInterval);
-          loadingOverlay.classList.remove('active');
-
-          // разбор структуры — как в исходнике
-          let mapData = null;
-          if (Array.isArray(data) && data.length > 0) {
-            const firstItem = data[0];
-            if (firstItem && firstItem.map) mapData = firstItem.map;
-            else if (firstItem && typeof firstItem === 'object') mapData = firstItem;
-            else if (firstItem && firstItem.data && firstItem.data.map) mapData = firstItem.data.map;
-            else if (firstItem && firstItem.payload) mapData = firstItem.payload;
-          } else if (data && data.map) {
-            mapData = data.map;
-          } else if (data && typeof data === 'object') {
-            mapData = data;
-          }
-
-          if (mapData) {
-            console.log('Получены данные карты:', mapData);
-
-            // ВОЗВРАЩАЮ исходный порядок: СНАЧАЛА отрисовка (postMessage)…
-            if (window.parent && window.parent !== window) {
-              window.parent.postMessage({ 
-                type: 'map:set', 
-                payload: {
-                  map: mapData,
-                  rawResponse: data
-                }
-              }, '*');
-            }
-            // …ПОТОМ закрытие модалки (как было)
-            setTimeout(() => {
-              if (window.parent && window.parent.UI) {
-                window.parent.UI.closeUserStory();
-              }
-            }, 1000);
-
-          } else {
-            console.warn('Неожиданная структура ответа:', data);
-            say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
-            submit.disabled = false;
-          }
-        } catch (error) {
-          clearInterval(timerInterval);
-          loadingOverlay.classList.remove('active');
-          const msg = (error && error.name === 'AbortError')
-            ? 'Таймаут запроса карты (5 сек).'
-            : 'Ошибка при получении карты: ' + error.message;
-          say(msg, 'crimson');
-          submit.disabled = false;
+        if (!response.ok) {
+          throw new Error(`HTTP ошибка: ${response.status}`);
         }
-      });
+
+        const responseData = await response.json();
+        const mapData = extractMapData(responseData);
+
+        if (!mapData) {
+          throw new Error('Не удалось извлечь данные карты из ответа сервера');
+        }
+
+        // Успешно получили карту
+        clearInterval(timerInterval);
+        loadingOverlay.classList.remove('active');
+        
+        console.log('Успешно получены данные карты:', mapData);
+        
+        // Передаем данные карты родительскому окну
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ 
+            type: 'map:set', 
+            payload: {
+              map: mapData,
+              mapId: currentMapId,
+              rawResponse: responseData // Для отладки
+            }
+          }, '*');
+        }
+        
+        // Закрываем окно через секунду
+        setTimeout(() => {
+          if (window.parent && window.parent.UI) {
+            window.parent.UI.closeUserStory();
+          }
+        }, 1000);
+        
+      } catch (error) {
+        // Обработка ошибок
+        clearInterval(timerInterval);
+        loadingOverlay.classList.remove('active');
+        
+        console.error('Ошибка:', error);
+        say('Ошибка: ' + error.message, 'crimson');
+        submit.disabled = false;
+        
+        loadingDetails.textContent = `Ошибка: ${error.message}`;
+      }
     });
 
+    // Очистка при закрытии
     window.addEventListener('beforeunload', () => {
-      if (timerInterval) clearInterval(timerInterval);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
     });
   })();
   </script>
