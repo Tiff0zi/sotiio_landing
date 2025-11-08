@@ -493,7 +493,7 @@
       progressFill.style.width = `${progress}%`;
     }
 
-    // Отправка данных - ОДИН ЗАПРОС БЕЗ ТАЙМАУТА
+    // Отправка данных
     submit.addEventListener('click', async ()=>{
       const role = document.querySelector('input[name="role"]:checked')?.value;
       const subject = document.getElementById('subject').value.trim();
@@ -552,11 +552,11 @@
         console.warn('Предупреждение при отправке:', error);
       })
       .finally(() => {
-        // 2. Ждем 10 секунд и делаем ОДИН запрос за картой
+        // 2. Ждем 5 секунд и делаем запрос за картой
         setTimeout(() => {
           loadingDetails.textContent = 'Ожидаем создание карты...';
           
-          // ОДИН запрос без таймаута - ждем пока сервер ответит
+          // Запрос за картой
           fetch('https://n8n.sotiio.com/webhook/getmap', {
             method: 'POST',
             headers: { 
@@ -580,7 +580,6 @@
           })
           .then(data => {
             clearInterval(timerInterval);
-            loadingOverlay.classList.remove('active');
             
             // Обрабатываем массив от n8n - берем первый элемент
             let mapData = null;
@@ -609,26 +608,31 @@
             }
             
             if (mapData) {
-              // Карта найдена!
-              console.log('Получены данные карты:', mapData);
+              // Сначала закрываем модальное окно
+              loadingOverlay.classList.remove('active');
               
-              if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ 
-                  type: 'map:set', 
-                  payload: {
-                    map: mapData,
-                    rawResponse: data // Отправляем также полный ответ для отладки
-                  }
-                }, '*');
-              }
-              
+              // Затем отправляем данные карты с небольшой задержкой
               setTimeout(() => {
-                if (window.parent && window.parent.UI) {
-                  window.parent.UI.closeUserStory();
+                if (window.parent && window.parent !== window) {
+                  window.parent.postMessage({ 
+                    type: 'map:set', 
+                    payload: {
+                      map: mapData,
+                      rawResponse: data
+                    }
+                  }, '*');
                 }
-              }, 1000);
+                
+                // Закрываем пользовательскую историю
+                setTimeout(() => {
+                  if (window.parent && window.parent.UI) {
+                    window.parent.UI.closeUserStory();
+                  }
+                }, 500);
+              }, 100);
             } else {
               console.warn('Неожиданная структура ответа:', data);
+              loadingOverlay.classList.remove('active');
               say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
               submit.disabled = false;
             }
@@ -639,7 +643,7 @@
             say('Ошибка при получении карты: ' + error.message, 'crimson');
             submit.disabled = false;
           });
-        }, 10000); // Ждем 10 секунд перед запросом карты
+        }, 5000); // Ждем 5 секунд перед запросом карты
       });
     });
 
