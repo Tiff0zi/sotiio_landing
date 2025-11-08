@@ -569,57 +569,21 @@
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}`);
             }
-            return response.text().then(text => {
-              try {
-                return text ? JSON.parse(text) : [];
-              } catch (e) {
-                console.error('Ошибка парсинга JSON:', e);
-                throw new Error('Невалидный JSON ответ от сервера');
-              }
-            });
+            return response.json();
           })
           .then(data => {
             clearInterval(timerInterval);
             loadingOverlay.classList.remove('active');
             
-            // Обрабатываем массив от n8n - берем первый элемент
-            let mapData = null;
+            // --- распаковываем ответ, если n8n обернул в { json: ... }
+            const result = (data && data.json) ? data.json : data;
             
-            if (Array.isArray(data) && data.length > 0) {
-              // n8n возвращает массив, берем первый элемент
-              const firstItem = data[0];
-              
-              // Проверяем различные возможные структуры в первом элементе массива
-              if (firstItem && firstItem.map) {
-                mapData = firstItem.map;
-              } else if (firstItem && typeof firstItem === 'object') {
-                // Если весь первый элемент - это карта
-                mapData = firstItem;
-              } else if (firstItem && firstItem.data && firstItem.data.map) {
-                mapData = firstItem.data.map;
-              } else if (firstItem && firstItem.payload) {
-                mapData = firstItem.payload;
-              }
-            } else if (data && data.map) {
-              // Если ответ не массив, а объект с map
-              mapData = data.map;
-            } else if (data && typeof data === 'object') {
-              // Если ответ - это сам объект карты
-              mapData = data;
-            }
+            // принимаем оба формата: { map: {...} } ИЛИ { format, data, meta }
+            const hasMap = !!(result && (result.map || (result.format && result.data)));
             
-            if (mapData) {
-              // Карта найдена!
-              console.log('Получены данные карты:', mapData);
-              
+            if (hasMap) {
               if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ 
-                  type: 'map:set', 
-                  payload: {
-                    map: mapData,
-                    rawResponse: data // Отправляем также полный ответ для отладки
-                  }
-                }, '*');
+                window.parent.postMessage({ type: 'map:set', payload: result }, '*');
               }
               
               setTimeout(() => {
@@ -628,8 +592,7 @@
                 }
               }, 1000);
             } else {
-              console.warn('Неожиданная структура ответа:', data);
-              say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
+              say('Карта не была создана. Попробуйте снова.', 'crimson');
               submit.disabled = false;
             }
           })
