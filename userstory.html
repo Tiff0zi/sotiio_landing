@@ -493,7 +493,7 @@
       progressFill.style.width = `${progress}%`;
     }
 
-    // Отправка данных
+    // Отправка данных - ОДИН ЗАПРОС БЕЗ ТАЙМАУТА
     submit.addEventListener('click', async ()=>{
       const role = document.querySelector('input[name="role"]:checked')?.value;
       const subject = document.getElementById('subject').value.trim();
@@ -552,11 +552,11 @@
         console.warn('Предупреждение при отправке:', error);
       })
       .finally(() => {
-        // 2. Ждем 5 секунд и делаем запрос за картой
+        // 2. Ждем 10 секунд и делаем ОДИН запрос за картой
         setTimeout(() => {
           loadingDetails.textContent = 'Ожидаем создание карты...';
           
-          // Запрос за картой
+          // ОДИН запрос без таймаута - ждем пока сервер ответит
           fetch('https://n8n.sotiio.com/webhook/getmap', {
             method: 'POST',
             headers: { 
@@ -580,46 +580,55 @@
           })
           .then(data => {
             clearInterval(timerInterval);
-            
-            console.log('Получены данные от n8n:', data);
+            loadingOverlay.classList.remove('active');
             
             // Обрабатываем массив от n8n - берем первый элемент
             let mapData = null;
             
             if (Array.isArray(data) && data.length > 0) {
               // n8n возвращает массив, берем первый элемент
-              mapData = data[0];
+              const firstItem = data[0];
+              
+              // Проверяем различные возможные структуры в первом элементе массива
+              if (firstItem && firstItem.map) {
+                mapData = firstItem.map;
+              } else if (firstItem && typeof firstItem === 'object') {
+                // Если весь первый элемент - это карта
+                mapData = firstItem;
+              } else if (firstItem && firstItem.data && firstItem.data.map) {
+                mapData = firstItem.data.map;
+              } else if (firstItem && firstItem.payload) {
+                mapData = firstItem.payload;
+              }
+            } else if (data && data.map) {
+              // Если ответ не массив, а объект с map
+              mapData = data.map;
             } else if (data && typeof data === 'object') {
-              // Если ответ не массив, а объект
+              // Если ответ - это сам объект карты
               mapData = data;
             }
             
-            // Проверяем, что у нас есть node_tree в данных карты
-            if (mapData && mapData.format === 'node_tree') {
-              console.log('Карта найдена в формате node_tree:', mapData);
+            if (mapData) {
+              // Карта найдена!
+              console.log('Получены данные карты:', mapData);
               
-              // Сначала закрываем модальное окно
-              loadingOverlay.classList.remove('active');
-              
-              // Затем отправляем данные карты
-              setTimeout(() => {
-                if (window.parent && window.parent !== window) {
-                  window.parent.postMessage({ 
-                    type: 'map:set', 
-                    payload: mapData
-                  }, '*');
-                }
-                
-                // Закрываем пользовательскую историю
-                setTimeout(() => {
-                  if (window.parent && window.parent.UI) {
-                    window.parent.UI.closeUserStory();
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ 
+                  type: 'map:set', 
+                  payload: {
+                    map: mapData,
+                    rawResponse: data // Отправляем также полный ответ для отладки
                   }
-                }, 500);
-              }, 100);
+                }, '*');
+              }
+              
+              setTimeout(() => {
+                if (window.parent && window.parent.UI) {
+                  window.parent.UI.closeUserStory();
+                }
+              }, 1000);
             } else {
-              console.warn('Неожиданная структура ответа или отсутствует node_tree:', mapData);
-              loadingOverlay.classList.remove('active');
+              console.warn('Неожиданная структура ответа:', data);
               say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
               submit.disabled = false;
             }
@@ -630,7 +639,7 @@
             say('Ошибка при получении карты: ' + error.message, 'crimson');
             submit.disabled = false;
           });
-        }, 5000); // Ждем 5 секунд перед запросом карты
+        }, 10000); // Ждем 10 секунд перед запросом карты
       });
     });
 
