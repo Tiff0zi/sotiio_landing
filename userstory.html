@@ -437,56 +437,72 @@
         console.warn('Предупреждение при отправке:', error);
       })
       .finally(() => {
-        // 2. Ждём 5 секунд и делаем один запрос за картой
+        // 2. Ждем 2 минуты и начинаем опрашивать статус каждые 15 секунд
+        const pollInterval = 15000; // 15 секунд
+        const initialDelay = 120000; // 2 минуты
+
         setTimeout(() => {
-          const secondsPassed = Math.floor((new Date() - startTime) / 1000);
-          loadingDetails.textContent = `Прошло ${secondsPassed} сек. — получаем карту...`;
-
-          fetch('https://n8n.sotiio.com/webhook/getmap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ map_id: currentMapId })
-          })
-          .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.text().then(text => {
-              try { return text ? JSON.parse(text) : []; }
-              catch { throw new Error('Невалидный JSON ответ от сервера'); }
-            });
-          })
-          .then(data => {
-            clearInterval(timerInterval);
-            loadingOverlay.classList.remove('active');
-
-            // n8n отдаёт массив с node_tree → берём первый элемент как есть
-            const nodeTree = Array.isArray(data) ? data[0] : data;
-
-            if (nodeTree && nodeTree.format === 'node_tree' && nodeTree.data) {
-              if (window.parent && window.parent !== window) {
-                // Сначала закрываем модалку, затем отдаём карту (плавнее)
-                if (window.parent.UI && typeof window.parent.UI.closeUserStory === 'function') {
-                  window.parent.UI.closeUserStory();
-                  setTimeout(() => {
-                    window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                  }, 400); // задержка на закрытие модалки
-                } else {
-                  // fallback
-                  window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                }
+          loadingDetails.textContent = 'Проверяем статус карты...';
+          
+          const pollMap = () => {
+            fetch('https://n8n.sotiio.com/webhook/getmap', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ map_id: currentMapId })
+            })
+            .then(response => {
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              return response.text().then(text => {
+                try { return text ? JSON.parse(text) : []; }
+                catch { throw new Error('Невалидный JSON ответ от сервера'); }
+              });
+            })
+            .then(data => {
+              const secondsPassed = Math.floor((new Date() - startTime) / 1000);
+              
+              // Проверяем статус pending
+              if (data.status === "pending") {
+                loadingDetails.textContent = `Прошло ${secondsPassed} сек. — карта еще не готова, проверяем снова через 15 секунд...`;
+                // Повторяем запрос через 15 секунд
+                setTimeout(pollMap, pollInterval);
+                return;
               }
-            } else {
-              console.warn('Неожиданная структура ответа:', data);
-              say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
+
+              // Если не pending, обрабатываем как раньше
+              clearInterval(timerInterval);
+              loadingOverlay.classList.remove('active');
+
+              const nodeTree = Array.isArray(data) ? data[0] : data;
+
+              if (nodeTree && nodeTree.format === 'node_tree' && nodeTree.data) {
+                if (window.parent && window.parent !== window) {
+                  if (window.parent.UI && typeof window.parent.UI.closeUserStory === 'function') {
+                    window.parent.UI.closeUserStory();
+                    setTimeout(() => {
+                      window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
+                    }, 400);
+                  } else {
+                    window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
+                  }
+                }
+              } else {
+                console.warn('Неожиданная структура ответа:', data);
+                say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
+                submit.disabled = false;
+              }
+            })
+            .catch(error => {
+              clearInterval(timerInterval);
+              loadingOverlay.classList.remove('active');
+              say('Ошибка при получении карты: ' + error.message, 'crimson');
               submit.disabled = false;
-            }
-          })
-          .catch(error => {
-            clearInterval(timerInterval);
-            loadingOverlay.classList.remove('active');
-            say('Ошибка при получении карты: ' + error.message, 'crimson');
-            submit.disabled = false;
-          });
-        }, 5000); // ← 5 секунд вместо 10
+            });
+          };
+
+          // Запускаем первый опрос
+          pollMap();
+
+        }, initialDelay);
       });
     });
 
