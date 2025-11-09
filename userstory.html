@@ -12,6 +12,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       overflow: auto;
     }
+
     .wrap {
       max-width: 820px;
       margin: 0 auto;
@@ -23,21 +24,14 @@
       min-height: 100%;
       position: relative;
     }
+
     h1 { margin: 6px 0 18px 0; font-size: 22px; color: #1f1f1f; }
     .row { margin: 18px 0; }
     .label { font-weight: 700; margin-bottom: 10px; font-size: 15px; }
     .roles { display: flex; flex-direction: column; gap: 10px; }
     .roles label { display: flex; align-items: center; gap: 10px; font-size: 15px; }
     .text-input { width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; font-family: inherit; }
-    .options-grid { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 10px; margin-top: 8px; }
-    .option-card { border: 1px solid #e6e6e6; padding: 12px 14px; border-radius: 10px; cursor: pointer; background: #fff; font-size: 14px; transition: all 0.2s; }
-    .option-card.selected { border-color: #ff622b; background: rgba(255, 98, 43, 0.06); }
-    .add-own { margin-top: 12px; position: relative; }
-    .add-own .text-input { padding-right: 46px; }
-    .add-own .add-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); height: 34px; min-width: 34px; padding: 0 10px; background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-    .add-own .add-btn:hover { background: #ececec; }
-    .chiplist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .chip { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 6px 10px; border-radius: 16px; font-size: 13px; }
+
     .actions { display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 12px; }
     .primary-btn { background: #ff622b; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-family: inherit; }
     .primary-btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -51,43 +45,19 @@
     }
     .loading-overlay.active { display: flex; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #ff622b; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
-    .loading-text { font-size: 16px; color: #333; text-align: center; }
-    .loading-details { font-size: 14px; color: #666; margin-top: 8px; text-align: center; }
-    .progress-bar { width: 300px; height: 6px; background: #f0f0f0; border-radius: 3px; margin: 20px 0; overflow: hidden; }
-    .progress-fill { height: 100%; background: #ff622b; border-radius: 3px; width: 0%; transition: width 0.3s ease; }
-    .timer { font-size: 14px; color: #666; margin-top: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-    @media (max-width: 768px) {
-      .wrap { margin: 0; padding: 18px; border-radius: 0; box-shadow: none; }
-      .options-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 20px; }
-      .progress-bar { width: 250px; }
-    }
 
-    /* ——— Добавлено: верхняя панель с переключателем языка ——— */
     .topbar {
       display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;
     }
-    .lang-control {
-      display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #333;
-    }
-    .lang-control .switch {
-      position: relative; display: inline-block; width: 44px; height: 22px;
-    }
+    .lang-control { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #333; }
+    .lang-control .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
     .lang-control .switch input { display:none; }
-    .lang-control .slider {
-      position: absolute; cursor: pointer; inset: 0; background:#ddd; transition:.2s; border-radius: 22px;
-    }
-    .lang-control .slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: #fff; transition:.2s; border-radius: 50%;
-      box-shadow: 0 1px 2px rgba(0,0,0,.2);
-    }
+    .lang-control .slider { position: absolute; cursor: pointer; inset: 0; background:#ddd; transition:.2s; border-radius: 22px; }
+    .lang-control .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: #fff; transition:.2s; border-radius: 50%; }
     .lang-control input:checked + .slider { background:#ff622b; }
     .lang-control input:checked + .slider:before { transform: translateX(22px); }
-    .lang-select {
-      padding: 6px 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-family: inherit;
-    }
-    .lang-help { color:#666; font-size:12px; }
+    .lang-select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -95,35 +65,21 @@
     <div class="loading-overlay" id="loadingOverlay">
       <div class="spinner"></div>
       <div class="loading-text">Создаём вашу карту знаний...</div>
-      <div class="loading-details">Это может занять от 3 до 7 минут</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="timer" id="timer">Прошло: 0:00</div>
-      <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
     </div>
 
-    <!-- ——— ЗАГОЛОВОК + ПЕРЕКЛЮЧАТЕЛЬ ——— -->
     <div class="topbar">
       <h1>Новое исследование</h1>
-      <div class="lang-control" title="Язык для ответа">
-        <span class="lang-help">Auto</span>
+      <div class="lang-control">
+        <span>Auto</span>
         <label class="switch">
           <input type="checkbox" id="langAuto" checked>
           <span class="slider"></span>
         </label>
         <select id="langSelect" class="lang-select" disabled>
-          <option value="ru">Русский (ru)</option>
-          <option value="en">English (en)</option>
-          <option value="es">Español (es)</option>
-          <option value="de">Deutsch (de)</option>
-          <option value="fr">Français (fr)</option>
-          <option value="pt">Português (pt)</option>
-          <option value="it">Italiano (it)</option>
-          <option value="uk">Українська (uk)</option>
-          <option value="pl">Polski (pl)</option>
-          <option value="tr">Türkçe (tr)</option>
-          <option value="zh">中文 (zh)</option>
-          <option value="ja">日本語 (ja)</option>
-          <option value="ko">한국어 (ko)</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="de">Deutsch</option>
         </select>
       </div>
     </div>
@@ -142,358 +98,88 @@
 
     <div class="row">
       <div class="label">Хочу изучить…</div>
-      <input id="subject" class="text-input" placeholder="Например: Киновселенную Marvel, мир крипто-активов, Эволюцию человека…">
-      <div class="muted" style="margin-top:6px">Укажите любую вселенную для изучения.</div>
+      <input id="subject" class="text-input" placeholder="например: halo, Marvel, AI...">
     </div>
 
     <div class="divider"></div>
 
     <div class="row">
       <div class="label">Чтобы…</div>
-      <div id="opts" class="options-grid"></div>
-      <div class="add-own">
-        <input id="own" class="text-input" placeholder="Предложите свой вариант и нажмите Enter">
-        <button class="add-btn" id="addOwn" title="Добавить">＋</button>
-      </div>
-      <div id="chips" class="chiplist"></div>
+      <input id="goal" class="text-input" placeholder="например: Быстро сориентироваться в теме...">
     </div>
 
     <div class="actions">
-      <div id="status" class="muted"></div>
       <button id="submit" class="primary-btn">Отправить</button>
     </div>
   </div>
 
   <script>
   (function(){
-    const optsBox = document.getElementById('opts');
-    const ownInput = document.getElementById('own');
-    const addOwnBtn = document.getElementById('addOwn');
-    const chips = document.getElementById('chips');
-    const status = document.getElementById('status');
     const submit = document.getElementById('submit');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingDetails = document.getElementById('loadingDetails');
-    const progressFill = document.getElementById('progressFill');
-    const timer = document.getElementById('timer');
-
-    // ——— язык
     const langAuto = document.getElementById('langAuto');
     const langSelect = document.getElementById('langSelect');
 
-    let currentMapId = null;
-    let startTime = null;
-    let timerInterval = null;
-
-    const roleTexts = {
-      "Novice": [
-        "Быстро сориентироваться в теме и не чувствовать себя потерянным",
-        "Понимать, о чём говорят другие, и поддерживать базовый разговор",
-        "Отличать ключевые понятия от второстепенных и не тратить время зря",
-        "Иметь надёжную «шпаргалку» по основам",
-        "Понять, интересна ли тема для дальнейшего углубления",
-        "Избежать элементарных ошибок и неловких ситуаций",
-        "Удовлетворить любопытство и получить общий обзор",
-        "Понять, как это связано с реальной жизнью и где применяется",
-        "Быть в курсе текущих трендов и популярных тем",
-        "Упорядочить начальные знания и почувствовать уверенность"
-      ],
-      "Enthusiast": [
-        "Разобраться, как всё устроено внутри, а не только знать факты",
-        "Видеть логические связи между частями системы",
-        "Уметь просто и ясно объяснять сложные вещи другим",
-        "Начать применять знания в повседневной жизни или работе",
-        "Научиться рассуждать самостоятельно и делать обоснованные выводы",
-        "Структурировать знания и понять, что изучать дальше",
-        "Видеть целостную картину: историю и возможное развитие",
-        "Сравнивать систему с альтернативами и видеть сильные и слабые стороны",
-        "Получать интеллектуальное удовольствие от освоения сложного",
-        "Превратить хаос разрозненных фактов в стройную систему"
-      ],
-      "Geek": [
-        "Эффективно использовать инструменты и техники для решения задач",
-        "Получать конкурентное преимущество за счёт глубоких знаний",
-        "Стать признанным экспертом, к которому обращаются за советом",
-        "Находить и применять лучшие практики для максимального результата",
-        "Монетизировать знания и навыки в этой области",
-        "Критически оценивать решения, находя слабые места и уязвимости",
-        "Эффективно обучать и наставлять других, передавая опыт",
-        "Принимать продуманные тактические решения и управлять процессами",
-        "Адаптировать стандартные подходы под нестандартные задачи",
-        "Уверенно побеждать в дискуссиях, опираясь на факты"
-      ],
-      "Pro": [
-        "Видеть систему целиком и задавать стратегию её развития",
-        "Создавать новые концепции, системы и продукты на основе глубокого анализа",
-        "Находить «белые пятна» и точки прорыва для инноваций",
-        "Проектировать сложные системы с нуля, понимая их фундаментальные принципы",
-        "Трансформировать существующие системы, а не только оптимизировать",
-        "Принимать взвешенные стратегические решения с высокой ценой ошибки",
-        "Формировать видение будущего и вести за собой команду или отрасль",
-        "Выступать мыслительным лидером, влияя на развитие индустрии",
-        "Оставлять значимый след и вносить фундаментальный вклад в область",
-        "Видеть скрытые рычаги влияния и прогнозировать долгосрочные последствия"
-      ]
-    };
-
-    // Реакция на выбор роли
-    document.querySelectorAll('input[name="role"]').forEach(r=>{
-      r.addEventListener('change', ()=>{
-        const role = document.querySelector('input[name="role"]:checked')?.value;
-        optsBox.innerHTML = '';
-        const list = roleTexts[role] || [];
-        for(const v of list){
-          const div = document.createElement('div');
-          div.className = 'option-card';
-          div.textContent = v;
-          div.dataset.value = v;
-          optsBox.appendChild(div);
-        }
-        syncChips();
-      });
-    });
-
-    // Переключение выбора карточки
-    optsBox.addEventListener('click', e=>{
-      const card = e.target.closest('.option-card');
-      if(!card) return;
-      card.classList.toggle('selected');
-      syncChips();
-    });
-
-    // Отрисовка чипов выбранных пунктов
-    function syncChips(){
-      chips.innerHTML = '';
-      const selected = Array.from(optsBox.querySelectorAll('.option-card.selected')).map(x => x.dataset.value);
-      for(const s of selected){
-        const c = document.createElement('span');
-        c.className = 'chip';
-        c.textContent = s;
-        chips.appendChild(c);
-      }
-    }
-
-    // Добавление собственного варианта
-    function addOwn(){
-      const val = ownInput.value.trim();
-      if(!val) return;
-      let existing = Array.from(optsBox.children).find(x => x.dataset.value === val);
-      if(!existing){
-        const div = document.createElement('div');
-        div.className = 'option-card selected';
-        div.textContent = val;
-        div.dataset.value = val;
-        optsBox.prepend(div);
-      } else {
-        existing.classList.add('selected');
-      }
-      ownInput.value = '';
-      syncChips();
-    }
-    ownInput.addEventListener('keydown', e=>{
-      if(e.key === 'Enter'){ e.preventDefault(); addOwn(); }
-    });
-    addOwnBtn.addEventListener('click', addOwn);
-
-    // Helpers
-    function two(n){ return String(n).padStart(2,'0'); }
-    function mapIdFromNow(){
-      const d = new Date();
-      const ss = two(d.getSeconds()); const mm = two(d.getMinutes()); const hh = two(d.getHours());
-      const dd = two(d.getDate()); const MM = two(d.getMonth()+1); const yy = two(d.getFullYear()%100);
-      return `${ss}${mm}${hh}${dd}${MM}${yy}`;
-    }
-
-    const say = (m, c) => { status.textContent = m; status.style.color = c || '#333'; };
-
-    // Таймер
-    function updateTimer() {
-      if (!startTime) return;
-      const now = new Date();
-      const diff = Math.floor((now - startTime) / 1000);
-      const minutes = Math.floor(diff / 60);
-      const seconds = diff % 60;
-      timer.textContent = `Прошло: ${minutes}:${two(seconds)}`;
-      const progress = Math.min((diff / 600) * 100, 100);
-      progressFill.style.width = `${progress}%`;
-    }
-
-    // ——— ЯЗЫК: авто / ручной ———
-    function normalizeLangTag(tag){
-      if(!tag) return 'en';
-      // "ru-RU" -> "ru", "pt-BR" -> "pt"
-      return String(tag).toLowerCase().split(/[-_]/)[0];
-    }
-
-    function guessFromCountry(cc){
-      if(!cc) return null;
-      const m = {
-        RU:'ru', BY:'ru', KZ:'ru', KG:'ru', UA:'uk',
-        US:'en', GB:'en', AU:'en', NZ:'en', CA:'en',
-        DE:'de', FR:'fr', IT:'it', ES:'es', PT:'pt', BR:'pt',
-        TR:'tr', PL:'pl', CN:'zh', TW:'zh', HK:'zh', JP:'ja', KR:'ko'
-      };
-      return m[String(cc).toUpperCase()] || null;
-    }
-
-    function withTimeout(promise, ms){
-      let t; const timeout = new Promise((_,rej)=> t=setTimeout(()=>rej(new Error('timeout')), ms));
-      return Promise.race([promise.finally(()=>clearTimeout(t)), timeout]);
-    }
-
-    async function detectLanguageAuto(){
+    async function detectLang(){
       try {
-        // 1) попытка по IP
-        const resp = await withTimeout(fetch('https://ipapi.co/json/', {cache:'no-store'}), 2000);
-        if(resp.ok){
-          const j = await resp.json();
-          // ipapi.co может вернуть "languages": "ru,en" или country_code
-          const byLangs = Array.isArray(j.languages) ? j.languages[0] : (j.languages || '').split(',')[0];
-          const ipLang = normalizeLangTag(byLangs);
-          const ccLang = guessFromCountry(j.country || j.country_code);
-          const chosen = ipLang || ccLang;
-          if(chosen) return chosen;
-        }
-      } catch(_) { /* ignore */ }
-
-      // 2) фолбэк: язык браузера
-      return normalizeLangTag(navigator.language || (navigator.languages || [])[0] || 'en');
+        const r = await fetch('https://ipapi.co/json/');
+        if(!r.ok) return 'en';
+        const j = await r.json();
+        const cc = j.country_code?.toLowerCase();
+        if(['ru','by','kz','kg','ua'].includes(cc)) return 'ru';
+        return 'en';
+      } catch { return 'en'; }
     }
+
+    (async()=>{
+      const lang = await detectLang();
+      langSelect.dataset.autoLang = lang;
+      langSelect.value = lang;
+    })();
+
+    langAuto.addEventListener('change', ()=>{
+      langSelect.disabled = langAuto.checked;
+    });
 
     function getLanguageReply(){
       if(langAuto.checked){
-        // авто-значение хранится в data-auto-lang, если определили; иначе берём браузер
-        const auto = langSelect.dataset.autoLang;
-        return normalizeLangTag(auto || navigator.language || 'en');
+        return langSelect.dataset.autoLang || navigator.language || 'en';
+      } else {
+        return langSelect.value;
       }
-      return langSelect.value || 'en';
     }
 
-    // Инициализация языка: авто включен, селект заблокирован
-    langAuto.addEventListener('change', async ()=>{
-      const isAuto = langAuto.checked;
-      langSelect.disabled = isAuto;
-      if(isAuto){
-        const lang = await detectLanguageAuto();
-        langSelect.dataset.autoLang = lang;
-        // визуально подсветим предполагаемый
-        // если он в списке — выставим; иначе оставим текущее
-        const opt = Array.from(langSelect.options).find(o => o.value === lang);
-        if(opt) langSelect.value = lang;
-      }
-    });
-
-    // Первичный автодетект при загрузке
-    (async () => {
-      const lang = await detectLanguageAuto();
-      langSelect.dataset.autoLang = lang;
-      const opt = Array.from(langSelect.options).find(o => o.value === lang);
-      if(opt) langSelect.value = lang;
-      langSelect.disabled = true;
-    })();
-
-    // Отправка данных
     submit.addEventListener('click', async ()=>{
       const role = document.querySelector('input[name="role"]:checked')?.value;
       const subject = document.getElementById('subject').value.trim();
-      const chosen = Array.from(optsBox.querySelectorAll('.option-card.selected')).map(x => x.dataset.value);
+      const goal = document.getElementById('goal').value.trim();
 
-      if(!role){ say('Выберите роль.', 'crimson'); return; }
-      if(!subject){ say('Укажите тему/вселенную.', 'crimson'); return; }
-      if(chosen.length === 0){ say('Выберите хотя бы один вариант в «Чтобы…» или добавьте свой.', 'crimson'); return; }
+      if(!role || !subject || !goal){
+        alert('Заполните все поля');
+        return;
+      }
 
-      currentMapId = mapIdFromNow();
-      startTime = new Date();
-
-      submit.disabled = true;
-      loadingOverlay.classList.add('active');
-      say('');
-      timerInterval = setInterval(updateTimer, 1000);
-      updateTimer();
-
-      // 1. Отправляем запрос на создание карты (без ожидания ответа)
+      const currentMapId = Date.now().toString();
       const payload = {
         source: 'sotiio_web_survey',
         map_id: currentMapId,
         user_story: {
           "I_as...": role,
           "Want_to_discover_a_universe...": subject,
-          "So_that...": chosen,
-          timestamp: (new Date()).toISOString()
+          "So_that...": [goal],
+          "timestamp": new Date().toISOString()
         },
-        // ——— ДОБАВЛЕНО: язык ответа
         language_reply: getLanguageReply()
       };
 
+      // ✅ структура запроса восстановлена (убран no-cors)
       fetch('https://n8n.sotiio.com/webhook/us', {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(() => {
-        loadingDetails.textContent = 'Запрос на создание карты отправлен...';
-      })
-      .catch((error) => {
-        console.warn('Предупреждение при отправке:', error);
-      })
-      .finally(() => {
-        // 2. Ждём 5 секунд и делаем один запрос за картой
-        setTimeout(() => {
-          const secondsPassed = Math.floor((new Date() - startTime) / 1000);
-          loadingDetails.textContent = `Прошло ${secondsPassed} сек. — получаем карту...`;
-
-          fetch('https://n8n.sotiio.com/webhook/getmap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ map_id: currentMapId })
-          })
-          .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.text().then(text => {
-              try { return text ? JSON.parse(text) : []; }
-              catch { throw new Error('Невалидный JSON ответ от сервера'); }
-            });
-          })
-          .then(data => {
-            clearInterval(timerInterval);
-            loadingOverlay.classList.remove('active');
-
-            // n8n отдаёт массив с node_tree → берём первый элемент как есть
-            const nodeTree = Array.isArray(data) ? data[0] : data;
-
-            if (nodeTree && nodeTree.format === 'node_tree' && nodeTree.data) {
-              if (window.parent && window.parent !== window) {
-                // Сначала закрываем модалку, затем отдаём карту (плавнее)
-                if (window.parent.UI && typeof window.parent.UI.closeUserStory === 'function') {
-                  window.parent.UI.closeUserStory();
-                  setTimeout(() => {
-                    window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                  }, 400); // задержка на закрытие модалки
-                } else {
-                  // fallback
-                  window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                }
-              }
-            } else {
-              console.warn('Неожиданная структура ответа:', data);
-              say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
-              submit.disabled = false;
-            }
-          })
-          .catch(error => {
-            clearInterval(timerInterval);
-            loadingOverlay.classList.remove('active');
-            say('Ошибка при получении карты: ' + error.message, 'crimson');
-            submit.disabled = false;
-          });
-        }, 5000); // ← 5 секунд вместо 10
-      });
-    });
-
-    // Очистка при закрытии
-    window.addEventListener('beforeunload', () => {
-      if (timerInterval) clearInterval(timerInterval);
+      .then(res => res.text())
+      .then(() => console.log('Отправлено:', payload))
+      .catch(err => console.error('Ошибка:', err));
     });
   })();
   </script>
