@@ -1,84 +1,66 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>Pixi Hex Demo</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    html, body { margin:0; height:100%; background:#202020; overflow:hidden; }
-    #app { width:100vw; height:100vh; }
-    .msg { position:fixed; left:10px; top:10px; color:#fff; font:14px/1.4 system-ui, sans-serif; }
-    .err { color:#ff6b6b; }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <div class="msg" id="msg">Init…</div>
+<script src="./PixiJS/pixi.min.js"></script>
+<script>
+(async () => {
+  // инициализация
+  const app = new PIXI.Application();
+  await app.init({ resizeTo: window, background: '#202020', antialias: true });
+  document.getElementById('app').appendChild(app.canvas);
 
-  <!-- Локальные библиотеки -->
-  <script src="./PixiJS/pixi.min.js?v=1"></script>
-  <script src="./PixiJS/honeycomb-grid.umd.js?v=1"></script>
+  // проверка (синий прямоугольник)
+  const test = new PIXI.Graphics().rect(20, 20, 120, 60).fill({ color: 0x3b82f6 });
+  app.stage.addChild(test);
 
-  <script>
-  (async function () {
-    const $msg = (t, err=false)=>{ const el=document.getElementById('msg'); el.textContent=t; el.className='msg'+(err?' err':''); };
+  // ---- HEX math (pointy-top) ----
+  const SQRT3 = Math.sqrt(3);
+  const size = 40;                                  // радиус шестиугольника в px
+  const center = { x: app.renderer.width/2, y: app.renderer.height/2 };
 
-    try {
-      if (!window.PIXI) { $msg('PIXI не загрузился (проверь путь /PixiJS/pixi.min.js)', true); return; }
-      if (!window.Honeycomb) { $msg('Honeycomb не загрузился (проверь /PixiJS/honeycomb-grid.umd.js)', true); return; }
+  // axial (q,r) -> пиксели
+  const axialToPixel = (q, r) => ({
+    x: size * (SQRT3*q + (SQRT3/2)*r),
+    y: size * (1.5*r)
+  });
 
-      // 1) Инициализация Pixi v8
-      const app = new PIXI.Application();
-      await app.init({ resizeTo: window, background: '#202020', antialias: true });
-      document.getElementById('app').appendChild(app.canvas);
-
-      // 2) Самопроверка: нарисуем прямоугольник (если ты видишь его — Pixi работает)
-      const test = new PIXI.Graphics();
-      test.rect(20, 20, 120, 60).fill({ color: 0x3b82f6, alpha: 0.9 });
-      app.stage.addChild(test);
-
-      // 3) Теперь рисуем гексы (pointy-top) через honeycomb
-      const Hex = Honeycomb.extendHex({ size: 40, orientation: 'pointy' });
-      const Grid = Honeycomb.defineGrid(Hex);
-      const hexes = Grid.rectangle({ width: 6, height: 6 });
-
-      // Предрасчёт вершин одного гекса (локальные координаты)
-      const cornerPoints = Hex().corners(); // [{x,y}...]
-      const flatPoints = cornerPoints.flatMap(p => [p.x, p.y]); // для poly()
-
-      for (const hex of hexes) {
-        const { x, y } = hex.toPoint(); // axial -> pixel (x,y)
-
-        const g = new PIXI.Graphics();
-        // В Pixi v8 используем poly() + fill()/stroke()
-        g.poly(flatPoints, true);
-        g.fill({ color: 0x88cc88, alpha: 0.6 });
-        g.stroke({ color: 0xffffff, width: 1, alpha: 0.35 });
-        g.x = x; g.y = y;
-
-        // hover для проверки интерактива
-        g.eventMode = 'static';
-        g.cursor = 'pointer';
-        g.on('pointerover', () => g.tint = 0xff6666);
-        g.on('pointerout',  () => g.tint = 0xffffff);
-
-        app.stage.addChild(g);
-      }
-
-      // 4) Текст (API Pixi v8)
-      const label = new PIXI.Text({
-        text: '🧩 Pixi v8 + Honeycomb: Hex OK',
-        style: { fill: 0xffffff, fontSize: 18 }
-      });
-      label.x = 20; label.y = 95;
-      app.stage.addChild(label);
-
-      $msg('Готово: прямоугольник + гексы должны быть видны');
-    } catch (e) {
-      console.error(e);
-      $msg('Ошибка (см. Console): ' + e.message, true);
+  // вершины одного шестиугольника (локальные координаты)
+  const hexPoints = (() => {
+    const pts = [];
+    for (let i=0;i<6;i++){
+      const a = (Math.PI/180) * (60*i - 30);        // pointy-top
+      pts.push(Math.cos(a)*size, Math.sin(a)*size);
     }
+    return pts;
   })();
-  </script>
-</body>
-</html>
+
+  // рисуем кольца R=0..N (bottom-up)
+  const maxR = 3;                                   // увеличивай радиус для большего поля
+  for (let r=0; r<=maxR; r++){
+    // сгенерировать кольцо радиуса r
+    const ring = [];
+    if (r===0) ring.push({q:0, r:0});
+    else {
+      let q = r, rr = -r;
+      const dirs = [ [-1,0], [-1,1], [0,1], [1,0], [1,-1], [0,-1] ];
+      for (const [dq,dr] of dirs){
+        for (let i=0;i<r;i++){ ring.push({q, r: rr}); q+=dq; rr+=dr; }
+      }
+    }
+    // отрисовать кольцо
+    for (const h of ring){
+      const {x,y} = axialToPixel(h.q, h.r);
+      const g = new PIXI.Graphics();
+      g.poly(hexPoints, true).fill({ color: 0x88cc88, alpha: Math.max(0.2, 1 - r*0.1) })
+                             .stroke({ color: 0xffffff, width:1, alpha:0.35 });
+      g.x = center.x + x; g.y = center.y + y;
+      g.eventMode = 'static'; g.cursor = 'pointer';
+      g.on('pointerover', () => g.tint = 0xff6666);
+      g.on('pointerout',  () => g.tint = 0xffffff);
+      app.stage.addChild(g);
+
+      // подпись (q,r)
+      const label = new PIXI.Text({ text: `${h.q},${h.r}`, style: { fill: 0xffffff, fontSize: 12 } });
+      label.anchor.set(0.5); label.x = g.x; label.y = g.y;
+      app.stage.addChild(label);
+    }
+  }
+})();
+</script>
