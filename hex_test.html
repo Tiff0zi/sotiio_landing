@@ -1,73 +1,115 @@
-<script src="./PixiJS/pixi.min.js?v=1"></script>
+<script src="./PixiJS/pixi.min.js?v=3"></script>
 <script>
-(async () => {
-  const app = new PIXI.Application();
-  await app.init({ resizeTo: window, background: '#202020', antialias: true });
-  document.body.appendChild(app.canvas);
-
-  // ---- HEX math (pointy-top axial) ----
-  const SQRT3 = Math.sqrt(3);
-  const size = 40;
-  const axialToPixel = (q, r) => ({
-    x: size * (SQRT3 * q + (SQRT3/2) * r),
-    y: size * (1.5 * r)
-  });
-  const hexPts = (() => {
-    const p = [];
-    for (let i = 0; i < 6; i++) {
-      const a = (Math.PI/180) * (60*i - 30);
-      p.push(Math.cos(a)*size, Math.sin(a)*size);
+(async function () {
+  const show = (t, err=false) => {
+    let m = document.getElementById('__msg'); 
+    if (!m) { 
+      m = document.createElement('div'); 
+      m.id='__msg'; 
+      m.style.cssText='position:fixed;left:10px;top:10px;color:#fff;font:14px system-ui;z-index:9999';
+      document.body.appendChild(m);
     }
-    return p;
-  })();
+    m.style.color = err ? '#ff6b6b' : '#ffffff';
+    m.textContent = t;
+    (err?console.error:console.log)(t);
+  };
 
-  // шесть базовых направлений (pointy-top)
-  const DIRS = [
-    {q:+1, r: 0}, {q:+1, r:-1}, {q: 0, r:-1},
-    {q:-1, r: 0}, {q:-1, r:+1}, {q: 0, r:+1}
-  ];
+  try {
+    if (!window.PIXI) { show('PIXI не загрузился: ./PixiJS/pixi.min.js', true); return; }
 
-  // утилиты
-  const key = (q,r)=>`${q},${r}`;
-  const cells = new Map(); // уникальные ячейки
-
-  function addCell(q, r, color, alpha=0.75) {
-    const { x, y } = axialToPixel(q, r);
-    const g = new PIXI.Graphics();
-    g.poly(hexPts, true).fill({ color, alpha }).stroke({ color: 0xffffff, width:1, alpha:0.28 });
-    g.x = app.renderer.width/2 + x;
-    g.y = app.renderer.height/2 + y;
-    app.stage.addChild(g);
-    cells.set(key(q,r), {q,r,g});
-  }
-
-  // 1) центр (зелёный)
-  addCell(0, 0, 0x82b07a, 0.8);
-
-  // 2) кольцо радиуса 1: 6 соседей вокруг центра (получим и «направление» для лучей)
-  const ring1 = [];
-  for (const d of DIRS) {
-    const q = d.q, r = d.r;
-    ring1.push({q,r,dir:d});
-    addCell(q, r, 0x6aa9ff, 0.65); // синие
-  }
-
-  // 3) от каждого соседа — вектор из 3 гексов наружу по его направлению
-  for (const h of ring1) {
-    const dq = h.dir.q, dr = h.dir.r;
-    // стартуем от соседа и идём дальше: +1, +2, +3 шаги
-    for (let step = 1; step <= 3; step++) {
-      const q = h.q + dq*step;
-      const r = h.r + dr*step;
-      if (!cells.has(key(q,r))) addCell(q, r, 0xffb86b, 0.75); // оранжевые «лучи»
+    // Создание приложения (v8 init / v7 opts)
+    let app;
+    try {
+      app = new PIXI.Application();
+      if (app.init) {
+        await app.init({ resizeTo: window, background: '#202020', antialias: true }); // v8
+      } else {
+        app = new PIXI.Application({ backgroundColor: 0x202020, antialias: true, resizeTo: window }); // v7
+      }
+    } catch {
+      app = new PIXI.Application({ backgroundColor: 0x202020, antialias: true, resizeTo: window });
     }
-  }
+    document.body.appendChild(app.canvas || app.view);
 
-  // подписи (необязательно — можете убрать)
-  for (const {q,r,g} of cells.values()) {
-    const t = new PIXI.Text({ text: `${q},${r}`, style: { fill: 0xffffff, fontSize: 12 } });
-    t.anchor.set(0.5); t.x = g.x; t.y = g.y;
-    app.stage.addChild(t);
+    // Функции совместимости для v8/v7
+    const G = () => new PIXI.Graphics();
+    const fillRect = (g, x,y,w,h, color) => {
+      if (typeof g.rect === 'function') { g.rect(x,y,w,h).fill({ color }); }           // v8
+      else { g.beginFill(color); g.drawRect(x,y,w,h); g.endFill(); }                   // v7
+    };
+    const fillPoly = (g, pts, color, alpha=0.75) => {
+      if (typeof g.poly === 'function') { g.poly(pts, true).fill({ color, alpha }); }  // v8
+      else { g.beginFill(color, alpha); g.drawPolygon(pts); g.endFill(); }             // v7
+    };
+    const stroke1 = (g, color=0xffffff, alpha=0.3, width=1) => {
+      if (typeof g.stroke === 'function') { g.stroke({ color, width, alpha }); }       // v8
+      else { g.lineStyle(width, color, alpha); }                                       // v7
+    };
+    const TextLabel = (text, style) => {
+      try { return new PIXI.Text({ text, style }); }                                   // v8
+      catch { const t = new PIXI.Text(text, style); return t; }                        // v7
+    };
+
+    // Пульс — чтобы видеть, что всё живо
+    const pulse = G(); fillRect(pulse, 20,20,160,90, 0x3b82f6); app.stage.addChild(pulse);
+
+    // --- HEX math (pointy-top axial) ---
+    const SQRT3 = Math.sqrt(3);
+    const size = 40;
+    const axialToPixel = (q,r) => ({
+      x: size * (SQRT3*q + (SQRT3/2)*r),
+      y: size * (1.5*r)
+    });
+    const hexPts = (() => {
+      const p = [];
+      for (let i=0;i<6;i++){ const a=(Math.PI/180)*(60*i-30); p.push(Math.cos(a)*size, Math.sin(a)*size); }
+      return p;
+    })();
+    const DIRS = [ {q:+1,r:0},{q:+1,r:-1},{q:0,r:-1},{q:-1,r:0},{q:-1,r:+1},{q:0,r:+1} ];
+    const key = (q,r)=>`${q},${r}`;
+    const cells = new Map();
+
+    const centerX = (app.renderer?.width || (app.canvas||app.view).width)/2;
+    const centerY = (app.renderer?.height|| (app.canvas||app.view).height)/2;
+
+    function addCell(q,r, color, alpha=0.75) {
+      if (cells.has(key(q,r))) return;
+      const {x,y} = axialToPixel(q,r);
+      const g = G(); fillPoly(g, hexPts, color, alpha); stroke1(g);
+      g.x = centerX + x; g.y = centerY + y;
+      g.eventMode = 'static'; g.cursor = 'pointer';
+      g.on?.('pointerover', ()=> g.tint = 0xff6666);
+      g.on?.('pointerout',  ()=> g.tint = 0xffffff);
+      app.stage.addChild(g);
+      cells.set(key(q,r), {q,r,g});
+    }
+
+    // 1) центр
+    addCell(0,0, 0x82b07a, 0.85);
+
+    // 2) кольцо радиуса 1 — 6 соседей
+    const ring1 = [];
+    for (const d of DIRS) {
+      const q=d.q, r=d.r;
+      ring1.push({q,r,dir:d});
+      addCell(q,r, 0x6aa9ff, 0.7);
+    }
+
+    // 3) от каждого соседа — луч из 3 гексов наружу (в том же направлении)
+    for (const h of ring1) {
+      const {q,r,dir:{q:dq,r:dr}} = h;
+      for (let step=1; step<=3; step++) addCell(q+dq*step, r+dr*step, 0xffb86b, 0.8);
+    }
+
+    // подписи
+    for (const {q,r,g} of cells.values()) {
+      const t = TextLabel(`${q},${r}`, { fill: 0xffffff, fontSize: 12 });
+      t.anchor?.set?.(0.5); t.x = g.x; t.y = g.y; app.stage.addChild(t);
+    }
+
+    show('OK: центр + 6 вокруг + лучи по 3');
+  } catch (e) {
+    show('Ошибка: ' + (e?.message||e), true);
   }
 })();
 </script>
