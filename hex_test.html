@@ -2,191 +2,102 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>HEX DEMO (Pixi v8, concept+color)</title>
+  <title>Pixi Hex Demo (white background)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html,body { margin:0; height:100%; overflow:hidden; background:#ffffff; }
-    #msg { position:fixed; left:10px; top:10px; font:13px system-ui,Segoe UI,Arial; color:#111; background:#fff8; padding:6px 10px; border-radius:8px; }
-    #msg.err { color:#b00020 }
+    #msg { position:fixed; left:10px; top:10px; font:13px system-ui; color:#111; background:#fff8; padding:6px 10px; border-radius:8px; }
   </style>
 </head>
 <body>
   <div id="msg">init…</div>
   <script src="./PixiJS/pixi.min.js"></script>
+
   <script>
   (async () => {
-    const M = (t, bad=false)=>{ const el=document.getElementById('msg'); el.textContent=t; el.className=bad?'err':''; console[bad?'error':'log'](t); };
+    const M = (t, bad=false)=>{ const el=document.getElementById('msg'); el.textContent=t; el.style.color=bad?'#b00020':'#111'; console[bad?'error':'log'](t); };
 
-    // ---- 0) Инициализация Pixi v8: белый фон + Retina resolution + камера для зума/драга ----
-    if (!window.PIXI) { M('PIXI не найден: ./PixiJS/pixi.min.js', true); return; }
+    if (!window.PIXI) { M('PIXI не найден', true); return; }
     const app = new PIXI.Application();
     await app.init({
       resizeTo: window,
       background: '#ffffff',
       antialias: true,
-      resolution: Math.min(3, window.devicePixelRatio || 1),
+      resolution: Math.min(3, window.devicePixelRatio || 1)
     });
     document.body.appendChild(app.canvas);
 
-    const cam = new PIXI.Container();      // сюда складываем все гексы и лейблы
+    const cam = new PIXI.Container();
     app.stage.addChild(cam);
 
-    // Простая камера: drag + wheel zoom
-    let dragging=false, last=null, zoom=1;
-    app.stage.eventMode='static';
-    app.stage.hitArea = app.screen;
-
-    app.stage.on('pointerdown', e=>{ dragging=true; last=e.global.clone(); });
-    app.stage.on('pointerup',   ()=>{ dragging=false; last=null; });
-    app.stage.on('pointerupoutside', ()=>{ dragging=false; last=null; });
-    app.stage.on('pointermove', e=>{
-      if (!dragging) return;
-      const now=e.global.clone();
-      cam.x += (now.x - last.x);
-      cam.y += (now.y - last.y);
-      last = now;
+    // --- Пан/Зум ---
+    let drag=false, prev=null, zoom=1;
+    app.stage.eventMode='static'; app.stage.hitArea=app.screen;
+    app.stage.on('pointerdown',e=>{drag=true;prev=e.global.clone();});
+    app.stage.on('pointerup',()=>{drag=false;prev=null;});
+    app.stage.on('pointerupoutside',()=>{drag=false;prev=null;});
+    app.stage.on('pointermove',e=>{
+      if(!drag)return;const n=e.global.clone();cam.x+=n.x-prev.x;cam.y+=n.y-prev.y;prev=n;
     });
-    app.canvas.addEventListener('wheel', ev=>{
-      ev.preventDefault();
-      const s = ev.deltaY < 0 ? 1.1 : 0.9;
-      const next = Math.min(4, Math.max(0.25, zoom * s));
-      // зум относительно центра экрана
-      const cx = app.renderer.width/2, cy = app.renderer.height/2;
-      const k = next/zoom;
-      cam.x = cx + (cam.x - cx)*k;
-      cam.y = cy + (cam.y - cy)*k;
-      zoom = next;
-      cam.scale.set(zoom);
-    }, { passive:false });
+    app.canvas.addEventListener('wheel',ev=>{
+      ev.preventDefault();const s=ev.deltaY<0?1.1:0.9;const next=Math.min(4,Math.max(0.25,zoom*s));
+      const cx=app.renderer.width/2,cy=app.renderer.height/2;const k=next/zoom;
+      cam.x=cx+(cam.x-cx)*k;cam.y=cy+(cam.y-cy)*k;zoom=next;cam.scale.set(zoom);
+    },{passive:false});
 
-    // ---- 1) Утилиты гекс-геометрии (pointy-top axial) ----
-    const SQRT3 = Math.sqrt(3);
-    const size = 42; // радиус гекса в px
-    const axialToPixel = (q,r)=>({
-      x: size * (SQRT3*q + (SQRT3/2)*r),
-      y: size * (1.5*r)
-    });
-    // предрасчёт вершин одного гекса
-    const HEX_PTS = (()=>{ const p=[]; for(let i=0;i<6;i++){ const a=(Math.PI/180)*(60*i-30); p.push(Math.cos(a)*size, Math.sin(a)*size); } return p; })();
-    const drawHex = (q,r,fill,alpha=1, stroke=0x000000, sAlpha=0.25)=>{
+    // --- HEX математика ---
+    const SQRT3=Math.sqrt(3), size=42;
+    const axialToPixel=(q,r)=>({x:size*(SQRT3*q+SQRT3/2*r),y:size*(1.5*r)});
+    const HEX_PTS=(()=>{const p=[];for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i-30);p.push(Math.cos(a)*size,Math.sin(a)*size);}return p;})();
+    const drawHex=(q,r,color,alpha=1,stroke=0x000000)=>{
       const {x,y}=axialToPixel(q,r);
-      const g=new PIXI.Graphics().poly(HEX_PTS,true).fill({color:fill,alpha}).stroke({color:stroke,width:1,alpha:sAlpha});
-      g.x = x; g.y = y; cam.addChild(g); return g;
+      const g=new PIXI.Graphics().poly(HEX_PTS,true).fill({color,alpha}).stroke({color:stroke,width:1,alpha:0.25});
+      g.x=x;g.y=y;cam.addChild(g);return g;
     };
-    const addLabel = (x,y,text,color=0x111111)=>{
-      const t = new PIXI.Text({ text, style:{ fill: color, fontSize: 12, fontFamily:'system-ui,Arial' }});
-      t.anchor.set(0.5); t.x=x; t.y=y; cam.addChild(t); return t;
+    const addLabel=(x,y,text,color=0x111111)=>{
+      const t=new PIXI.Text({text,style:{fill:color,fontSize:12,fontFamily:'system-ui,Arial'}});
+      t.anchor.set(0.5);t.x=x;t.y=y;cam.addChild(t);
     };
 
-    // ---- 2) Читаем твои файлы ----
-    // Ожидаем, что оба файла лежат в корне рядом с этим html
-    let colors, concept;
+    // --- Цвета из color.json (если есть) ---
+    let palette;
     try {
-      colors = await fetch('./color.json').then(r=>r.json());
-    } catch(e){ M('color.json не найден — использую дефолтную палитру', false); colors=null; }
-    try {
-      concept = await fetch('./concept.json').then(r=>r.json());
-    } catch(e){ M('concept.json не найден — ничего рисовать', true); return; }
+      const c = await fetch('./color.json').then(r=>r.json());
+      const toHex = s => s?.startsWith('#') ? parseInt(s.slice(1),16) : 0x6aa9ff;
+      palette = {
+        L1: toHex(c.fill_sota) || 0x1a1a1a,
+        L2: Array.isArray(c.color_sota) ? c.color_sota.map(x=>parseInt(x.replace('#',''),16)) :
+            ['#59a3a9','#d9e6e6','#996666','#735c59','#808080','#b84d5c'].map(h=>parseInt(h.replace('#',''),16)),
+        stroke: parseInt((c.stroke_sota||'#000000').replace('#',''),16),
+        label: parseInt((c.color_label||'#111111').replace('#',''),16)
+      };
+    } catch(e){
+      palette = { L1:0x1a1a1a, L2:[0x59a3a9,0xd9e6e6,0x996666,0x735c59,0x808080,0xb84d5c],
+                  stroke:0x000000, label:0x111111 };
+    }
 
-    // ---- 3) Палитра из color.json (с безопасными дефолтами) ----
-    // Ожидаемые поля (гибко): color_sota (массив из 6), fill_sota (HEX или rgba), color_label, stroke_sota
-    // Если нет — используем разумные дефолты
-    const toHex = v=>{
-      if (!v) return null;
-      if (typeof v === 'number') return v;
-      if (typeof v === 'string'){
-        if (v.startsWith('#')) return parseInt(v.slice(1),16);
-        // rgb/rgba
-        const m=v.match(/\d+/g); if (m && m.length>=3){ const [r,g,b]=m.map(Number); return (r<<16)|(g<<8)|b; }
+    // --- Генерация демо-карты (центр + 6 + лучи) ---
+    const DIRS=[{q:+1,r:0},{q:+1,r:-1},{q:0,r:-1},{q:-1,r:0},{q:-1,r:+1},{q:0,r:+1}];
+    cam.x=app.renderer.width/2; cam.y=app.renderer.height/2;
+
+    // центр
+    drawHex(0,0,palette.L1,0.9,palette.stroke);
+    addLabel(0,0,'Center',palette.label);
+
+    // 6 направлений
+    for(let i=0;i<6;i++){
+      const {q,r}=DIRS[i];
+      drawHex(q,r,palette.L2[i%palette.L2.length],0.9,palette.stroke);
+      addLabel(axialToPixel(q,r).x,axialToPixel(q,r).y,`R1-${i+1}`,palette.label);
+
+      // луч из 3
+      for(let s=1;s<=3;s++){
+        const qq=q+s*DIRS[i].q, rr=r+s*DIRS[i].r;
+        drawHex(qq,rr,palette.L2[i%palette.L2.length],0.4,palette.stroke);
       }
-      return null;
-    };
-    // Дефолт L2 (6 направлений) — пастель
-    const L2_DEFAULT = ['#59a3a9','#d9e6e6','#996666','#735c59','#808080','#b84d5c'].map(h=>parseInt(h.slice(1),16));
-    const palette = {
-      stroke: toHex(colors?.stroke_sota) ?? 0x000000,
-      label : toHex(colors?.color_label) ?? 0x111111,
-      L1    : toHex(colors?.fill_sota)   ?? 0x1a1a1a,
-      L2    : Array.isArray(colors?.color_sota) && colors.color_sota.length>=6
-              ? colors.color_sota.map(toHex)
-              : L2_DEFAULT
-    };
-    const opacityByLevel = (lvl)=>{
-      if (lvl==='L1') return 1.00;
-      if (lvl?.startsWith('L2')) return 1.00;
-      if (lvl?.startsWith('L3')) return 0.50;
-      if (lvl?.startsWith('L4')) return 0.25;
-      return 0.75;
-    };
-
-    // ---- 4) Достаём узлы из concept.json ----
-    // Поддержим два варианта структуры: массив узлов или объект с корнем/списком
-    const nodes = [];
-    const parseXYZ = (s)=>{
-      const m = String(s||'').match(/-?\d+/g);
-      if (!m || m.length<3) return null;
-      const [x, , z] = m.map(Number); // axial: q=x, r=z
-      return { q:x, r:z };
-    };
-    const levelOf = (n)=>{
-      // берем явно из n.level || из id вида "L2-..." || если нет — по глубине
-      if (typeof n.level === 'string') return n.level;
-      if (typeof n.id === 'string' && /^L\d/.test(n.id)) return n.id.split(/[^A-Z0-9]+/i)[0];
-      return null;
-    };
-    const walk = (n, depth=0)=>{
-      if (!n || typeof n!=='object') return;
-      const xyz = n.xyz ?? n.meta?.xyz ?? n.coords ?? null;
-      const ar = parseXYZ(xyz);
-      const lvl = levelOf(n) ?? (depth===0?'L1': depth===1?'L2': depth===2?'L3':'L4');
-      nodes.push({ q: ar?.q, r: ar?.r, label: n.label ?? n.name ?? n.title ?? '', level: lvl });
-      const kids = n.children ?? n.sota ?? n.items ?? n.nodes;
-      if (Array.isArray(kids)) for (const c of kids) walk(c, depth+1);
-    };
-    if (Array.isArray(concept)) concept.forEach(n=>walk(n,0));
-    else if (concept && typeof concept==='object'){
-      if (Array.isArray(concept.sota)) concept.sota.forEach(n=>walk(n,0));
-      else if (Array.isArray(concept.children)) concept.children.forEach(n=>walk(n,0));
-      else walk(concept,0);
     }
 
-    // фильтруем только те, у кого есть координаты
-    const cells = nodes.filter(n=> Number.isFinite(n.q) && Number.isFinite(n.r));
-
-    if (!cells.length){ M('В concept.json нет валидных xyz → q,r', true); return; }
-
-    // ---- 5) Рисуем: цвет по уровню; для L2 — 6 направлений (подобьём индекс по вектору) ----
-    // Определим направление L2 по (q,r) у радиуса 1
-    const DIRS = [ {q:+1,r:0}, {q:+1,r:-1}, {q:0,r:-1}, {q:-1,r:0}, {q:-1,r:+1}, {q:0,r:+1} ];
-    const dirIndex = (q,r)=>{
-      for (let i=0;i<6;i++) if (DIRS[i].q===q && DIRS[i].r===r) return i;
-      // для радиуса >1 возьмём нормированный вектор на направление
-      const len = Math.max(Math.abs(q), Math.abs(r), Math.abs(-q-r));
-      if (len>0) { const nq = Math.round(q/len), nr = Math.round(r/len); for (let i=0;i<6;i++) if (DIRS[i].q===nq && DIRS[i].r===nr) return i; }
-      return 0;
-    };
-
-    // центр сцены в центр экрана
-    cam.x = app.renderer.width/2;
-    cam.y = app.renderer.height/2;
-
-    for (const n of cells){
-      const lvl = n.level || 'L4';
-      let fill = 0x6aa9ff; // дефолт
-      if (lvl==='L1') fill = palette.L1;
-      else if (lvl.startsWith('L2')) fill = palette.L2[ dirIndex(n.q,n.r) % 6 ];
-      else if (lvl.startsWith('L3')) fill = (palette.L2[ dirIndex(n.q,n.r) % 6 ] ?? 0x6aa9ff);
-      else if (lvl.startsWith('L4')) fill = (palette.L2[ dirIndex(n.q,n.r) % 6 ] ?? 0x6aa9ff);
-
-      const alpha = opacityByLevel(lvl);
-      const g = drawHex(n.q, n.r, fill, alpha, palette.stroke, 0.20);
-
-      // подпись
-      const {x,y} = axialToPixel(n.q,n.r);
-      addLabel(x, y, (n.label || `${n.q},${n.r}`), palette.label);
-    }
-
-    M(`OK: нарисовано ${cells.length} ячеек (фон белый, зум/пан внутри сцены)`);
+    M('OK: белый фон, центр + 6 направлений + лучи по 3 (зум/пан включены)');
   })();
   </script>
 </body>
