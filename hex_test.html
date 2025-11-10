@@ -1,90 +1,73 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>Pixi sanity check (v7/v8)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    html, body { margin:0; height:100%; background:#202020; overflow:hidden; }
-    #app { width:100vw; height:100vh; }
-    #msg { position:fixed; left:10px; top:10px; color:#fff; font:14px system-ui; }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <div id="msg">init…</div>
+<script src="./PixiJS/pixi.min.js?v=1"></script>
+<script>
+(async () => {
+  const app = new PIXI.Application();
+  await app.init({ resizeTo: window, background: '#202020', antialias: true });
+  document.body.appendChild(app.canvas);
 
-  <!-- ВАЖНО: путь к твоему файлу -->
-  <script src="./PixiJS/pixi.min.js?v=2"></script>
-
-  <script>
-  (async function () {
-    const log = (t, err=false) => {
-      const el = document.getElementById('msg'); el.textContent = t; el.style.color = err ? '#ff6b6b' : '#ffffff';
-      console[err ? 'error' : 'log'](t);
-    };
-
-    if (!window.PIXI) { log('PIXI не загрузился: проверь путь ./PixiJS/pixi.min.js', true); return; }
-
-    // Создаём приложение: v8 -> new PIXI.Application(); await init(...)
-    //                     v7 -> new PIXI.Application(opts)
-    let app;
-    try {
-      app = new PIXI.Application();
-      if (app.init) {
-        await app.init({ resizeTo: window, background: '#202020', antialias: true }); // v8
-      } else {
-        app = new PIXI.Application({ backgroundColor: 0x202020, antialias: true, resizeTo: window }); // v7
-      }
-    } catch (e) {
-      // если new PIXI.Application() требует opts (старый v7)
-      app = new PIXI.Application({ backgroundColor: 0x202020, antialias: true, resizeTo: window });
-    }
-
-    // Добавляем canvas (v8 -> app.canvas, v7 -> app.view)
-    const canvas = app.canvas || app.view;
-    document.getElementById('app').appendChild(canvas);
-
-    // Рисуем СИНИЙ прямоугольник — если его видно, Pixi работает
-    const g = new PIXI.Graphics();
-    if (typeof g.rect === 'function') {
-      // v8 API
-      g.rect(20, 20, 160, 90).fill({ color: 0x3b82f6 });
-    } else {
-      // v7 API
-      g.beginFill(0x3b82f6);
-      g.drawRect(20, 20, 160, 90);
-      g.endFill();
-    }
-    app.stage.addChild(g);
-
-    // Рисуем ШЕСТИУГОЛЬНИК (точно без honeycomb)
-    const size = 40;
-    const pts = [];
+  // ---- HEX math (pointy-top axial) ----
+  const SQRT3 = Math.sqrt(3);
+  const size = 40;
+  const axialToPixel = (q, r) => ({
+    x: size * (SQRT3 * q + (SQRT3/2) * r),
+    y: size * (1.5 * r)
+  });
+  const hexPts = (() => {
+    const p = [];
     for (let i = 0; i < 6; i++) {
-      const a = (Math.PI / 180) * (60 * i - 30); // pointy-top
-      pts.push(Math.cos(a) * size, Math.sin(a) * size);
+      const a = (Math.PI/180) * (60*i - 30);
+      p.push(Math.cos(a)*size, Math.sin(a)*size);
     }
-
-    const hx = new PIXI.Graphics();
-    if (typeof hx.poly === 'function') {
-      // v8
-      hx.poly(pts, true).fill({ color: 0x88cc88, alpha: 0.7 }).stroke({ color: 0xffffff, width: 1, alpha: 0.35 });
-    } else {
-      // v7
-      hx.lineStyle(1, 0xffffff, 0.35);
-      hx.beginFill(0x88cc88, 0.7);
-      hx.drawPolygon(pts);
-      hx.endFill();
-    }
-    // позиция гекса — центр экрана
-    const w = (app.renderer?.width) || canvas.width;
-    const h = (app.renderer?.height) || canvas.height;
-    hx.x = w / 2; hx.y = h / 2;
-    app.stage.addChild(hx);
-
-    log('OK: виден синий прямоугольник и зелёный шестиугольник в центре');
+    return p;
   })();
-  </script>
-</body>
-</html>
+
+  // шесть базовых направлений (pointy-top)
+  const DIRS = [
+    {q:+1, r: 0}, {q:+1, r:-1}, {q: 0, r:-1},
+    {q:-1, r: 0}, {q:-1, r:+1}, {q: 0, r:+1}
+  ];
+
+  // утилиты
+  const key = (q,r)=>`${q},${r}`;
+  const cells = new Map(); // уникальные ячейки
+
+  function addCell(q, r, color, alpha=0.75) {
+    const { x, y } = axialToPixel(q, r);
+    const g = new PIXI.Graphics();
+    g.poly(hexPts, true).fill({ color, alpha }).stroke({ color: 0xffffff, width:1, alpha:0.28 });
+    g.x = app.renderer.width/2 + x;
+    g.y = app.renderer.height/2 + y;
+    app.stage.addChild(g);
+    cells.set(key(q,r), {q,r,g});
+  }
+
+  // 1) центр (зелёный)
+  addCell(0, 0, 0x82b07a, 0.8);
+
+  // 2) кольцо радиуса 1: 6 соседей вокруг центра (получим и «направление» для лучей)
+  const ring1 = [];
+  for (const d of DIRS) {
+    const q = d.q, r = d.r;
+    ring1.push({q,r,dir:d});
+    addCell(q, r, 0x6aa9ff, 0.65); // синие
+  }
+
+  // 3) от каждого соседа — вектор из 3 гексов наружу по его направлению
+  for (const h of ring1) {
+    const dq = h.dir.q, dr = h.dir.r;
+    // стартуем от соседа и идём дальше: +1, +2, +3 шаги
+    for (let step = 1; step <= 3; step++) {
+      const q = h.q + dq*step;
+      const r = h.r + dr*step;
+      if (!cells.has(key(q,r))) addCell(q, r, 0xffb86b, 0.75); // оранжевые «лучи»
+    }
+  }
+
+  // подписи (необязательно — можете убрать)
+  for (const {q,r,g} of cells.values()) {
+    const t = new PIXI.Text({ text: `${q},${r}`, style: { fill: 0xffffff, fontSize: 12 } });
+    t.anchor.set(0.5); t.x = g.x; t.y = g.y;
+    app.stage.addChild(t);
+  }
+})();
+</script>
