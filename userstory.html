@@ -1,687 +1,421 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <title>sotiio user story</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sotiio user story</title>
+
+<style>
     *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
-      height: 100%;
-      margin: 0;
-      background: #7c7167; /* фон, как на скрине */
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      overflow: auto;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background: #1E1E1E; /* n8n dark background */
+        color: #F5F5F5;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+        overflow: hidden;
     }
 
-    /* центрируем модалку-карточку */
-    .shell {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 16px;
+    /* ——— FULLSCREEN CENTERING ——— */
+    .container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        /* 10% заполняемости — большие элементы, остальное пустота */
+        gap: 40px;
+        z-index: 1;
     }
 
-    .wrap {
-      position: relative;
-      max-width: 720px;
-      width: 100%;
-      background: #111111;
-      border-radius: 16px;
-      box-shadow: 0 28px 80px rgba(0,0,0,0.65);
-      padding: 28px 32px 30px 32px;
-    }
-
+    /* ——— TITLE (ГИГАНТИЗМ) ——— */
     h1 {
-      margin: 2px 0 18px 0;
-      font-size: 32px;
-      color: #f9f5ee;
-      text-align: center;
-      font-weight: 800;
-      line-height: 1.25;
+        font-size: 60px;
+        font-weight: 800;
+        text-align: center;
+        margin: 0;
+        line-height: 1.1;
     }
 
-    .row { margin: 18px 0; }
-    .label { font-weight: 700; margin-bottom: 10px; font-size: 15px; color: #f5f5f5; }
-    .roles { display: flex; flex-direction: column; gap: 10px; }
-    .roles label { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #f0f0f0; }
+    /* ——— INPUT ——— */
+    .giant-input {
+        width: 50vw;
+        max-width: 900px;
 
-    .text-input {
-      width: 100%;
-      padding: 16px 18px;
-      border: 1px solid #222;
-      border-radius: 12px;
-      font-size: 18px;
-      font-family: inherit;
-      background: #1d1d1d;
-      color: #f5f5f5;
-    }
-    .text-input::placeholder { color: #6f6f6f; }
-    .text-input:focus {
-      outline: none;
-      border-color: #ff622b;
-    }
+        padding: 28px 30px;
+        font-size: 32px;
+        text-align: center;
 
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(240px, 1fr));
-      gap: 10px;
-      margin-top: 8px;
+        background: #2A2A2A; /* n8n panel color */
+        border: 2px solid #3F3F3F;
+        border-radius: 14px;
+        color: #F5F5F5;
+
+        outline: none;
     }
-    .option-card {
-      border: 1px solid #2a2a2a;
-      padding: 12px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      background: #181818;
-      font-size: 14px;
-      transition: all 0.2s;
-      color: #e5e5e5;
+    .giant-input::placeholder {
+        color: #8a8a8a;
     }
-    .option-card.selected {
-      border-color: #ff622b;
-      background: rgba(255, 98, 43, 0.08);
+    .giant-input:focus {
+        border-color: #FF6A3C;
     }
 
-    .add-own { margin-top: 12px; position: relative; }
-    .add-own .text-input { padding-right: 46px; }
-    .add-own .add-btn {
-      position: absolute;
-      right: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 34px;
-      min-width: 34px;
-      padding: 0 10px;
-      background: #2a2a2a;
-      border: 1px solid #333;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      color: #f5f5f5;
-    }
-    .add-own .add-btn:hover { background: #353535; }
-
-    .chiplist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .chip {
-      background: #262626;
-      border: 1px solid #333;
-      padding: 6px 10px;
-      border-radius: 16px;
-      font-size: 13px;
-      color: #e5e5e5;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 10px;
-      gap: 16px;
-    }
-
+    /* ——— BUTTON ——— */
     .primary-btn {
-      background: #ff622b;
-      color: #fff;
-      border: none;
-      padding: 14px 32px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 700;
-      font-family: inherit;
-      font-size: 18px;
+        padding: 25px 80px;
+        background: #FF6A3C;
+        border: none;
+        border-radius: 14px;
+        color: #fff;
+        font-size: 32px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s;
     }
-    .primary-btn:hover { background: #ff743f; }
-    .primary-btn:disabled { background: #555; cursor: not-allowed; }
-
-    .muted { font-size: 13px; color: #999; text-align: center; }
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,0.06);
-      border: 0;
-      margin: 16px 0 6px 0;
-      width: 100%;
+    .primary-btn:hover {
+        background: #FF7E55;
+    }
+    .primary-btn:disabled {
+        background: #555;
+        cursor: not-allowed;
     }
 
-    .status { font-size: 13px; color: #ccc; min-height: 18px; }
+    /* ——— LANGUAGE DROPDOWN ——— */
+    .lang {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        z-index: 2;
+    }
+    .lang-select {
+        padding: 12px 16px;
+        font-size: 20px;
+        background: #2A2A2A;
+        border: 1px solid #3F3F3F;
+        border-radius: 10px;
+        color: #fff;
+    }
 
-    /* loading overlay — поверх карточки */
+    /* ——— STATUS TEXT ——— */
+    .status {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 14px;
+        color: #ccc;
+        min-height: 18px;
+        text-align: center;
+        z-index: 1;
+    }
+
+    /* ——— LOADING OVERLAY ——— */
     .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(5,5,5,0.96);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 16px;
-      z-index: 100;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.92);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
     }
-    .loading-overlay.active { display: flex; }
+    .loading-overlay.active {
+        display: flex;
+    }
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #333;
-      border-top: 4px solid #ff622b;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #333;
+        border-top: 4px solid #FF6A3C;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
     }
-    .loading-text { font-size: 16px; color: #f5f5f5; text-align: center; }
-    .loading-details { font-size: 14px; color: #aaa; margin-top: 8px; text-align: center; }
+    .loading-text {
+        font-size: 18px;
+        color: #F5F5F5;
+        text-align: center;
+    }
+    .loading-details {
+        font-size: 14px;
+        color: #A0A0A0;
+        margin-top: 8px;
+        text-align: center;
+    }
     .progress-bar {
-      width: 300px;
-      height: 6px;
-      background: #222;
-      border-radius: 3px;
-      margin: 20px 0;
-      overflow: hidden;
+        width: 320px;
+        height: 6px;
+        background: #2D2D2D;
+        border-radius: 3px;
+        margin: 20px 0;
+        overflow: hidden;
     }
     .progress-fill {
-      height: 100%;
-      background: #ff622b;
-      border-radius: 3px;
-      width: 0%;
-      transition: width 0.3s ease;
+        height: 100%;
+        background: #FF6A3C;
+        border-radius: 3px;
+        width: 0%;
+        transition: width 0.3s ease;
     }
-    .timer { font-size: 14px; color: #aaa; margin-top: 10px; }
+    .timer {
+        font-size: 14px;
+        color: #A0A0A0;
+        margin-top: 10px;
+    }
 
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 
     @media (max-width: 768px) {
-      .wrap { padding: 20px 18px; border-radius: 14px; }
-      h1 { font-size: 24px; }
-      .text-input { font-size: 16px; padding: 14px 14px; }
-      .primary-btn { font-size: 16px; padding: 12px 24px; }
-      .options-grid { grid-template-columns: 1fr; }
-      .progress-bar { width: 250px; }
+        h1 { font-size: 34px; }
+        .giant-input {
+            width: 80vw;
+            font-size: 22px;
+            padding: 20px 18px;
+        }
+        .primary-btn {
+            font-size: 22px;
+            padding: 18px 40px;
+        }
+        .lang-select {
+            font-size: 16px;
+            padding: 8px 10px;
+        }
     }
-
-    /* ——— верхняя панель с языком ——— */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-
-    .lang-control {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #ccc;
-    }
-    .lang-control .switch {
-      position: relative; display: inline-block; width: 44px; height: 22px;
-    }
-    .lang-control .switch input { display:none; }
-    .lang-control .slider {
-      position: absolute; cursor: pointer; inset: 0; background:#444; transition:.2s; border-radius: 22px;
-    }
-    .lang-control .slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: #fff; transition:.2s; border-radius: 50%;
-      box-shadow: 0 1px 2px rgba(0,0,0,.2);
-    }
-    .lang-control input:checked + .slider { background:#ff622b; }
-    .lang-control input:checked + .slider:before { transform: translateX(22px); }
-    .lang-select {
-      padding: 6px 8px; border: 1px solid #333; border-radius: 8px; background: #1d1d1d; color: #f5f5f5; font-family: inherit;
-    }
-    .lang-help { color:#aaa; font-size:12px; }
-
-    /* прячем старые блоки */
-    .hidden-legacy {
-      display: none !important;
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="shell">
-    <div class="wrap">
-      <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <div class="loading-text">Создаём вашу карту знаний...</div>
-        <div class="loading-details">Это может занять от 3 до 7 минут</div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="timer" id="timer">Прошло: 0:00</div>
-        <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
-      </div>
 
-      <!-- ЗАГОЛОВОК + ЯЗЫК -->
-      <div class="topbar">
-        <h1>Выбери вселенную для исследования</h1>
-        <div class="lang-control" title="Язык для ответа">
-          <span class="lang-help">Auto</span>
-          <label class="switch">
-            <input type="checkbox" id="langAuto" checked>
-            <span class="slider"></span>
-          </label>
-          <select id="langSelect" class="lang-select" disabled>
-            <option value="ru">Русский (ru)</option>
-            <option value="en">English (en)</option>
-            <option value="es">Español (es)</option>
-            <option value="de">Deutsch (de)</option>
-            <option value="fr">Français (fr)</option>
-            <option value="pt">Português (pt)</option>
-            <option value="it">Italiano (it)</option>
-            <option value="uk">Українська (uk)</option>
-            <option value="pl">Polski (pl)</option>
-            <option value="tr">Türkçe (tr)</option>
-            <option value="zh">中文 (zh)</option>
-            <option value="ja">日本語 (ja)</option>
-            <option value="ko">한국어 (ko)</option>
-          </select>
-        </div>
-      </div>
+<!-- LANGUAGE -->
+<div class="lang">
+    <select id="langSelect" class="lang-select">
+        <option value="ru">Русский (ru)</option>
+        <option value="en">English (en)</option>
+        <option value="es">Español (es)</option>
+        <option value="de">Deutsch (de)</option>
+        <option value="fr">Français (fr)</option>
+        <option value="pt">Português (pt)</option>
+        <option value="it">Italiano (it)</option>
+        <option value="uk">Українська (uk)</option>
+        <option value="pl">Polski (pl)</option>
+        <option value="tr">Türkçe (tr)</option>
+        <option value="zh">中文 (zh)</option>
+        <option value="ja">日本語 (ja)</option>
+        <option value="ko">한국어 (ko)</option>
+    </select>
+</div>
 
-      <div class="divider"></div>
+<!-- CENTER CONTENT -->
+<div class="container">
+    <h1>Выбери вселенную<br>для исследования</h1>
 
-      <!-- ЕДИНСТВЕННЫЙ ВИДИМЫЙ ВОПРОС -->
-      <div class="row">
-        <input id="subject" class="text-input" placeholder="Например: Halo, Marvel, The Witcher, Dune..." />
-        <div class="muted" style="margin-top:6px">Укажи любую вселенную / мир / IP / сеттинг.</div>
-      </div>
+    <input id="subject" class="giant-input"
+           placeholder="Например: Halo, Marvel, Dune, Cyberpunk..." />
 
-      <!-- СТАРЫЕ БЛОКИ: СПРЯТАНЫ, НО ЖИВЫ -->
-      <div class="hidden-legacy">
-        <div class="row">
-          <div class="label">Я как…</div>
-          <div class="roles">
-            <label><input type="radio" name="role" value="Novice"> Новичок</label>
-            <label><input type="radio" name="role" value="Enthusiast"> Увлекающийся</label>
-            <label><input type="radio" name="role" value="Geek"> Гик</label>
-            <label><input type="radio" name="role" value="Pro"> Профи</label>
-          </div>
-        </div>
+    <button id="submit" class="primary-btn">Отправить</button>
+</div>
 
-        <div class="divider"></div>
+<div id="status" class="status"></div>
 
-        <div class="row">
-          <div class="label">Чтобы…</div>
-          <div id="opts" class="options-grid"></div>
-          <div class="add-own">
-            <input id="own" class="text-input" placeholder="Предложите свой вариант и нажмите Enter">
-            <button class="add-btn" id="addOwn" title="Добавить">＋</button>
-          </div>
-          <div id="chips" class="chiplist"></div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <div id="status" class="status"></div>
-        <button id="submit" class="primary-btn">Отправить</button>
-      </div>
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Создаём вашу карту знаний...</div>
+    <div class="loading-details">Это может занять от 3 до 7 минут</div>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
     </div>
-  </div>
+    <div class="timer" id="timer">Прошло: 0:00</div>
+    <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
+</div>
 
-  <script>
-  (function(){
-    const optsBox = document.getElementById('opts');
-    const ownInput = document.getElementById('own');
-    const addOwnBtn = document.getElementById('addOwn');
-    const chips = document.getElementById('chips');
-    const status = document.getElementById('status');
-    const submit = document.getElementById('submit');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingDetails = document.getElementById('loadingDetails');
-    const progressFill = document.getElementById('progressFill');
-    const timer = document.getElementById('timer');
-
-    // язык
-    const langAuto = document.getElementById('langAuto');
-    const langSelect = document.getElementById('langSelect');
+<script>
+(function() {
+    const subjectInput   = document.getElementById("subject");
+    const langSelect     = document.getElementById("langSelect");
+    const submitBtn      = document.getElementById("submit");
+    const statusEl       = document.getElementById("status");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingDetails = document.getElementById("loadingDetails");
+    const progressFill   = document.getElementById("progressFill");
+    const timerEl        = document.getElementById("timer");
 
     let currentMapId = null;
-    let startTime = null;
+    let startTime    = null;
     let timerInterval = null;
 
-    const roleTexts = {
-      "Novice": [
-        "Быстро сориентироваться в теме и не чувствовать себя потерянным",
-        "Понимать, о чём говорят другие, и поддерживать базовый разговор",
-        "Отличать ключевые понятия от второстепенных и не тратить время зря",
-        "Иметь надёжную «шпаргалку» по основам",
-        "Понять, интересна ли тема для дальнейшего углубления",
-        "Избежать элементарных ошибок и неловких ситуаций",
-        "Удовлетворить любопытство и получить общий обзор",
-        "Понять, как это связано с реальной жизнью и где применяется",
-        "Быть в курсе текущих трендов и популярных тем",
-        "Упорядочить начальные знания и почувствовать уверенность"
-      ],
-      "Enthusiast": [
-        "Разобраться, как всё устроено внутри, а не только знать факты",
-        "Видеть логические связи между частями системы",
-        "Уметь просто и ясно объяснять сложные вещи другим",
-        "Начать применять знания в повседневной жизни или работе",
-        "Научиться рассуждать самостоятельно и делать обоснованные выводы",
-        "Структурировать знания и понять, что изучать дальше",
-        "Видеть целостную картину: историю и возможное развитие",
-        "Сравнивать систему с альтернативами и видеть сильные и слабые стороны",
-        "Получать интеллектуальное удовольствие от освоения сложного",
-        "Превратить хаос разрозненных фактов в стройную систему"
-      ],
-      "Geek": [
-        "Эффективно использовать инструменты и техники для решения задач",
-        "Получать конкурентное преимущество за счёт глубоких знаний",
-        "Стать признанным экспертом, к которому обращаются за советом",
-        "Находить и применять лучшие практики для максимального результата",
-        "Монетизировать знания и навыки в этой области",
-        "Критически оценивать решения, находя слабые места и уязвимости",
-        "Эффективно обучать и наставлять других, передавая опыт",
-        "Принимать продуманные тактические решения и управлять процессами",
-        "Адаптировать стандартные подходы под нестандартные задачи",
-        "Уверенно побеждать в дискуссиях, опираясь на факты"
-      ],
-      "Pro": [
-        "Видеть систему целиком и задавать стратегию её развития",
-        "Создавать новые концепции, системы и продукты на основе глубокого анализа",
-        "Находить «белые пятна» и точки прорыва для инноваций",
-        "Проектировать сложные системы с нуля, понимая их фундаментальные принципы",
-        "Трансформировать существующие системы, а не только оптимизировать",
-        "Принимать взвешенные стратегические решения с высокой ценой ошибки",
-        "Формировать видение будущего и вести за собой команду или отрасль",
-        "Выступать мыслительным лидером, влияя на развитие индустрии",
-        "Оставлять значимый след и вносить фундаментальный вклад в область",
-        "Видеть скрытые рычаги влияния и прогнозировать долгосрочные последствия"
-      ]
-    };
-
-    const languageNames = {
-      'ru': 'russian',
-      'en': 'english',
-      'es': 'spanish',
-      'de': 'german',
-      'fr': 'french',
-      'pt': 'portuguese',
-      'it': 'italian',
-      'uk': 'ukrainian',
-      'pl': 'polish',
-      'tr': 'turkish',
-      'zh': 'chinese',
-      'ja': 'japanese',
-      'ko': 'korean'
-    };
-
-    // Реакция на выбор роли
-    document.querySelectorAll('input[name="role"]').forEach(r=>{
-      r.addEventListener('change', ()=>{
-        const role = document.querySelector('input[name="role"]:checked')?.value;
-        if (!optsBox) return;
-        optsBox.innerHTML = '';
-        const list = roleTexts[role] || [];
-        for(const v of list){
-          const div = document.createElement('div');
-          div.className = 'option-card';
-          div.textContent = v;
-          div.dataset.value = v;
-          optsBox.appendChild(div);
-        }
-        syncChips();
-      });
-    });
-
-    if (optsBox) {
-      optsBox.addEventListener('click', e=>{
-        const card = e.target.closest('.option-card');
-        if(!card) return;
-        card.classList.toggle('selected');
-        syncChips();
-      });
+    function say(msg, color) {
+        statusEl.textContent = msg || "";
+        statusEl.style.color = color || "#ccc";
     }
 
-    function syncChips(){
-      if (!chips || !optsBox) return;
-      chips.innerHTML = '';
-      const selected = Array.from(optsBox.querySelectorAll('.option-card.selected')).map(x => x.dataset.value);
-      for(const s of selected){
-        const c = document.createElement('span');
-        c.className = 'chip';
-        c.textContent = s;
-        chips.appendChild(c);
-      }
-    }
+    function two(n) { return String(n).padStart(2, "0"); }
 
-    function addOwn(){
-      if (!ownInput || !optsBox) return;
-      const val = ownInput.value.trim();
-      if(!val) return;
-      let existing = Array.from(optsBox.children).find(x => x.dataset.value === val);
-      if(!existing){
-        const div = document.createElement('div');
-        div.className = 'option-card selected';
-        div.textContent = val;
-        div.dataset.value = val;
-        optsBox.prepend(div);
-      } else {
-        existing.classList.add('selected');
-      }
-      ownInput.value = '';
-      syncChips();
+    function mapIdFromNow() {
+        const d  = new Date();
+        const ss = two(d.getSeconds());
+        const mm = two(d.getMinutes());
+        const hh = two(d.getHours());
+        const dd = two(d.getDate());
+        const MM = two(d.getMonth() + 1);
+        const yy = two(d.getFullYear() % 100);
+        return `${ss}${mm}${hh}${dd}${MM}${yy}`;
     }
-    if (ownInput) {
-      ownInput.addEventListener('keydown', e=>{
-        if(e.key === 'Enter'){ e.preventDefault(); addOwn(); }
-      });
-    }
-    if (addOwnBtn) {
-      addOwnBtn.addEventListener('click', addOwn);
-    }
-
-    function two(n){ return String(n).padStart(2,'0'); }
-    function mapIdFromNow(){
-      const d = new Date();
-      const ss = two(d.getSeconds()); const mm = two(d.getMinutes()); const hh = two(d.getHours());
-      const dd = two(d.getDate()); const MM = two(d.getMonth()+1); const yy = two(d.getFullYear()%100);
-      return `${ss}${mm}${hh}${dd}${MM}${yy}`;
-    }
-
-    const say = (m, c) => {
-      if (!status) return;
-      status.textContent = m;
-      status.style.color = c || '#ccc';
-    };
 
     function updateTimer() {
-      if (!startTime) return;
-      const now = new Date();
-      const diff = Math.floor((now - startTime) / 1000);
-      const minutes = Math.floor(diff / 60);
-      const seconds = diff % 60;
-      timer.textContent = `Прошло: ${minutes}:${two(seconds)}`;
-      const progress = Math.min((diff / 600) * 100, 100);
-      progressFill.style.width = `${progress}%`;
+        if (!startTime) return;
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const minutes = Math.floor(diff / 60);
+        const seconds = diff % 60;
+        timerEl.textContent = `Прошло: ${minutes}:${two(seconds)}`;
+        const progress = Math.min((diff / 600) * 100, 100); // 10 минут = 100%
+        progressFill.style.width = progress + "%";
     }
 
-    function normalizeLangTag(tag){
-      if(!tag) return 'en';
-      return String(tag).toLowerCase().split(/[-_]/)[0];
+    function startOverlay() {
+        startTime = new Date();
+        loadingOverlay.classList.add("active");
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
     }
 
-    function guessFromCountry(cc){
-      if(!cc) return null;
-      const m = {
-        RU:'ru', BY:'ru', KZ:'ru', KG:'ru', UA:'uk',
-        US:'en', GB:'en', AU:'en', NZ:'en', CA:'en',
-        DE:'de', FR:'fr', IT:'it', ES:'es', PT:'pt', BR:'pt',
-        TR:'tr', PL:'pl', CN:'zh', TW:'zh', HK:'zh', JP:'ja', KR:'ko'
-      };
-      return m[String(cc).toUpperCase()] || null;
+    function stopOverlay() {
+        if (timerInterval) clearInterval(timerInterval);
+        loadingOverlay.classList.remove("active");
     }
 
-    function withTimeout(promise, ms){
-      let t; const timeout = new Promise((_,rej)=> t=setTimeout(()=>rej(new Error('timeout')), ms));
-      return Promise.race([promise.finally(()=>clearTimeout(t)), timeout]);
-    }
+    function sendUserStory() {
+        const subject = subjectInput.value.trim();
+        const lang    = langSelect.value || "en";
 
-    async function detectLanguageAuto(){
-      try {
-        const resp = await withTimeout(fetch('https://ipapi.co/json/', {cache:'no-store'}), 2000);
-        if(resp.ok){
-          const j = await resp.json();
-          const byLangs = Array.isArray(j.languages) ? j.languages[0] : (j.languages || '').split(',')[0];
-          const ipLang = normalizeLangTag(byLangs);
-          const ccLang = guessFromCountry(j.country || j.country_code);
-          const chosen = ipLang || ccLang;
-          if(chosen) return chosen;
+        if (!subject) {
+            say("Укажи вселенную.", "crimson");
+            return;
         }
-      } catch(_) {}
-      return normalizeLangTag(navigator.language || (navigator.languages || [])[0] || 'en');
+
+        // генерим map_id
+        currentMapId = mapIdFromNow();
+        say("");
+        submitBtn.disabled = true;
+        startOverlay();
+
+        const payload = {
+            source: "sotiio_web_survey",
+            map_id: currentMapId,
+            user_story: {
+                "I_as...": "Explorer", // дефолтная роль, т.к. вопрос выключен
+                "Want_to_discover_a_universe...": subject,
+                "So_that...": ["Исследовать вселенную в общем виде"],
+                timestamp: new Date().toISOString()
+            },
+            // язык — как есть из селекта (ru/en/…)
+            language_reply: lang
+        };
+
+        // 1. Отправляем запрос на создание карты
+        fetch("https://n8n.sotiio.com/webhook/us", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            loadingDetails.textContent = "Запрос на создание карты отправлен...";
+        })
+        .catch(err => {
+            console.warn("Ошибка при отправке:", err);
+            // даже если ошибка, всё равно запускаем опрос — вдруг бэк принял
+        })
+        .finally(() => {
+            const pollInterval = 15000;   // 15 сек
+            const initialDelay = 120000;  // 2 минуты
+
+            setTimeout(() => {
+                loadingDetails.textContent = "Проверяем статус карты...";
+
+                const pollMap = () => {
+                    fetch("https://n8n.sotiio.com/webhook/getmap", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({ map_id: currentMapId })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("HTTP " + response.status);
+                        return response.text().then(text => {
+                            try { return text ? JSON.parse(text) : []; }
+                            catch { throw new Error("Невалидный JSON ответ от сервера"); }
+                        });
+                    })
+                    .then(data => {
+                        const secondsPassed = Math.floor((new Date() - startTime) / 1000);
+
+                        if (data && data.status === "pending") {
+                            loadingDetails.textContent =
+                                `Прошло ${secondsPassed} сек. — карта ещё не готова, проверяем снова через 15 секунд...`;
+                            setTimeout(pollMap, pollInterval);
+                            return;
+                        }
+
+                        stopOverlay();
+
+                        const nodeTree = Array.isArray(data) ? data[0] : data;
+
+                        if (nodeTree && nodeTree.format === "node_tree" && nodeTree.data) {
+                            // передаём в родительский фрейм
+                            if (window.parent && window.parent !== window) {
+                                if (window.parent.UI && typeof window.parent.UI.closeUserStory === "function") {
+                                    window.parent.UI.closeUserStory();
+                                    setTimeout(() => {
+                                        window.parent.postMessage({ type: "map:set", payload: nodeTree }, "*");
+                                    }, 400);
+                                } else {
+                                    window.parent.postMessage({ type: "map:set", payload: nodeTree }, "*");
+                                }
+                            }
+                        } else {
+                            console.warn("Неожиданная структура ответа:", data);
+                            say("Карта не была создана. Неожиданный формат ответа.", "crimson");
+                            submitBtn.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        stopOverlay();
+                        say("Ошибка при получении карты: " + err.message, "crimson");
+                        submitBtn.disabled = false;
+                    });
+                };
+
+                pollMap();
+            }, initialDelay);
+        });
     }
 
-    function getLanguageReply(){
-      let langCode;
-      if(langAuto.checked){
-        const auto = langSelect.dataset.autoLang;
-        langCode = normalizeLangTag(auto || navigator.language || 'en');
-      } else {
-        langCode = langSelect.value || 'en';
-      }
-      return languageNames[langCode] || 'english';
-    }
-
-    langAuto.addEventListener('change', async ()=>{
-      const isAuto = langAuto.checked;
-      langSelect.disabled = isAuto;
-      if(isAuto){
-        const lang = await detectLanguageAuto();
-        langSelect.dataset.autoLang = lang;
-        const opt = Array.from(langSelect.options).find(o => o.value === lang);
-        if(opt) langSelect.value = lang;
-      }
+    submitBtn.addEventListener("click", sendUserStory);
+    subjectInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendUserStory();
+        }
     });
 
-    (async () => {
-      const lang = await detectLanguageAuto();
-      langSelect.dataset.autoLang = lang;
-      const opt = Array.from(langSelect.options).find(o => o.value === lang);
-      if(opt) langSelect.value = lang;
-      langSelect.disabled = true;
-    })();
-
-    // ——— ОТПРАВКА + ОЖИДАНИЕ КАРТЫ ———
-    submit.addEventListener('click', async ()=>{
-      const role = document.querySelector('input[name="role"]:checked')?.value;
-      const subject = document.getElementById('subject').value.trim();
-      const chosen = optsBox
-        ? Array.from(optsBox.querySelectorAll('.option-card.selected')).map(x => x.dataset.value)
-        : [];
-
-      // теперь обязателен только subject
-      if(!subject){
-        say('Укажи вселенную для исследования.', 'crimson');
-        return;
-      }
-
-      const safeRole = role || 'Explorer';
-      const safeGoals = chosen.length ? chosen : ['Исследовать вселенную в общем виде'];
-
-      currentMapId = mapIdFromNow();
-      startTime = new Date();
-
-      submit.disabled = true;
-      loadingOverlay.classList.add('active');
-      say('');
-      timerInterval = setInterval(updateTimer, 1000);
-      updateTimer();
-
-      const payload = {
-        source: 'sotiio_web_survey',
-        map_id: currentMapId,
-        user_story: {
-          "I_as...": safeRole,
-          "Want_to_discover_a_universe...": subject,
-          "So_that...": safeGoals,
-          timestamp: (new Date()).toISOString()
-        },
-        language_reply: getLanguageReply()
-      };
-
-      fetch('https://n8n.sotiio.com/webhook/us', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(() => {
-        loadingDetails.textContent = 'Запрос на создание карты отправлен...';
-      })
-      .catch((error) => {
-        console.warn('Предупреждение при отправке:', error);
-      })
-      .finally(() => {
-        const pollInterval = 15000;   // 15 секунд
-        const initialDelay = 120000;  // 2 минуты
-
-        setTimeout(() => {
-          loadingDetails.textContent = 'Проверяем статус карты...';
-
-          const pollMap = () => {
-            fetch('https://n8n.sotiio.com/webhook/getmap', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              body: JSON.stringify({ map_id: currentMapId })
-            })
-            .then(response => {
-              if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              return response.text().then(text => {
-                try { return text ? JSON.parse(text) : []; }
-                catch { throw new Error('Невалидный JSON ответ от сервера'); }
-              });
-            })
-            .then(data => {
-              const secondsPassed = Math.floor((new Date() - startTime) / 1000);
-
-              if (data && data.status === "pending") {
-                loadingDetails.textContent = `Прошло ${secondsPassed} сек. — карта ещё не готова, проверяем снова через 15 секунд...`;
-                setTimeout(pollMap, pollInterval);
-                return;
-              }
-
-              clearInterval(timerInterval);
-              loadingOverlay.classList.remove('active');
-
-              const nodeTree = Array.isArray(data) ? data[0] : data;
-
-              if (nodeTree && nodeTree.format === 'node_tree' && nodeTree.data) {
-                if (window.parent && window.parent !== window) {
-                  if (window.parent.UI && typeof window.parent.UI.closeUserStory === 'function') {
-                    window.parent.UI.closeUserStory();
-                    setTimeout(() => {
-                      window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                    }, 400);
-                  } else {
-                    window.parent.postMessage({ type: 'map:set', payload: nodeTree }, '*');
-                  }
-                }
-              } else {
-                console.warn('Неожиданная структура ответа:', data);
-                say('Карта не была создана. Неожиданный формат ответа.', 'crimson');
-                submit.disabled = false;
-              }
-            })
-            .catch(error => {
-              clearInterval(timerInterval);
-              loadingOverlay.classList.remove('active');
-              say('Ошибка при получении карты: ' + error.message, 'crimson');
-              submit.disabled = false;
-            });
-          };
-
-          pollMap();
-        }, initialDelay);
-      });
+    window.addEventListener("beforeunload", () => {
+        if (timerInterval) clearInterval(timerInterval);
     });
+})();
+</script>
 
-    window.addEventListener('beforeunload', () => {
-      if (timerInterval) clearInterval(timerInterval);
-    });
-  })();
-  </script>
 </body>
 </html>
