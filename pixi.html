@@ -13,81 +13,116 @@
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
     }
 
-    /* Панель палитры в правом верхнем углу */
+    /* Улучшенная панель палитры */
     #palette-panel {
       position: fixed;
-      top: 8px;
-      right: 8px;
+      top: 16px;
+      right: 16px;
       z-index: 10;
-      background: rgba(15, 15, 15, 0.92);
-      border-radius: 10px;
-      padding: 8px 10px;
+      background: rgba(30, 30, 30, 0.95);
+      border-radius: 16px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      font-size: 11px;
-      color: #ddd;
-      backdrop-filter: blur(6px);
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      font-size: 13px;
+      color: #eee;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.15);
+      min-width: 160px;
     }
 
     #palette-panel-header {
-      font-size: 11px;
+      font-size: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #999;
-      margin-bottom: 4px;
+      letter-spacing: 0.1em;
+      color: #ccc;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: 600;
     }
 
-    .palette-row {
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .palette-item {
       display: flex;
+      flex-direction: column;
       align-items: center;
       gap: 6px;
     }
 
-    .palette-label {
-      width: 32px;
-      text-align: right;
-      color: #aaa;
+    .palette-color {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
     }
 
-    .palette-color {
-      width: 22px;
-      height: 22px;
-      padding: 0;
-      border: none;
-      background: transparent;
-      cursor: pointer;
+    .palette-color:hover {
+      transform: scale(1.12);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .palette-label {
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .palette-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 4px 0;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <!-- Панель выбора цветов -->
+  <!-- Обновленная панель выбора цветов -->
   <div id="palette-panel">
-    <div id="palette-panel-header">L2 palette</div>
-    <div class="palette-row">
-      <div class="palette-label">L2-1</div>
-      <input class="palette-color" type="color" data-sector="1" />
+    <div id="palette-panel-header">Color Palette</div>
+    
+    <div class="palette-item">
+      <input class="palette-color" type="color" data-sector="0" title="Center L1" />
+      <div class="palette-label">Center L1</div>
     </div>
-    <div class="palette-row">
-      <div class="palette-label">L2-2</div>
-      <input class="palette-color" type="color" data-sector="2" />
-    </div>
-    <div class="palette-row">
-      <div class="palette-label">L2-3</div>
-      <input class="palette-color" type="color" data-sector="3" />
-    </div>
-    <div class="palette-row">
-      <div class="palette-label">L2-4</div>
-      <input class="palette-color" type="color" data-sector="4" />
-    </div>
-    <div class="palette-row">
-      <div class="palette-label">L2-5</div>
-      <input class="palette-color" type="color" data-sector="5" />
-    </div>
-    <div class="palette-row">
-      <div class="palette-label">L2-6</div>
-      <input class="palette-color" type="color" data-sector="6" />
+    
+    <div class="palette-divider"></div>
+    
+    <div class="palette-grid">
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="1" title="L2-1" />
+        <div class="palette-label">L2-1</div>
+      </div>
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="2" title="L2-2" />
+        <div class="palette-label">L2-2</div>
+      </div>
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="3" title="L2-3" />
+        <div class="palette-label">L2-3</div>
+      </div>
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="4" title="L2-4" />
+        <div class="palette-label">L2-4</div>
+      </div>
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="5" title="L2-5" />
+        <div class="palette-label">L2-5</div>
+      </div>
+      <div class="palette-item">
+        <input class="palette-color" type="color" data-sector="6" title="L2-6" />
+        <div class="palette-label">L2-6</div>
+      </div>
     </div>
   </div>
 
@@ -298,8 +333,9 @@
 
     // ─── ЦВЕТОВАЯ ПАЛИТРА L1–L4 ───────────────────────────────
 
-    // базовые цвета L2-1..L2-6 (их ты можешь менять)
-    const L2_BASE_COLORS = {
+    // базовые цвета L1 (центральная) и L2-1..L2-6
+    const BASE_COLORS = {
+      0: 0xff622b, // Центральная сота L1
       1: 0xd98073, // L2-1 ↖
       2: 0xffd9bf, // L2-2 ↗
       3: 0x61f29d, // L2-3 →
@@ -315,20 +351,17 @@
     }
 
     function setupPaletteUI() {
-      const panel = document.getElementById('palette-panel');
-      if (!panel) return;
-
-      const inputs = panel.querySelectorAll('input.palette-color');
+      const inputs = document.querySelectorAll('input.palette-color');
       inputs.forEach(input => {
         const sector = Number(input.dataset.sector);
-        const base = L2_BASE_COLORS[sector] ?? 0x000000;
+        const base = BASE_COLORS[sector] ?? 0x000000;
         input.value = intToHexColor(base);
 
         input.addEventListener('input', (e) => {
           const val = e.target.value; // "#rrggbb"
           const intVal = parseInt(val.slice(1), 16);
           if (!Number.isNaN(intVal)) {
-            L2_BASE_COLORS[sector] = intVal;
+            BASE_COLORS[sector] = intVal;
             if (lastCells && Array.isArray(lastCells)) {
               buildFromCells(lastCells);
             }
@@ -369,32 +402,37 @@
     function getFillStyle(cell) {
       const { level, sector, order } = parseLevelVector(cell);
 
+      // Центральная сота (L1)
       if (level === 1) {
-        return { color: 0xff622b, alpha: 1 };
+        return { color: BASE_COLORS[0], alpha: 0 }; // alpha = 0
       }
 
-      const baseColor = (sector && L2_BASE_COLORS[sector]) ? L2_BASE_COLORS[sector] : 0x000000;
+      // Второй уровень (L2) - радиальный
+      if (level === 2) {
+        const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
+        return { color: baseColor, alpha: 0 }; // alpha = 0
+      }
+
+      const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
 
       if (!sector) {
         return { color: baseColor, alpha: 0 };
       }
 
-      if (level === 2) {
-        return { color: baseColor, alpha: 0.15 };
-      }
-
+      // Третий уровень (L3)
       if (level === 3) {
-        return { color: baseColor, alpha: 0.5 };
+        return { color: baseColor, alpha: 0.5 }; // alpha = 0.5
       }
 
+      // Четвертый уровень (L4) и выше
       if (level >= 4) {
         const idx = order || 1;
         const isOdd = idx % 2 === 1;
-        const alpha = isOdd ? 0.2 : 0.1;
+        const alpha = isOdd ? 0.2 : 0.1; // чередование 0.2 и 0.1
         return { color: baseColor, alpha };
       }
 
-      return { color: baseColor, alpha: 0.3 };
+      return { color: baseColor, alpha: 0 };
     }
 
     // ─── создание одной соты ───────────────────────────────────
