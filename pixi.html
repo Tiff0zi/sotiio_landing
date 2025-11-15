@@ -324,12 +324,6 @@
           wireInteractions(hex);
         }
       });
-
-      // debug-маяк в центре (0,0)
-      const dbg = new PIXI.Graphics();
-      dbg.rect(-20, -20, 40, 40).fill(0xff0000, 1);
-      container.addChild(dbg);
-
       console.log('Pixi карта отрисована, всего сот:', HEXES.length);
     }
 
