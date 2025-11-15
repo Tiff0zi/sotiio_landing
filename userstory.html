@@ -10,119 +10,205 @@
     html, body {
       height: 100%;
       margin: 0;
-      background: #1E1E1E; /* n8n dark */
+      background: #7c7167; /* фон, как на скрине */
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      color: #F5F5F5;
-      overflow: hidden;
+      overflow: auto;
     }
 
-    /* fullscreen модалка */
-    .wrap {
-      position: fixed;
-      inset: 0;
-      padding: 40px;
+    /* центрируем модалку-карточку */
+    .shell {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #1E1E1E;
+      padding: 40px 16px;
     }
 
-    .content {
+    .wrap {
+      position: relative;
+      max-width: 720px;
       width: 100%;
-      max-width: 960px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 24px;
+      background: #111111;
+      border-radius: 16px;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.65);
+      padding: 28px 32px 30px 32px;
     }
 
     h1 {
-      margin: 0;
-      font-size: 42px;
+      margin: 2px 0 18px 0;
+      font-size: 32px;
+      color: #f9f5ee;
+      text-align: center;
       font-weight: 800;
-      color: #F5F5F5;
+      line-height: 1.25;
     }
 
-    .row { margin: 0; }
-
-    .label {
-      font-weight: 700;
-      margin-bottom: 12px;
-      font-size: 18px;
-    }
+    .row { margin: 18px 0; }
+    .label { font-weight: 700; margin-bottom: 10px; font-size: 15px; color: #f5f5f5; }
+    .roles { display: flex; flex-direction: column; gap: 10px; }
+    .roles label { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #f0f0f0; }
 
     .text-input {
       width: 100%;
-      padding: 20px 22px;
-      border: 1px solid #3F3F3F;
-      border-radius: 14px;
-      font-size: 22px;
+      padding: 16px 18px;
+      border: 1px solid #222;
+      border-radius: 12px;
+      font-size: 18px;
       font-family: inherit;
-      background: #2A2A2A;
-      color: #F5F5F5;
-      text-align: center;
+      background: #1d1d1d;
+      color: #f5f5f5;
     }
-
-    .text-input::placeholder {
-      color: #7A7A7A;
-    }
-
+    .text-input::placeholder { color: #6f6f6f; }
     .text-input:focus {
       outline: none;
-      border-color: #FF6A3C;
+      border-color: #ff622b;
     }
 
-    .muted {
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .option-card {
+      border: 1px solid #2a2a2a;
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #181818;
       font-size: 14px;
-      color: #A0A0A0;
-      margin-top: 6px;
-      text-align: center;
+      transition: all 0.2s;
+      color: #e5e5e5;
+    }
+    .option-card.selected {
+      border-color: #ff622b;
+      background: rgba(255, 98, 43, 0.08);
+    }
+
+    .add-own { margin-top: 12px; position: relative; }
+    .add-own .text-input { padding-right: 46px; }
+    .add-own .add-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 34px;
+      min-width: 34px;
+      padding: 0 10px;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #f5f5f5;
+    }
+    .add-own .add-btn:hover { background: #353535; }
+
+    .chiplist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .chip {
+      background: #262626;
+      border: 1px solid #333;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 13px;
+      color: #e5e5e5;
     }
 
     .actions {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 24px;
+      margin-top: 10px;
       gap: 16px;
     }
 
     .primary-btn {
-      background: #FF6A3C;
+      background: #ff622b;
       color: #fff;
       border: none;
-      padding: 18px 48px;
-      border-radius: 14px;
+      padding: 14px 32px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 22px;
       font-family: inherit;
-      transition: background 0.15s;
+      font-size: 18px;
     }
-
-    .primary-btn:hover { background: #FF7E55; }
+    .primary-btn:hover { background: #ff743f; }
     .primary-btn:disabled { background: #555; cursor: not-allowed; }
 
-    .status {
-      font-size: 14px;
-      min-height: 18px;
-    }
-
-    /* divider можно оставить, но он почти не нужен */
+    .muted { font-size: 13px; color: #999; text-align: center; }
     .divider {
       height: 1px;
-      background: #2A2A2A;
+      background: rgba(255,255,255,0.06);
       border: 0;
-      margin: 10px 0;
+      margin: 16px 0 6px 0;
       width: 100%;
     }
 
-    /* language topbar */
+    .status { font-size: 13px; color: #ccc; min-height: 18px; }
+
+    /* loading overlay — поверх карточки */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(5,5,5,0.96);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      z-index: 100;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #333;
+      border-top: 4px solid #ff622b;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    .loading-text { font-size: 16px; color: #f5f5f5; text-align: center; }
+    .loading-details { font-size: 14px; color: #aaa; margin-top: 8px; text-align: center; }
+    .progress-bar {
+      width: 300px;
+      height: 6px;
+      background: #222;
+      border-radius: 3px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #ff622b;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .timer { font-size: 14px; color: #aaa; margin-top: 10px; }
+
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+    @media (max-width: 768px) {
+      .wrap { padding: 20px 18px; border-radius: 14px; }
+      h1 { font-size: 24px; }
+      .text-input { font-size: 16px; padding: 14px 14px; }
+      .primary-btn { font-size: 16px; padding: 12px 24px; }
+      .options-grid { grid-template-columns: 1fr; }
+      .progress-bar { width: 250px; }
+    }
+
+    /* ——— верхняя панель с языком ——— */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      margin-bottom: 6px;
     }
 
     .lang-control {
@@ -132,120 +218,43 @@
       font-size: 13px;
       color: #ccc;
     }
-
     .lang-control .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 22px;
+      position: relative; display: inline-block; width: 44px; height: 22px;
     }
-    .lang-control .switch input { display: none; }
+    .lang-control .switch input { display:none; }
     .lang-control .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background:#444;
-      transition:.2s;
-      border-radius: 22px;
+      position: absolute; cursor: pointer; inset: 0; background:#444; transition:.2s; border-radius: 22px;
     }
     .lang-control .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px; width: 18px;
-      left: 2px; bottom: 2px;
-      background:#fff;
-      transition:.2s;
-      border-radius: 50%;
+      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: #fff; transition:.2s; border-radius: 50%;
       box-shadow: 0 1px 2px rgba(0,0,0,.2);
     }
-    .lang-control input:checked + .slider { background:#FF6A3C; }
+    .lang-control input:checked + .slider { background:#ff622b; }
     .lang-control input:checked + .slider:before { transform: translateX(22px); }
-
     .lang-select {
-      padding: 6px 8px;
-      border: 1px solid #3F3F3F;
-      border-radius: 8px;
-      background: #2A2A2A;
-      color: #F5F5F5;
-      font-family: inherit;
+      padding: 6px 8px; border: 1px solid #333; border-radius: 8px; background: #1d1d1d; color: #f5f5f5; font-family: inherit;
     }
-
     .lang-help { color:#aaa; font-size:12px; }
 
-    /* loading overlay */
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(12,12,12,0.96);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .loading-overlay.active { display: flex; }
-
-    .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid #333;
-      border-top: 4px solid #FF6A3C;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
-    }
-    .loading-text { font-size: 18px; color: #F5F5F5; text-align: center; }
-    .loading-details { font-size: 14px; color: #A0A0A0; margin-top: 8px; text-align: center; }
-
-    .progress-bar {
-      width: 320px; height: 6px;
-      background: #2D2D2D;
-      border-radius: 3px;
-      margin: 20px 0;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: #FF6A3C;
-      border-radius: 3px;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-    .timer { font-size: 14px; color: #A0A0A0; margin-top: 10px; }
-
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-
-    @media (max-width: 768px) {
-      .wrap { padding: 20px; }
-      h1 { font-size: 30px; }
-      .text-input { font-size: 18px; padding: 16px 18px; }
-      .primary-btn { font-size: 18px; padding: 14px 32px; }
-    }
-
-    /* старые блоки — просто выключены */
+    /* прячем старые блоки */
     .hidden-legacy {
       display: none !important;
     }
-
-    /* чтобы ничего не ломалось */
-    .options-grid { display: none; }
-    .chiplist { display: none; }
-    .add-own { display: none; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- overlay ожидания карты -->
-    <div class="loading-overlay" id="loadingOverlay">
-      <div class="spinner"></div>
-      <div class="loading-text">Создаём вашу карту знаний...</div>
-      <div class="loading-details">Это может занять от 3 до 7 минут</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="timer" id="timer">Прошло: 0:00</div>
-      <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
-    </div>
+  <div class="shell">
+    <div class="wrap">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Создаём вашу карту знаний...</div>
+        <div class="loading-details">Это может занять от 3 до 7 минут</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="timer" id="timer">Прошло: 0:00</div>
+        <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
+      </div>
 
-    <div class="content">
-      <!-- верх: заголовок + язык -->
+      <!-- ЗАГОЛОВОК + ЯЗЫК -->
       <div class="topbar">
         <h1>Выбери вселенную для исследования</h1>
         <div class="lang-control" title="Язык для ответа">
@@ -272,17 +281,15 @@
         </div>
       </div>
 
-      <hr class="divider">
+      <div class="divider"></div>
 
-      <!-- основной и единственный видимый вопрос -->
+      <!-- ЕДИНСТВЕННЫЙ ВИДИМЫЙ ВОПРОС -->
       <div class="row">
-        <div class="label" style="text-align:center;">Вселенная для исследования</div>
-        <input id="subject" class="text-input"
-               placeholder="Например: Halo, Marvel, The Witcher, Dune..." />
-        <div class="muted">Укажи любую вселенную, мир, IP, сеттинг или концепцию.</div>
+        <input id="subject" class="text-input" placeholder="Например: Halo, Marvel, The Witcher, Dune..." />
+        <div class="muted" style="margin-top:6px">Укажи любую вселенную / мир / IP / сеттинг.</div>
       </div>
 
-      <!-- старые блоки: спрятаны, но живы -->
+      <!-- СТАРЫЕ БЛОКИ: СПРЯТАНЫ, НО ЖИВЫ -->
       <div class="hidden-legacy">
         <div class="row">
           <div class="label">Я как…</div>
@@ -336,11 +343,54 @@
     let timerInterval = null;
 
     const roleTexts = {
-      "Novice": [],
-      "Enthusiast": [],
-      "Geek": [],
-      "Pro": []
-      // список оставил пустым, т.к. блок выключен
+      "Novice": [
+        "Быстро сориентироваться в теме и не чувствовать себя потерянным",
+        "Понимать, о чём говорят другие, и поддерживать базовый разговор",
+        "Отличать ключевые понятия от второстепенных и не тратить время зря",
+        "Иметь надёжную «шпаргалку» по основам",
+        "Понять, интересна ли тема для дальнейшего углубления",
+        "Избежать элементарных ошибок и неловких ситуаций",
+        "Удовлетворить любопытство и получить общий обзор",
+        "Понять, как это связано с реальной жизнью и где применяется",
+        "Быть в курсе текущих трендов и популярных тем",
+        "Упорядочить начальные знания и почувствовать уверенность"
+      ],
+      "Enthusiast": [
+        "Разобраться, как всё устроено внутри, а не только знать факты",
+        "Видеть логические связи между частями системы",
+        "Уметь просто и ясно объяснять сложные вещи другим",
+        "Начать применять знания в повседневной жизни или работе",
+        "Научиться рассуждать самостоятельно и делать обоснованные выводы",
+        "Структурировать знания и понять, что изучать дальше",
+        "Видеть целостную картину: историю и возможное развитие",
+        "Сравнивать систему с альтернативами и видеть сильные и слабые стороны",
+        "Получать интеллектуальное удовольствие от освоения сложного",
+        "Превратить хаос разрозненных фактов в стройную систему"
+      ],
+      "Geek": [
+        "Эффективно использовать инструменты и техники для решения задач",
+        "Получать конкурентное преимущество за счёт глубоких знаний",
+        "Стать признанным экспертом, к которому обращаются за советом",
+        "Находить и применять лучшие практики для максимального результата",
+        "Монетизировать знания и навыки в этой области",
+        "Критически оценивать решения, находя слабые места и уязвимости",
+        "Эффективно обучать и наставлять других, передавая опыт",
+        "Принимать продуманные тактические решения и управлять процессами",
+        "Адаптировать стандартные подходы под нестандартные задачи",
+        "Уверенно побеждать в дискуссиях, опираясь на факты"
+      ],
+      "Pro": [
+        "Видеть систему целиком и задавать стратегию её развития",
+        "Создавать новые концепции, системы и продукты на основе глубокого анализа",
+        "Находить «белые пятна» и точки прорыва для инноваций",
+        "Проектировать сложные системы с нуля, понимая их фундаментальные принципы",
+        "Трансформировать существующие системы, а не только оптимизировать",
+        "Принимать взвешенные стратегические решения с высокой ценой ошибки",
+        "Формировать видение будущего и вести за собой команду или отрасль",
+        "Выступать мыслительным лидером, влияя на развитие индустрии",
+        "Оставлять значимый след и вносить фундаментальный вклад в область",
+        "Видеть скрытые рычаги влияния и прогнозировать долгосрочные последствия"
+      ]
     };
 
     const languageNames = {
@@ -359,7 +409,7 @@
       'ko': 'korean'
     };
 
-    // если когда-нибудь вернёшь радио-кнопки — всё уже готово
+    // Реакция на выбор роли
     document.querySelectorAll('input[name="role"]').forEach(r=>{
       r.addEventListener('change', ()=>{
         const role = document.querySelector('input[name="role"]:checked')?.value;
@@ -515,7 +565,7 @@
       langSelect.disabled = true;
     })();
 
-    // ───── отправка + ожидание карты ─────
+    // ——— ОТПРАВКА + ОЖИДАНИЕ КАРТЫ ———
     submit.addEventListener('click', async ()=>{
       const role = document.querySelector('input[name="role"]:checked')?.value;
       const subject = document.getElementById('subject').value.trim();
@@ -565,8 +615,8 @@
         console.warn('Предупреждение при отправке:', error);
       })
       .finally(() => {
-        const pollInterval = 15000;   // 15 сек
-        const initialDelay = 120000;  // 2 мин
+        const pollInterval = 15000;   // 15 секунд
+        const initialDelay = 120000;  // 2 минуты
 
         setTimeout(() => {
           loadingDetails.textContent = 'Проверяем статус карты...';
@@ -574,10 +624,7 @@
           const pollMap = () => {
             fetch('https://n8n.sotiio.com/webhook/getmap', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
               body: JSON.stringify({ map_id: currentMapId })
             })
             .then(response => {
@@ -591,8 +638,7 @@
               const secondsPassed = Math.floor((new Date() - startTime) / 1000);
 
               if (data && data.status === "pending") {
-                loadingDetails.textContent =
-                  `Прошло ${secondsPassed} сек. — карта ещё не готова, проверяем снова через 15 секунд...`;
+                loadingDetails.textContent = `Прошло ${secondsPassed} сек. — карта ещё не готова, проверяем снова через 15 секунд...`;
                 setTimeout(pollMap, pollInterval);
                 return;
               }
