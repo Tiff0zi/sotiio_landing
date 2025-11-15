@@ -12,49 +12,100 @@
       background:#1e1e1e; 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
-    #msg { 
-      position:fixed; 
-      left:10px; 
-      top:10px; 
-      font:13px system-ui; 
-      color:#e0e0e0; 
-      background:#2c2c2c; 
-      padding:6px 10px; 
-      border-radius:8px; 
-      border:1px solid #444;
-    }
   </style>
 </head>
 <body>
-  <div id="msg">Загрузка...</div>
   <script src="./PixiJS/pixi.min.js"></script>
 
   <script>
   (async () => {
-    const M = (t, bad=false)=>{ 
-      const el=document.getElementById('msg'); 
-      el.textContent=t; 
-      el.style.color=bad?'#ff4444':'#e0e0e0'; 
-      console[bad?'error':'log'](t); 
-    };
-
-    if (!window.PIXI) { M('PIXI не найден', true); return; }
+    if (!window.PIXI) { 
+      console.error('PIXI не найден'); 
+      return; 
+    }
     
     const app = new PIXI.Application();
     await app.init({
       width: window.innerWidth,
       height: window.innerHeight,
       background: '#1e1e1e',
-      antialias: true
+      antialias: true,
+      resolution: 1
     });
     document.body.appendChild(app.canvas);
 
     const container = new PIXI.Container();
     app.stage.addChild(container);
 
-    // Центрируем карту
+    // Начальная позиция - центрируем карту
     container.x = app.screen.width / 2;
     container.y = app.screen.height / 2;
+
+    // --- Пан/Зум с ограничениями ---
+    let isDragging = false;
+    let lastMousePosition = null;
+    let scale = 1;
+    const minScale = 0.5;
+    const maxScale = 2;
+
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = app.screen;
+    
+    // Перемещение карты
+    app.stage.on('pointerdown', (event) => {
+      isDragging = true;
+      lastMousePosition = event.global.clone();
+    });
+
+    app.stage.on('pointerup', () => {
+      isDragging = false;
+      lastMousePosition = null;
+    });
+
+    app.stage.on('pointerupoutside', () => {
+      isDragging = false;
+      lastMousePosition = null;
+    });
+
+    app.stage.on('pointermove', (event) => {
+      if (!isDragging || !lastMousePosition) return;
+      
+      const newMousePosition = event.global.clone();
+      const deltaX = newMousePosition.x - lastMousePosition.x;
+      const deltaY = newMousePosition.y - lastMousePosition.y;
+      
+      container.x += deltaX;
+      container.y += deltaY;
+      
+      lastMousePosition = newMousePosition;
+    });
+
+    // Масштабирование с ограничениями
+    app.canvas.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      
+      const zoomSpeed = 0.1;
+      const zoomFactor = event.deltaY > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
+      const newScale = Math.min(maxScale, Math.max(minScale, scale * zoomFactor));
+      
+      if (newScale !== scale) {
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
+        
+        // Преобразуем координаты мыши в координаты контейнера
+        const worldPos = {
+          x: (mouseX - container.x) / scale,
+          y: (mouseY - container.y) / scale
+        };
+        
+        scale = newScale;
+        container.scale.set(scale);
+        
+        // Корректируем позицию для сохранения точки под курсором
+        container.x = mouseX - worldPos.x * scale;
+        container.y = mouseY - worldPos.y * scale;
+      }
+    }, { passive: false });
 
     // --- HEX математика ---
     const SQRT3 = Math.sqrt(3);
@@ -65,8 +116,8 @@
       y: size * (1.5 * r)
     });
 
-    // Функция для создания шестиугольника с закругленными углами
-    const createRoundedHex = (radius, cornerRadius = 4) => {
+    // Создание точек шестиугольника (без скругления)
+    const createHexPoints = (radius) => {
       const points = [];
       for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 180) * (60 * i - 30);
@@ -78,7 +129,7 @@
       return points;
     };
 
-    const HEX_PTS = createRoundedHex(size, 4);
+    const HEX_PTS = createHexPoints(size);
 
     // Создание шестиугольника
     const createHex = (q, r, labelText) => {
@@ -97,9 +148,8 @@
       graphics.eventMode = 'static';
       graphics.cursor = 'pointer';
       
-      // Хит-область (без закругления для точности)
-      const hitAreaPoints = createRoundedHex(size, 0);
-      graphics.hitArea = new PIXI.Polygon(hitAreaPoints);
+      // Хит-область
+      graphics.hitArea = new PIXI.Polygon(HEX_PTS);
       
       container.addChild(graphics);
 
@@ -136,11 +186,11 @@
     const HEXES = [];
     let selectedHex = null;
 
-    // Центральная оранжевая сота
+    // Центральная оранжевая сота (непрозрачная)
     const center = createHex(0, 0, 'Center');
     center.graphics.clear()
           .poly(HEX_PTS, true)
-          .fill(0xff622b, 1) // Оранжевая заливка
+          .fill(0xff622b, 1) // Оранжевая заливка (непрозрачная)
           .stroke({ color: 0xffffff, width: 1, alpha: 1 });
     HEXES.push(center);
 
@@ -163,6 +213,9 @@
 
     // --- Взаимодействия ---
     const wireInteractions = (hexObj) => {
+      // Пропускаем центральную соту - она всегда оранжевая
+      if (hexObj === center) return;
+      
       hexObj.graphics.on('pointerover', () => {
         if (!hexObj.selected) {
           hexObj.graphics.clear()
@@ -211,10 +264,14 @@
       });
     };
 
-    // Применяем взаимодействия ко всем сотам
-    HEXES.forEach(hex => wireInteractions(hex));
+    // Применяем взаимодействия ко всем сотам (кроме центральной)
+    HEXES.forEach(hex => {
+      if (hex !== center) {
+        wireInteractions(hex);
+      }
+    });
 
-    M('Готово: оранжевый центр, выделение синим, шестиугольники с закругленными углами');
+    console.log('Готово: оранжевый центр, выделение синим, управление мышью и колесом');
   })();
   </script>
 </body>
