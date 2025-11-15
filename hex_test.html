@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Pixi Hex Demo (n8n dark)</title>
+  <title>Hex Map</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html,body { 
@@ -22,12 +22,11 @@
       padding:6px 10px; 
       border-radius:8px; 
       border:1px solid #444;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
   </style>
 </head>
 <body>
-  <div id="msg">init…</div>
+  <div id="msg">Загрузка...</div>
   <script src="./PixiJS/pixi.min.js"></script>
 
   <script>
@@ -36,181 +35,186 @@
       const el=document.getElementById('msg'); 
       el.textContent=t; 
       el.style.color=bad?'#ff4444':'#e0e0e0'; 
-      el.style.background=bad?'#2c1a1a':'#2c2c2c';
       console[bad?'error':'log'](t); 
     };
 
     if (!window.PIXI) { M('PIXI не найден', true); return; }
+    
     const app = new PIXI.Application();
     await app.init({
-      resizeTo: window,
+      width: window.innerWidth,
+      height: window.innerHeight,
       background: '#1e1e1e',
-      antialias: true,
-      resolution: Math.min(3, window.devicePixelRatio || 1)
+      antialias: true
     });
     document.body.appendChild(app.canvas);
 
-    const cam = new PIXI.Container();
-    app.stage.addChild(cam);
+    const container = new PIXI.Container();
+    app.stage.addChild(container);
 
-    // --- Пан/Зум ---
-    let drag=false, prev=null, zoom=1;
-    app.stage.eventMode='static'; app.stage.hitArea=app.screen;
-    app.stage.on('pointerdown',e=>{drag=true;prev=e.global.clone();});
-    app.stage.on('pointerup',()=>{drag=false;prev=null;});
-    app.stage.on('pointerupoutside',()=>{drag=false;prev=null;});
-    app.stage.on('pointermove',e=>{
-      if(!drag)return;const n=e.global.clone();cam.x+=n.x-prev.x;cam.y+=n.y-prev.y;prev=n;
-    });
-    app.canvas.addEventListener('wheel',ev=>{
-      ev.preventDefault();const s=ev.deltaY<0?1.1:0.9;const next=Math.min(4,Math.max(0.25,zoom*s));
-      const cx=app.renderer.width/2,cy=app.renderer.height/2;const k=next/zoom;
-      cam.x=cx+(cam.x-cx)*k;cam.y=cy+(cam.y-cy)*k;zoom=next;cam.scale.set(zoom);
-    },{passive:false});
+    // Центрируем карту
+    container.x = app.screen.width / 2;
+    container.y = app.screen.height / 2;
 
     // --- HEX математика ---
-    const SQRT3=Math.sqrt(3), size=42;
-    const axialToPixel=(q,r)=>({x:size*(SQRT3*q+SQRT3/2*r),y:size*(1.5*r)});
-    const HEX_PTS=(()=>{const p=[];for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i-30);p.push(Math.cos(a)*size,Math.sin(a)*size);}return p;})();
-    const makePolygon = (pts)=> new PIXI.Polygon(pts.reduce((arr,_,i)=> (i%2===0?arr.push({x:pts[i],y:pts[i+1]}):arr,arr),[]).map(p=>[p.x,p.y]).flat());
+    const SQRT3 = Math.sqrt(3);
+    const size = 42;
+    
+    const axialToPixel = (q, r) => ({
+      x: size * (SQRT3 * q + SQRT3/2 * r),
+      y: size * (1.5 * r)
+    });
 
-    // универсальная перерисовка одной соты
-    const redrawHex = (g, fillColor, fillAlpha, strokeColor, strokeWidth=0.75, strokeAlpha=0.6) => {
-      g.clear();
-      g.poly(HEX_PTS, true)
-       .fill({ color: fillColor, alpha: fillAlpha })
-       .stroke({ color: strokeColor, width: strokeWidth, alpha: strokeAlpha, alignment: 0.5 });
+    // Функция для создания шестиугольника с закругленными углами
+    const createRoundedHex = (radius, cornerRadius = 4) => {
+      const points = [];
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 180) * (60 * i - 30);
+        points.push(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius
+        );
+      }
+      return points;
     };
 
-    // создаёт соту + кольцо ховера + метку
-    const createHex = (q,r,baseColor,baseAlpha,strokeColor,labelText,labelColor)=>{
-      const {x,y}=axialToPixel(q,r);
+    const HEX_PTS = createRoundedHex(size, 4);
 
-      // основная сота
-      const g = new PIXI.Graphics();
-      redrawHex(g, baseColor, baseAlpha, strokeColor, 0.75, 0.6);
-      g.x=x; g.y=y;
-      g.eventMode='static';
-      g.cursor='pointer';
-      g.hitArea = makePolygon(HEX_PTS);
-      cam.addChild(g);
+    // Создание шестиугольника
+    const createHex = (q, r, labelText) => {
+      const {x, y} = axialToPixel(q, r);
 
-      // «свечение» при ховере
-      const hoverRing = new PIXI.Graphics();
-      hoverRing.poly(HEX_PTS, true)
-               .stroke({ color: 0x34a2db, width: 1.5, alpha: 0.7, alignment: 0.5 });
-      hoverRing.x=x; hoverRing.y=y;
-      hoverRing.scale.set(1.04);
-      hoverRing.visible=false;
-      cam.addChild(hoverRing);
+      // Основная графика для шестиугольника
+      const graphics = new PIXI.Graphics();
+      
+      // Начальное состояние - только обводка
+      graphics.poly(HEX_PTS, true)
+              .fill(0x000000, 0) // Полностью прозрачная заливка
+              .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+      
+      graphics.x = x;
+      graphics.y = y;
+      graphics.eventMode = 'static';
+      graphics.cursor = 'pointer';
+      
+      // Хит-область (без закругления для точности)
+      const hitAreaPoints = createRoundedHex(size, 0);
+      graphics.hitArea = new PIXI.Polygon(hitAreaPoints);
+      
+      container.addChild(graphics);
 
-      // метка
-      const t=new PIXI.Text({
-        text:labelText,
-        style:{
-          fill:labelColor,
-          fontSize:12,
-          fontFamily:'system-ui,Arial',
-          fontWeight:'500'
+      // Метка
+      const text = new PIXI.Text({
+        text: labelText,
+        style: {
+          fill: 0xffffff,
+          fontSize: 12,
+          fontFamily: 'system-ui, Arial',
+          fontWeight: '500'
         }
       });
-      t.anchor.set(0.5); t.x=x; t.y=y;
-      cam.addChild(t);
+      text.anchor.set(0.5);
+      text.x = x;
+      text.y = y;
+      container.addChild(text);
 
-      return { g, hoverRing, t, q, r, baseColor, baseAlpha, strokeColor, selected:false };
+      return { 
+        graphics, 
+        text, 
+        q, 
+        r,
+        selected: false
+      };
     };
 
-    // --- Цвета в стиле n8n dark ---
-    let palette;
-    try {
-      const c = await fetch('./color.json').then(r=>r.json());
-      const toHex = s => s?.startsWith('#') ? parseInt(s.slice(1),16) : 0x34a2db;
-      palette = {
-        L1: toHex(c.fill_sota) || 0x34a2db,
-        L2: Array.isArray(c.color_sota) ? c.color_sota.map(x=>parseInt(x.replace('#',''),16)) :
-            [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c],
-        stroke: 0xffffff,
-        label: parseInt((c.color_label||'#e0e0e0').replace('#',''),16),
-        hover: 0x34a2db,
-        selected: 0xff622b
-      };
-    } catch(e){
-      palette = { 
-        L1: 0x34a2db,
-        L2: [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c],
-        stroke: 0xffffff,
-        label: 0xe0e0e0,
-        hover: 0x34a2db,
-        selected: 0xff622b
-      };
-    }
-
-    // --- Генерация демо-карты ---
-    const DIRS=[{q:+1,r:0},{q:+1,r:-1},{q:0,r:-1},{q:-1,r:0},{q:-1,r:+1},{q:0,r:+1}];
-    cam.x=app.renderer.width/2; cam.y=app.renderer.height/2;
+    // --- Генерация карты ---
+    const DIRS = [
+      {q: +1, r: 0}, {q: +1, r: -1}, {q: 0, r: -1},
+      {q: -1, r: 0}, {q: -1, r: +1}, {q: 0, r: +1}
+    ];
 
     const HEXES = [];
     let selectedHex = null;
 
-    const wireInteractions = (hexObj) => {
-      const { g, hoverRing } = hexObj;
-
-      g.on('pointerover', () => {
-        if (!hexObj.selected) {
-          hoverRing.visible = true;
-          redrawHex(g, hexObj.baseColor, Math.min(1, hexObj.baseAlpha + 0.1), palette.hover, 1.25, 0.7);
-        }
-      });
-
-      g.on('pointerout', () => {
-        if (!hexObj.selected) {
-          hoverRing.visible = false;
-          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 0.75, 0.6);
-        }
-      });
-
-      g.on('pointertap', () => {
-        if (hexObj.selected) {
-          hexObj.selected = false;
-          hoverRing.visible = false;
-          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 0.75, 0.6);
-          selectedHex = null;
-          return;
-        }
-        if (selectedHex && selectedHex !== hexObj) {
-          selectedHex.selected = false;
-          selectedHex.hoverRing.visible = false;
-          redrawHex(selectedHex.g, selectedHex.baseColor, selectedHex.baseAlpha, palette.stroke, 0.75, 0.6);
-        }
-        hexObj.selected = true;
-        selectedHex = hexObj;
-        hoverRing.visible = true;
-        redrawHex(g, palette.selected, 0.95, 0xffffff, 1.5, 0.8);
-      });
-    };
-
-    // центр
-    const center = createHex(0,0,palette.L1,0.9,palette.stroke,'Center',palette.label);
-    wireInteractions(center);
+    // Центральная оранжевая сота
+    const center = createHex(0, 0, 'Center');
+    center.graphics.clear()
+          .poly(HEX_PTS, true)
+          .fill(0xff622b, 1) // Оранжевая заливка
+          .stroke({ color: 0xffffff, width: 1, alpha: 1 });
     HEXES.push(center);
 
-    // 6 направлений
-    for(let i=0;i<6;i++){
-      const {q,r}=DIRS[i];
-      const main = createHex(q,r,palette.L2[i%palette.L2.length],0.85,palette.stroke,`R1-${i+1}`,palette.label);
-      wireInteractions(main);
+    // 6 направлений + лучи
+    for (let i = 0; i < 6; i++) {
+      const {q, r} = DIRS[i];
+      
+      // Основной узел направления
+      const main = createHex(q, r, `R1-${i+1}`);
       HEXES.push(main);
 
-      // луч из 3
-      for(let s=1;s<=3;s++){
-        const qq=q+s*DIRS[i].q, rr=r+s*DIRS[i].r;
-        const node = createHex(qq,rr,palette.L2[i%palette.L2.length],0.35,palette.stroke,``,palette.label);
-        wireInteractions(node);
+      // Луч из 3 узлов
+      for (let s = 1; s <= 3; s++) {
+        const qq = q + s * DIRS[i].q;
+        const rr = r + s * DIRS[i].r;
+        const node = createHex(qq, rr, '');
         HEXES.push(node);
       }
     }
 
-    M('OK: n8n dark тема с тонкими белыми обводками');
+    // --- Взаимодействия ---
+    const wireInteractions = (hexObj) => {
+      hexObj.graphics.on('pointerover', () => {
+        if (!hexObj.selected) {
+          hexObj.graphics.clear()
+                .poly(HEX_PTS, true)
+                .fill(0x000000, 0) // Прозрачная заливка
+                .stroke({ color: 0x34a2db, width: 2, alpha: 1 }); // Синяя обводка при ховере
+        }
+      });
+
+      hexObj.graphics.on('pointerout', () => {
+        if (!hexObj.selected) {
+          hexObj.graphics.clear()
+                .poly(HEX_PTS, true)
+                .fill(0x000000, 0) // Прозрачная заливка
+                .stroke({ color: 0xffffff, width: 1, alpha: 1 }); // Возвращаем белую обводку
+        }
+      });
+
+      hexObj.graphics.on('pointertap', () => {
+        // Снимаем выделение с предыдущей соты
+        if (selectedHex && selectedHex !== hexObj) {
+          selectedHex.selected = false;
+          selectedHex.graphics.clear()
+                .poly(HEX_PTS, true)
+                .fill(0x000000, 0)
+                .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+        }
+
+        // Если кликаем по уже выделенной - снимаем выделение
+        if (hexObj.selected) {
+          hexObj.selected = false;
+          hexObj.graphics.clear()
+                .poly(HEX_PTS, true)
+                .fill(0x000000, 0)
+                .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+          selectedHex = null;
+        } else {
+          // Выделяем новую соту синим
+          hexObj.selected = true;
+          selectedHex = hexObj;
+          hexObj.graphics.clear()
+                .poly(HEX_PTS, true)
+                .fill(0x34a2db, 1) // Синяя заливка
+                .stroke({ color: 0xffffff, width: 2, alpha: 1 }); // Белая обводка
+        }
+      });
+    };
+
+    // Применяем взаимодействия ко всем сотам
+    HEXES.forEach(hex => wireInteractions(hex));
+
+    M('Готово: оранжевый центр, выделение синим, шестиугольники с закругленными углами');
   })();
   </script>
 </body>
