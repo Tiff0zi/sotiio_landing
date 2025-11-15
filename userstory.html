@@ -380,39 +380,39 @@
                 };
 
                 // Pixi
-                const pollPixi = () => {
+               const pollPixi = () => {
                     fetch("https://n8n.sotiio.com/webhook/get_pixi", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Accept": "application/json"
-                        },
-                        body: JSON.stringify({ map_id: currentMapId })
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                      },
+                      body: JSON.stringify({ map_id: currentMapId })
                     })
                     .then(safeParseTextResponse)
                     .then(data => {
-                        if (data && data.status === "pending") {
-                            setTimeout(pollPixi, pollInterval);
-                            return;
-                        }
-
-                        const pixiMap = Array.isArray(data) ? data[0] : data;
-
-                        if (pixiMap && pixiMap.format && pixiMap.cells) {
-                            if (window.parent && window.parent !== window) {
-                                window.parent.postMessage(
-                                  { type: "map:pixi", payload: pixiMap },
-                                  "*"
-                                );
-                            }
-                        } else {
-                            console.warn("Неожиданная структура ответа (Pixi):", data);
-                        }
+                      // если бек сказал "ещё считаю" — ждём и опрашиваем снова
+                      if (data && data.status === "pending") {
+                        setTimeout(pollPixi, pollInterval);
+                        return;
+                      }
+                  
+                      // n8n может вернуть либо массив, либо объект
+                      const pixiMap = Array.isArray(data) ? data[0] : data;
+                  
+                      // БЕЗ проверок формата — просто отправляем,
+                      // нормализация будет внутри pixi.html
+                      if (window.parent && window.parent !== window) {
+                        window.parent.postMessage(
+                          { type: "map:pixi", payload: pixiMap },
+                          "*"
+                        );
+                      }
                     })
                     .catch(err => {
-                        console.warn("Ошибка при получении Pixi карты:", err);
+                      console.warn("Ошибка при получении Pixi карты:", err);
                     });
-                };
+                  };
 
                 pollJsMind();
                 pollPixi();
