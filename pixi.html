@@ -40,7 +40,7 @@
     container.x = app.screen.width / 2;
     container.y = app.screen.height / 2;
 
-    // Пан/зум
+    // ───────────────── пан/зум ─────────────────
     let isDragging = false;
     let lastMousePosition = null;
     let scale = 1;
@@ -95,7 +95,7 @@
       }
     }, { passive: false });
 
-    // HEX математика
+    // ───────────────── HEX-геометрия ─────────────────
     const SQRT3 = Math.sqrt(3);
     const size = 42;
 
@@ -214,11 +214,61 @@
       });
     };
 
-    const drawMap = (mapJson) => {
+    // ───────────────── НОРМАЛИЗАЦИЯ ПРИЛЕТАЮЩЕГО JSON ─────────────────
+    function normalizePixiPayload(raw) {
+      if (!raw) return { format:'pixi_hex', cells:[] };
+
+      // если уже нормальный формат
+      if (raw.format === 'pixi_hex' && Array.isArray(raw.cells)) {
+        return raw;
+      }
+
+      let obj = raw;
+
+      // часто n8n заворачивает в массив
+      if (Array.isArray(obj)) {
+        obj = obj[0];
+      }
+
+      // твой кейс: { "": { "L1": {...}, "L2-1": {...} } }
+      if (obj && typeof obj === 'object' && '' in obj && typeof obj[''] === 'object') {
+        obj = obj[''];
+      }
+
+      // ожидаем словарь: { "L1": {...}, "L2-1": {...}, ... }
+      if (obj && typeof obj === 'object' && !Array.isArray(obj) && !obj.cells) {
+        const cells = Object.values(obj).map((cell) => {
+          if (!cell || typeof cell !== 'object') return null;
+          const q = Number(cell.q) || 0;
+          const r = Number(cell.r) || 0;
+          const label = cell.label || '';
+          const id = cell.id;
+
+          return {
+            q,
+            r,
+            label,
+            data: {
+              id,
+              ...(cell.data || {})
+            }
+          };
+        }).filter(Boolean);
+
+        return { format:'pixi_hex', cells };
+      }
+
+      // на крайний случай — не трогаем
+      return raw;
+    }
+
+    const drawMap = (mapJsonRaw) => {
+      const mapJson = normalizePixiPayload(mapJsonRaw);
+
       clearMap();
 
       if (!mapJson || !Array.isArray(mapJson.cells)) {
-        console.warn('Ожидался формат { format:"pixi_hex", cells:[...] }');
+        console.warn('Pixi: ожидался формат { format:"pixi_hex", cells:[...] } либо словарь id -> {q,r,label,...}');
         return;
       }
 
@@ -245,7 +295,7 @@
       }
     });
 
-    console.log('Pixi viewer готов. Ждёт { type:"map:pixi", payload:{ format:"pixi_hex", cells:[...] } }');
+    console.log('Pixi viewer готов. Ждёт { type:"map:pixi", payload: ... } (и сам приведёт объект к нужному формату).');
   })();
   </script>
 </body>
