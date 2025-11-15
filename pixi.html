@@ -142,51 +142,87 @@
       centerHex = null;
     };
 
-    // ─── ХЕЛПЕР ПЕРЕНОСА ТЕКСТА ────────────────────────────────
-    function wrapLabel(text, maxCharsPerLine = 14, maxLines = 3) {
+    // ─── ХЕЛПЕР ПЕРЕНОСА ТЕКСТА ПО ТВОИМ ПРАВИЛАМ ─────────────
+    function wrapLabel(text, maxCharsSingle = 9, maxLineLenMulti = 10, maxLines = 4) {
       const str = String(text || '').trim();
       if (!str) return '';
 
-      const words = str.split(/\s+/);
+      const words = str.split(/\s+/).filter(Boolean);
+      const wordCount = words.length;
+
+      // helper: обрезать ОДНО слово по правилу 1
+      const cutWord = (word) => {
+        if (word.length <= maxCharsSingle) return word;
+        return word.slice(0, maxCharsSingle) + '.';
+      };
+
+      // 1) ОДНО слово
+      if (wordCount === 1) {
+        return cutWord(words[0]);
+      }
+
       const lines = [];
+
+      // 2) 2 или 3 слова: каждое на своей строке
+      if (wordCount === 2 || wordCount === 3) {
+        for (let i = 0; i < wordCount && lines.length < maxLines; i++) {
+          lines.push(cutWord(words[i]));
+        }
+        return lines.join('\n');
+      }
+
+      // 3) >3 слова: допускаем несколько слов в строке, но ≤ 10 символов
       let current = '';
 
-      for (const word of words) {
-        const w = word.trim();
-        if (!w) continue;
+      for (let i = 0; i < wordCount; i++) {
+        let w = words[i];
 
-        const candidate = current ? current + ' ' + w : w;
+        // если слово само по себе длинное – обрезаем по правилу 1
+        if (w.length > maxCharsSingle) {
+          w = cutWord(w);
+        }
 
-        if (candidate.length <= maxCharsPerLine) {
-          current = candidate;
+        if (!current) {
+          // строка пустая – просто ставим слово
+          current = w;
         } else {
-          if (current) {
-            lines.push(current);
-          }
-          if (w.length > maxCharsPerLine) {
-            // слово само по себе длиннее лимита — режем
-            lines.push(w.slice(0, maxCharsPerLine - 1) + '…');
+          // пробуем добавить " " + w, не превышая maxLineLenMulti
+          const candidate = current + ' ' + w;
+          if (candidate.length <= maxLineLenMulti) {
+            current = candidate;
           } else {
+            // текущая строка готова, пушим
+            lines.push(current);
+            if (lines.length >= maxLines) break;
             current = w;
           }
+        }
+
+        // если мы на последнем слове
+        if (i === wordCount - 1 && current && lines.length < maxLines) {
+          lines.push(current);
         }
 
         if (lines.length >= maxLines) break;
       }
 
-      if (lines.length < maxLines && current) {
+      // safety: если текущая строка не запушена (и есть место) — пушим
+      if (current && lines.length < maxLines && lines[lines.length - 1] !== current) {
         lines.push(current);
       }
 
-      // если всё равно больше maxLines — режем
+      // на всякий случай: ограничиваем строки до maxLines
       if (lines.length > maxLines) {
         lines.length = maxLines;
       }
 
-      // проверим последнюю строку на длину
-      const lastIdx = lines.length - 1;
-      if (lastIdx >= 0 && lines[lastIdx].length > maxCharsPerLine) {
-        lines[lastIdx] = lines[lastIdx].slice(0, maxCharsPerLine - 1) + '…';
+      // финальная проверка: если строка содержит одно слово и >9 символов,
+      // обрезаем по правилу 1
+      for (let i = 0; i < lines.length; i++) {
+        const parts = lines[i].split(/\s+/).filter(Boolean);
+        if (parts.length === 1 && lines[i].length > maxCharsSingle) {
+          lines[i] = cutWord(parts[0]);
+        }
       }
 
       return lines.join('\n');
@@ -209,7 +245,7 @@
 
       container.addChild(graphics);
 
-      const wrapped = wrapLabel(labelText, 14, 3); // можно поиграть цифрами
+      const wrapped = wrapLabel(labelText);
       const text = new PIXI.Text({
         text: wrapped,
         style: {
@@ -290,7 +326,7 @@
       });
     };
 
-    // ─── нормализация payload в {format, cells[]} ──────────────
+    // ─── нормализация payload ──────────────────────────────────
     function normalizePixiPayload(raw) {
       if (!raw) return { format: 'pixi_hex', cells: [] };
 
