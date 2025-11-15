@@ -44,7 +44,7 @@
     const app = new PIXI.Application();
     await app.init({
       resizeTo: window,
-      background: '#1e1e1e', // Тёмный фон как в n8n
+      background: '#1e1e1e',
       antialias: true,
       resolution: Math.min(3, window.devicePixelRatio || 1)
     });
@@ -75,7 +75,7 @@
     const makePolygon = (pts)=> new PIXI.Polygon(pts.reduce((arr,_,i)=> (i%2===0?arr.push({x:pts[i],y:pts[i+1]}):arr,arr),[]).map(p=>[p.x,p.y]).flat());
 
     // универсальная перерисовка одной соты
-    const redrawHex = (g, fillColor, fillAlpha, strokeColor, strokeWidth=1, strokeAlpha=0.25) => {
+    const redrawHex = (g, fillColor, fillAlpha, strokeColor, strokeWidth=1.5, strokeAlpha=0.8) => {
       g.clear();
       g.poly(HEX_PTS, true)
        .fill({ color: fillColor, alpha: fillAlpha })
@@ -88,17 +88,17 @@
 
       // основная сота
       const g = new PIXI.Graphics();
-      redrawHex(g, baseColor, baseAlpha, strokeColor, 1, 0.25);
+      redrawHex(g, baseColor, baseAlpha, strokeColor, 1.5, 0.8); // Белая обводка для всех
       g.x=x; g.y=y;
       g.eventMode='static';
       g.cursor='pointer';
-      g.hitArea = makePolygon(HEX_PTS); // точный хит-тест
+      g.hitArea = makePolygon(HEX_PTS);
       cam.addChild(g);
 
-      // «свечение» при ховере (толстый контур, чуть больше масштаб)
+      // «свечение» при ховере
       const hoverRing = new PIXI.Graphics();
       hoverRing.poly(HEX_PTS, true)
-               .stroke({ color: 0x34a2db, width: 3, alpha: 0.6, alignment: 0.5 }); // Синий n8n для ховера
+               .stroke({ color: 0x34a2db, width: 3, alpha: 0.9, alignment: 0.5 });
       hoverRing.x=x; hoverRing.y=y;
       hoverRing.scale.set(1.06);
       hoverRing.visible=false;
@@ -120,42 +120,28 @@
       return { g, hoverRing, t, q, r, baseColor, baseAlpha, strokeColor, selected:false };
     };
 
-    const addLabel=(x,y,text,color=0xe0e0e0)=>{
-      const t=new PIXI.Text({
-        text,
-        style:{
-          fill:color,
-          fontSize:12,
-          fontFamily:'system-ui,Arial',
-          fontWeight:'500'
-        }
-      });
-      t.anchor.set(0.5);t.x=x;t.y=y;cam.addChild(t);
-    };
-
-    // --- Цвета в стиле n8n dark ---
+    // --- Цвета в стиле n8n dark с белыми обводками ---
     let palette;
     try {
       const c = await fetch('./color.json').then(r=>r.json());
       const toHex = s => s?.startsWith('#') ? parseInt(s.slice(1),16) : 0x34a2db;
       palette = {
-        // Основные цвета n8n dark
-        L1: toHex(c.fill_sota) || 0x34a2db,           // Центр - синий акцент n8n
+        L1: toHex(c.fill_sota) || 0x34a2db,
         L2: Array.isArray(c.color_sota) ? c.color_sota.map(x=>parseInt(x.replace('#',''),16)) :
-            [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c], // Приглушённые цвета
-        stroke: parseInt((c.stroke_sota||'#444444').replace('#',''),16),    // Тёмно-серая обводка
-        label: parseInt((c.color_label||'#e0e0e0').replace('#',''),16),     // Светлый текст
-        hover: 0x34a2db,   // Синий n8n для ховера
-        selected: 0xff622b  // Оранжевый для выделения (как в оригинале)
+            [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c],
+        stroke: 0xffffff,     // Белая обводка для всех узлов
+        label: parseInt((c.color_label||'#e0e0e0').replace('#',''),16),
+        hover: 0x34a2db,
+        selected: 0xff622b
       };
     } catch(e){
       palette = { 
-        L1: 0x34a2db,      // Синий n8n для центра
-        L2: [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c], // Приглушённые тона
-        stroke: 0x444444,   // Тёмно-серая обводка
-        label: 0xe0e0e0,    // Светлый текст
-        hover: 0x34a2db,    // Синий n8n для ховера
-        selected: 0xff622b   // Оранжевый для выделения
+        L1: 0x34a2db,
+        L2: [0x2c5282, 0x2d7a5c, 0x744c8c, 0x8c4a2d, 0x8c8c2d, 0x4a8c8c],
+        stroke: 0xffffff,     // Белая обводка для всех узлов
+        label: 0xe0e0e0,
+        hover: 0x34a2db,
+        selected: 0xff622b
       };
     }
 
@@ -172,15 +158,16 @@
       g.on('pointerover', () => {
         if (!hexObj.selected) {
           hoverRing.visible = true;
-          // Мягкое подсвечивание синим n8n
-          redrawHex(g, hexObj.baseColor, Math.min(1, hexObj.baseAlpha + 0.1), palette.hover, 2, 0.6);
+          // Подсвечивание с синей обводкой при ховере
+          redrawHex(g, hexObj.baseColor, Math.min(1, hexObj.baseAlpha + 0.1), palette.hover, 2.5, 0.9);
         }
       });
 
       g.on('pointerout', () => {
         if (!hexObj.selected) {
           hoverRing.visible = false;
-          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 1, 0.25);
+          // Возвращаем белую обводку
+          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 1.5, 0.8);
         }
       });
 
@@ -189,7 +176,7 @@
         if (hexObj.selected) {
           hexObj.selected = false;
           hoverRing.visible = false;
-          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 1, 0.25);
+          redrawHex(g, hexObj.baseColor, hexObj.baseAlpha, palette.stroke, 1.5, 0.8);
           selectedHex = null;
           return;
         }
@@ -197,29 +184,29 @@
         if (selectedHex && selectedHex !== hexObj) {
           selectedHex.selected = false;
           selectedHex.hoverRing.visible = false;
-          redrawHex(selectedHex.g, selectedHex.baseColor, selectedHex.baseAlpha, palette.stroke, 1, 0.25);
+          redrawHex(selectedHex.g, selectedHex.baseColor, selectedHex.baseAlpha, palette.stroke, 1.5, 0.8);
         }
-        // выделить текущую оранжевым
+        // выделить текущую оранжевым с белой обводкой
         hexObj.selected = true;
         selectedHex = hexObj;
         hoverRing.visible = true;
-        redrawHex(g, palette.selected, 0.95, 0xffffff, 2.5, 0.9);
+        redrawHex(g, palette.selected, 0.95, 0xffffff, 3, 1.0);
       });
     };
 
-    // центр - синий n8n
+    // центр - синий n8n с белой обводкой
     const center = createHex(0,0,palette.L1,0.9,palette.stroke,'Center',palette.label);
     wireInteractions(center);
     HEXES.push(center);
 
-    // 6 направлений - приглушённые цвета
+    // 6 направлений - приглушённые цвета с белыми обводками
     for(let i=0;i<6;i++){
       const {q,r}=DIRS[i];
       const main = createHex(q,r,palette.L2[i%palette.L2.length],0.85,palette.stroke,`R1-${i+1}`,palette.label);
       wireInteractions(main);
       HEXES.push(main);
 
-      // луч из 3 (полупрозрачные)
+      // луч из 3 (полупрозрачные) с белыми обводками
       for(let s=1;s<=3;s++){
         const qq=q+s*DIRS[i].q, rr=r+s*DIRS[i].r;
         const node = createHex(qq,rr,palette.L2[i%palette.L2.length],0.35,palette.stroke,``,palette.label);
@@ -228,7 +215,7 @@
       }
     }
 
-    M('OK: n8n dark тема, пан/зум; hover-подсветка синим; клик — оранжевое выделение.');
+    M('OK: n8n dark тема, у всех узлов белая обводка, пан/зум; hover-подсветка синим; клик — оранжевое выделение.');
   })();
   </script>
 </body>
