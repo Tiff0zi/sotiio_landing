@@ -142,7 +142,7 @@
       centerHex = null;
     };
 
-    // ─── ХЕЛПЕР ПЕРЕНОСА ТЕКСТА ПО ТВОИМ ПРАВИЛАМ ─────────────
+    // ─── ХЕЛПЕР ПЕРЕНОСА ТЕКСТА (твои правила) ────────────────
     function wrapLabel(text, maxCharsSingle = 9, maxLineLenMulti = 10, maxLines = 4) {
       const str = String(text || '').trim();
       if (!str) return '';
@@ -150,7 +150,6 @@
       const words = str.split(/\s+/).filter(Boolean);
       const wordCount = words.length;
 
-      // helper: обрезать ОДНО слово по правилу 1
       const cutWord = (word) => {
         if (word.length <= maxCharsSingle) return word;
         return word.slice(0, maxCharsSingle) + '.';
@@ -163,7 +162,7 @@
 
       const lines = [];
 
-      // 2) 2 или 3 слова: каждое на своей строке
+      // 2) 2 или 3 слова — каждое слово на своей строке
       if (wordCount === 2 || wordCount === 3) {
         for (let i = 0; i < wordCount && lines.length < maxLines; i++) {
           lines.push(cutWord(words[i]));
@@ -171,34 +170,30 @@
         return lines.join('\n');
       }
 
-      // 3) >3 слова: допускаем несколько слов в строке, но ≤ 10 символов
+      // 3) >3 слов — несколько слов в строке, но ≤ 10 символов
       let current = '';
 
       for (let i = 0; i < wordCount; i++) {
         let w = words[i];
 
-        // если слово само по себе длинное – обрезаем по правилу 1
+        // ограничиваем само слово, если оно слишком длинное
         if (w.length > maxCharsSingle) {
           w = cutWord(w);
         }
 
         if (!current) {
-          // строка пустая – просто ставим слово
           current = w;
         } else {
-          // пробуем добавить " " + w, не превышая maxLineLenMulti
           const candidate = current + ' ' + w;
           if (candidate.length <= maxLineLenMulti) {
             current = candidate;
           } else {
-            // текущая строка готова, пушим
             lines.push(current);
             if (lines.length >= maxLines) break;
             current = w;
           }
         }
 
-        // если мы на последнем слове
         if (i === wordCount - 1 && current && lines.length < maxLines) {
           lines.push(current);
         }
@@ -206,18 +201,15 @@
         if (lines.length >= maxLines) break;
       }
 
-      // safety: если текущая строка не запушена (и есть место) — пушим
       if (current && lines.length < maxLines && lines[lines.length - 1] !== current) {
         lines.push(current);
       }
 
-      // на всякий случай: ограничиваем строки до maxLines
       if (lines.length > maxLines) {
         lines.length = maxLines;
       }
 
-      // финальная проверка: если строка содержит одно слово и >9 символов,
-      // обрезаем по правилу 1
+      // финальная проверка: одна строка = одно длинное слово → режем по правилу 1
       for (let i = 0; i < lines.length; i++) {
         const parts = lines[i].split(/\s+/).filter(Boolean);
         if (parts.length === 1 && lines[i].length > maxCharsSingle) {
@@ -228,13 +220,95 @@
       return lines.join('\n');
     }
 
+    // ─── ЦВЕТОВАЯ ПАЛИТРА ПО L1–L4 ─────────────────────────────
+
+    // базовые цвета L2-1..L2-6 (из твоей CMYK-палитры, переведено в RGB)
+    const L2_BASE_COLORS = {
+      1: 0xd98073, // L2-1 ↖
+      2: 0xffd9bf, // L2-2 ↗
+      3: 0x61f29d, // L2-3 →
+      4: 0x4991b6, // L2-4 ↘
+      5: 0x6680cc, // L2-5 ↙
+      6: 0xe64073  // L2-6 ←
+    };
+
+    function parseLevelVector(cell) {
+      const id = (cell && cell.data && cell.data.id) || cell.id || '';
+      const m = /^L(\d)(?:-([0-9]+))?(?:-([0-9]+))?/.exec(id);
+      let level = null;
+      let sector = null;
+      let order = null;
+
+      if (m) {
+        level = parseInt(m[1], 10);
+        if (m[2]) sector = parseInt(m[2], 10);
+        if (m[3]) order = parseInt(m[3], 10);
+      }
+
+      // fallback по радиусу, если id нет
+      if (!level) {
+        const q = Number(cell.q) || 0;
+        const r = Number(cell.r) || 0;
+        const s = -q - r;
+        const radius = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
+        if (radius === 0) level = 1;
+        else if (radius === 1) level = 2;
+        else if (radius === 2) level = 3;
+        else level = 4;
+      }
+
+      return { level, sector, order };
+    }
+
+    function getFillStyle(cell) {
+      const { level, sector, order } = parseLevelVector(cell);
+
+      // L1 — центр, оставляем оранжевый
+      if (level === 1) {
+        return { color: 0xff622b, alpha: 1 };
+      }
+
+      const baseColor = (sector && L2_BASE_COLORS[sector]) ? L2_BASE_COLORS[sector] : 0x000000;
+
+      if (!sector) {
+        // если не смогли определить сектор — пусть будет прозрачный
+        return { color: baseColor, alpha: 0 };
+      }
+
+      if (level === 2) {
+        // L2 — база, лёгкая заливка
+        return { color: baseColor, alpha: 0.15 };
+      }
+
+      if (level === 3) {
+        // L3 — те же цвета, но плотнее
+        return { color: baseColor, alpha: 0.5 };
+      }
+
+      if (level >= 4) {
+        // L4 — чередующаяся прозрачность
+        const idx = order || 1;
+        const isOdd = idx % 2 === 1;
+        const alpha = isOdd ? 0.2 : 0.1;
+        return { color: baseColor, alpha };
+      }
+
+      // дефолт
+      return { color: baseColor, alpha: 0.3 };
+    }
+
     // ─── создание одной соты ───────────────────────────────────
-    const createHex = (q, r, labelText) => {
+    const createHex = (cell) => {
+      const q = Number(cell.q) || 0;
+      const r = Number(cell.r) || 0;
+      const labelText = cell.label || '';
       const { x, y } = axialToPixel(q, r);
+
+      const { color: fillColor, alpha: fillAlpha } = getFillStyle(cell);
 
       const graphics = new PIXI.Graphics();
       graphics.poly(HEX_PTS, true)
-              .fill(0x000000, 0)
+              .fill(fillColor, fillAlpha)
               .stroke({ color: 0xffffff, width: 1, alpha: 1 });
 
       graphics.x = x;
@@ -267,8 +341,18 @@
         q,
         r,
         selected: false,
-        data: {}
+        data: cell.data || cell,
+        baseFillColor: fillColor,
+        baseFillAlpha: fillAlpha
       };
+    };
+
+    const applyBaseStyle = (hexObj) => {
+      hexObj.graphics
+        .clear()
+        .poly(HEX_PTS, true)
+        .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
+        .stroke({ color: 0xffffff, width: 1, alpha: 1 });
     };
 
     const wireInteractions = (hexObj) => {
@@ -278,35 +362,26 @@
         if (!hexObj.selected) {
           hexObj.graphics.clear()
                 .poly(HEX_PTS, true)
-                .fill(0x000000, 0)
+                .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
                 .stroke({ color: 0x34a2db, width: 2, alpha: 1 });
         }
       });
 
       hexObj.graphics.on('pointerout', () => {
         if (!hexObj.selected) {
-          hexObj.graphics.clear()
-                .poly(HEX_PTS, true)
-                .fill(0x000000, 0)
-                .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+          applyBaseStyle(hexObj);
         }
       });
 
       hexObj.graphics.on('pointertap', () => {
         if (selectedHex && selectedHex !== hexObj) {
           selectedHex.selected = false;
-          selectedHex.graphics.clear()
-                .poly(HEX_PTS, true)
-                .fill(0x000000, 0)
-                .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+          applyBaseStyle(selectedHex);
         }
 
         if (hexObj.selected) {
           hexObj.selected = false;
-          hexObj.graphics.clear()
-                .poly(HEX_PTS, true)
-                .fill(0x000000, 0)
-                .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+          applyBaseStyle(hexObj);
           selectedHex = null;
         } else {
           hexObj.selected = true;
@@ -381,20 +456,12 @@
       console.log('Pixi: строим карту из', cells.length, 'ячеек');
 
       cells.forEach((cell, idx) => {
-        const q = Number(cell.q) || 0;
-        const r = Number(cell.r) || 0;
-        const label = cell.label || '';
-        const hex = createHex(q, r, label);
-
-        hex.data = cell.data || cell;
+        const hex = createHex(cell);
         HEXES.push(hex);
 
         if (idx === 0) {
           centerHex = hex;
-          hex.graphics.clear()
-            .poly(HEX_PTS, true)
-            .fill(0xff622b, 1)
-            .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+          // центр уже раскрашен по getFillStyle(L1) — оранжевый
         } else {
           wireInteractions(hex);
         }
