@@ -145,6 +145,14 @@
     }
 
     async function setData(mind){
+      // Извлекаем map_id если он есть в payload
+      if (mind && mind.map_id) {
+        currentMapId = mind.map_id;
+        // Убираем map_id из данных карты чтобы не мешал
+        const { map_id, ...mindData } = mind;
+        mind = mindData;
+      }
+
       const safe = toNodeTreeIfPossible(mind);
       if (!safe || safe.format!=='node_tree' || !safe.data) {
         console.error('jsmind.html: нужен {format:"node_tree", data:{...}}');
@@ -164,6 +172,7 @@
       window.addEventListener('resize', () => jm.resize());
     }
 
+    // Клик по узлам -> отправляем данные родителю
     document.getElementById('jsmind_container').addEventListener('click', (e)=>{
       const el = e.target.closest('.jmnode');
       if (!el) {
@@ -184,6 +193,8 @@
       selectedNodeEl = el;
 
       const nodeData = (node.data && node.data.data) || node.data || {};
+      
+      // Формируем стандартный payload для контейнера
       const payload = {
         map_id: currentMapId,
         node_id: node.id,
@@ -202,9 +213,6 @@
     window.addEventListener('message', (ev)=>{
       const msg = ev.data || {};
       if (msg.type === 'map:jsmind') {
-        if (msg.payload && msg.payload.map_id) {
-          currentMapId = msg.payload.map_id;
-        }
         setData(msg.payload).catch(err => {
           console.error('Ошибка показа карты (jsMind):', err);
         });
