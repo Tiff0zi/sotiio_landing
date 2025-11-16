@@ -83,6 +83,7 @@
     });
 
     let selectedNodeEl = null;
+    let currentMapId = null;
 
     function tagLevels(){
       const root = jm.get_root();
@@ -163,11 +164,9 @@
       window.addEventListener('resize', () => jm.resize());
     }
 
-    // Клик по узлам -> отправляем нормализованный payload родителю
     document.getElementById('jsmind_container').addEventListener('click', (e)=>{
       const el = e.target.closest('.jmnode');
       if (!el) {
-        // снятие выделения при клике в пустоту
         if (selectedNodeEl) {
           selectedNodeEl.classList.remove('selected');
           selectedNodeEl = null;
@@ -184,20 +183,17 @@
       el.classList.add('selected');
       selectedNodeEl = el;
 
-      const base = (node.data && node.data.data) || node.data || {};
-      const node_id = base.node_id || base.id || node.id;
-      const label = base.label || base.topic || node.topic || '';
+      const nodeData = (node.data && node.data.data) || node.data || {};
+      const payload = {
+        map_id: currentMapId,
+        node_id: node.id,
+        label: node.topic,
+        ...nodeData
+      };
 
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(
-          {
-            type:'node:click',
-            payload: {
-              node_id,
-              label,
-              raw: base
-            }
-          },
+          { type:'container:set', payload },
           '*'
         );
       }
@@ -206,6 +202,9 @@
     window.addEventListener('message', (ev)=>{
       const msg = ev.data || {};
       if (msg.type === 'map:jsmind') {
+        if (msg.payload && msg.payload.map_id) {
+          currentMapId = msg.payload.map_id;
+        }
         setData(msg.payload).catch(err => {
           console.error('Ошибка показа карты (jsMind):', err);
         });
