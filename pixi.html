@@ -13,7 +13,6 @@
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
     }
 
-    /* Панель палитры в виде гексагона */
     #palette-panel {
       position: fixed;
       top: 20px;
@@ -91,13 +90,12 @@
       transform: scale(1.15);
     }
 
-    /* Расположение секторов по кругу */
-    .palette-sector[data-sector="1"] { top: 10px; left: 50px; }  /* ↖ */
-    .palette-sector[data-sector="2"] { top: 10px; right: 50px; } /* ↗ */
-    .palette-sector[data-sector="3"] { top: 60px; right: 10px; } /* → */
-    .palette-sector[data-sector="4"] { bottom: 10px; right: 50px; } /* ↘ */
-    .palette-sector[data-sector="5"] { bottom: 10px; left: 50px; }  /* ↙ */
-    .palette-sector[data-sector="6"] { top: 60px; left: 10px; }  /* ← */
+    .palette-sector[data-sector="1"] { top: 10px; left: 50px; }
+    .palette-sector[data-sector="2"] { top: 10px; right: 50px; }
+    .palette-sector[data-sector="3"] { top: 60px; right: 10px; }
+    .palette-sector[data-sector="4"] { bottom: 10px; right: 50px; }
+    .palette-sector[data-sector="5"] { bottom: 10px; left: 50px; }
+    .palette-sector[data-sector="6"] { top: 60px; left: 10px; }
 
     .palette-toggle {
       position: absolute;
@@ -122,7 +120,6 @@
   </style>
 </head>
 <body>
-  <!-- Панель палитры в виде гексагона -->
   <div id="palette-panel" class="collapsed">
     <div class="palette-hexagon">
       <div class="palette-center">
@@ -150,7 +147,6 @@
     <button class="palette-toggle">•••</button>
   </div>
 
-  <!-- Pixi лежит в /PixiJS/pixi.min.js -->
   <script src="/PixiJS/pixi.min.js"></script>
 
   <script>
@@ -173,9 +169,9 @@
     const container = new PIXI.Container();
     app.stage.addChild(container);
 
-    let lastCells = null; // последняя карта, чтобы пересобирать при смене палитры
+    let lastCells = null;
+    let currentMapId = null;
 
-    // ─── РЕСАЙЗ ────────────────────────────────────────────────
     function resizeApp() {
       const w = document.documentElement.clientWidth || window.innerWidth || 800;
       const h = document.documentElement.clientHeight || window.innerHeight || 600;
@@ -190,7 +186,6 @@
     window.addEventListener('resize', resizeApp);
     setTimeout(resizeApp, 200);
 
-    // ─── Пан/зум ───────────────────────────────────────────────
     let isDragging = false;
     let lastMousePosition = null;
     let scale = 1;
@@ -245,7 +240,6 @@
       }
     }, { passive: false });
 
-    // ─── HEX-геометрия ─────────────────────────────────────────
     const SQRT3 = Math.sqrt(3);
     const size = 42;
 
@@ -279,7 +273,6 @@
       centerHex = null;
     };
 
-    // ─── ХЕЛПЕР ПЕРЕНОСА ТЕКСТА (твои правила) ─────────────
     function wrapLabel(text, maxCharsSingle = 9, maxLineLenMulti = 10, maxLines = 4) {
       const str = String(text || '').trim();
       if (!str) return '';
@@ -292,14 +285,12 @@
         return word.slice(0, maxCharsSingle) + '.';
       };
 
-      // 1) ОДНО слово
       if (wordCount === 1) {
         return cutWord(words[0]);
       }
 
       const lines = [];
 
-      // 2) 2 или 3 слова — каждое слово на своей строке
       if (wordCount === 2 || wordCount === 3) {
         for (let i = 0; i < wordCount && lines.length < maxLines; i++) {
           lines.push(cutWord(words[i]));
@@ -307,7 +298,6 @@
         return lines.join('\n');
       }
 
-      // 3) >3 слов — несколько слов в строке, но ≤ 10 символов
       let current = '';
 
       for (let i = 0; i < wordCount; i++) {
@@ -355,17 +345,14 @@
       return lines.join('\n');
     }
 
-    // ─── ЦВЕТОВАЯ ПАЛИТРА L1–L4 ───────────────────────────────
-
-    // базовые цвета L1 (центральная) и L2-1..L2-6
     const BASE_COLORS = {
-      0: 0xff622b, // Центральная сота L1
-      1: 0xd98073, // L2-1 ↖
-      2: 0xffd9bf, // L2-2 ↗
-      3: 0x61f29d, // L2-3 →
-      4: 0x4991b6, // L2-4 ↘
-      5: 0x6680cc, // L2-5 ↙
-      6: 0xe64073  // L2-6 ←
+      0: 0xff622b,
+      1: 0xd98073,
+      2: 0xffd9bf,
+      3: 0x61f29d,
+      4: 0x4991b6,
+      5: 0x6680cc,
+      6: 0xe64073
     };
 
     function intToHexColor(intVal) {
@@ -382,7 +369,7 @@
         input.value = intToHexColor(base);
 
         input.addEventListener('input', (e) => {
-          const val = e.target.value; // "#rrggbb"
+          const val = e.target.value;
           const intVal = parseInt(val.slice(1), 16);
           if (!Number.isNaN(intVal)) {
             BASE_COLORS[sector] = intVal;
@@ -393,7 +380,6 @@
         });
       });
 
-      // Toggle для панели палитры
       const palettePanel = document.getElementById('palette-panel');
       const toggleButton = document.querySelector('.palette-toggle');
       
@@ -402,14 +388,12 @@
         palettePanel.classList.toggle('collapsed');
       });
 
-      // Закрытие панели при клике вне её
       document.addEventListener('click', (e) => {
         if (!palettePanel.contains(e.target)) {
           palettePanel.classList.add('collapsed');
         }
       });
 
-      // Предотвращение закрытия при клике на саму панель
       palettePanel.addEventListener('click', (e) => {
         e.stopPropagation();
       });
@@ -447,15 +431,13 @@
     function getFillStyle(cell) {
       const { level, sector, order } = parseLevelVector(cell);
 
-      // Центральная сота (L1)
       if (level === 1) {
-        return { color: BASE_COLORS[0], alpha: 1 }; // alpha = 1
+        return { color: BASE_COLORS[0], alpha: 1 };
       }
 
-      // Второй уровень (L2) - радиальный
       if (level === 2) {
         const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
-        return { color: baseColor, alpha: 1 }; // alpha = 1
+        return { color: baseColor, alpha: 1 };
       }
 
       const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
@@ -464,23 +446,20 @@
         return { color: baseColor, alpha: 0 };
       }
 
-      // Третий уровень (L3)
       if (level === 3) {
-        return { color: baseColor, alpha: 0.5 }; // alpha = 0.5
+        return { color: baseColor, alpha: 0.5 };
       }
 
-      // Четвертый уровень (L4) и выше
       if (level >= 4) {
         const idx = order || 1;
         const isOdd = idx % 2 === 1;
-        const alpha = isOdd ? 0.2 : 0.1; // чередование 0.2 и 0.1
+        const alpha = isOdd ? 0.2 : 0.1;
         return { color: baseColor, alpha };
       }
 
       return { color: baseColor, alpha: 0 };
     }
 
-    // ─── создание одной соты ───────────────────────────────────
     const createHex = (cell) => {
       const q = Number(cell.q) || 0;
       const r = Number(cell.r) || 0;
@@ -523,7 +502,6 @@
         text,
         q,
         r,
-        label: labelText,
         selected: false,
         data: cell.data || cell,
         baseFillColor: fillColor,
@@ -575,30 +553,15 @@
                 .fill(0x34a2db, 1)
                 .stroke({ color: 0xffffff, width: 2, alpha: 1 });
 
-          // Единый путь: отправляем нормализованный payload
           if (window.parent && window.parent !== window) {
-            const raw = hexObj.data || {};
-            const node_id =
-              raw.node_id ||
-              raw.id ||
-              (raw.data && (raw.data.node_id || raw.data.id)) ||
-              null;
-            const label =
-              hexObj.label ||
-              raw.label ||
-              raw.topic ||
-              (raw.data && (raw.data.label || raw.data.topic)) ||
-              '';
-
+            const payload = {
+              map_id: currentMapId,
+              node_id: hexObj.data.id,
+              label: hexObj.data.label || hexObj.label,
+              ...hexObj.data
+            };
             window.parent.postMessage(
-              {
-                type: 'node:click',
-                payload: {
-                  node_id,
-                  label,
-                  raw
-                }
-              },
+              { type: 'container:set', payload },
               '*'
             );
           }
@@ -606,7 +569,6 @@
       });
     };
 
-    // ─── нормализация payload ──────────────────────────────────
     function normalizePixiPayload(raw) {
       if (!raw) return { format: 'pixi_hex', cells: [] };
 
@@ -649,7 +611,6 @@
       return raw;
     }
 
-    // ─── построение карты ──────────────────────────────────────
     function buildFromCells(cells) {
       clearMap();
 
@@ -658,7 +619,7 @@
         return;
       }
 
-      lastCells = cells.slice(); // запоминаем для пересборки при смене палитры
+      lastCells = cells.slice();
 
       console.log('Pixi: строим карту из', cells.length, 'ячеек');
 
@@ -684,12 +645,14 @@
       buildFromCells(norm.cells || []);
     }
 
-    // ─── API и сообщения от index.html ─────────────────────────
     window.PixiViewer = { setData: drawMap };
 
     window.addEventListener('message', (ev) => {
       const msg = ev.data || {};
       if (msg.type === 'map:pixi') {
+        if (msg.payload && msg.payload.map_id) {
+          currentMapId = msg.payload.map_id;
+        }
         drawMap(msg.payload);
       }
       if (msg.type === 'pixi:resize') {
