@@ -19,6 +19,7 @@
         overflow: hidden;
     }
 
+    /* ——— FULLSCREEN CENTERING ——— */
     .container {
         position: fixed;
         inset: 0;
@@ -26,30 +27,71 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+
+        /* 10% заполняемости — большие элементы, остальное пустота */
         gap: 40px;
-        z-index: 1;
     }
 
     h1 {
         font-size: 60px;
-        font-weight: 800;
-        text-align: center;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         margin: 0;
-        line-height: 1.1;
+        text-align: center;
+        color: #FFFFFF;
+        text-shadow:
+            0 0 0 #000,
+            0 0 18px rgba(0,0,0,0.9),
+            0 0 40px rgba(0,0,0,0.9);
+    }
+
+    h1 span {
+        display: block;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: 0.2em;
+        opacity: 0.7;
+        margin-bottom: 6px;
+    }
+
+    .giant-input-wrap {
+        width: min(900px, 100% - 80px);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    label {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #B0BEC5;
+    }
+
+    .giant-input-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
     }
 
     .giant-input {
-        width: 50vw;
-        max-width: 900px;
-        padding: 28px 30px;
-        font-size: 32px;
-        text-align: center;
-        background: #2A2A2A;
-        border: 2px solid #3F3F3F;
-        border-radius: 14px;
-        color: #F5F5F5;
+        flex: 1;
+        height: 80px;
+        border-radius: 18px;
+        border: 2px solid #333;
+        padding: 0 30px;
+        background: radial-gradient(circle at top, #252525 0, #111 50%, #050505 100%);
+        color: #FFF;
+        font-size: 28px;
+        font-weight: 600;
         outline: none;
+        box-shadow:
+            0 18px 40px rgba(0,0,0,0.8),
+            0 0 40px rgba(0,0,0,0.8) inset;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
     }
+
     .giant-input::placeholder { color: #8a8a8a; }
     .giant-input:focus { border-color: #FF6A3C; }
 
@@ -66,37 +108,27 @@
     }
     .primary-btn:hover { background: #FF7E55; }
     .primary-btn:disabled {
-        background: #555;
-        cursor: not-allowed;
-    }
-
-    .lang {
-        position: absolute;
-        top: 25px;
-        right: 25px;
-        z-index: 2;
-    }
-    .lang-select {
-        padding: 12px 16px;
-        font-size: 20px;
-        background: #2A2A2A;
-        border: 1px solid #3F3F3F;
-        border-radius: 10px;
-        color: #fff;
+        opacity: 0.5;
+        cursor: default;
     }
 
     .status {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
         font-size: 14px;
-        color: #ccc;
+        color: #B0BEC5;
         min-height: 18px;
         text-align: center;
-        z-index: 1;
     }
 
+    .lang-select {
+        border-radius: 999px;
+        border: 1px solid #555;
+        padding: 8px 14px;
+        background: #111;
+        color: #EEE;
+        font-size: 12px;
+    }
+
+    /* ——— LOADING OVERLAY ——— */
     .loading-overlay {
         position: fixed;
         inset: 0;
@@ -112,119 +144,70 @@
     .spinner {
         width: 40px;
         height: 40px;
-        border: 4px solid #333;
-        border-top: 4px solid #FF6A3C;
-        border-radius: 50%;
+        border-radius: 999px;
+        border: 4px solid rgba(255,255,255,0.2);
+        border-top-color: #FF6A3C;
         animation: spin 1s linear infinite;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
+
     .loading-text {
-        font-size: 18px;
-        color: #F5F5F5;
-        text-align: center;
+        font-size: 16px;
+        margin-bottom: 8px;
     }
+
     .loading-details {
-        font-size: 14px;
-        color: #A0A0A0;
-        margin-top: 8px;
+        font-size: 13px;
+        color: #B0BEC5;
+        max-width: 400px;
         text-align: center;
-    }
-    .progress-bar {
-        width: 320px;
-        height: 6px;
-        background: #2D2D2D;
-        border-radius: 3px;
-        margin: 20px 0;
-        overflow: hidden;
-    }
-    .progress-fill {
-        height: 100%;
-        background: #FF6A3C;
-        border-radius: 3px;
-        width: 0%;
-        transition: width 0.3s ease;
-    }
-    .timer {
-        font-size: 14px;
-        color: #A0A0A0;
-        margin-top: 10px;
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 768px) {
-        h1 { font-size: 34px; }
-        .giant-input {
-            width: 80vw;
-            font-size: 22px;
-            padding: 20px 18px;
-        }
-        .primary-btn {
-            font-size: 22px;
-            padding: 18px 40px;
-        }
-        .lang-select {
-            font-size: 16px;
-            padding: 8px 10px;
-        }
+        to { transform: rotate(360deg); }
     }
 </style>
 </head>
-
 <body>
-<div class="lang">
-    <select id="langSelect" class="lang-select">
-        <option value="ru">Русский (ru)</option>
-        <option value="en">English (en)</option>
-        <option value="es">Español (es)</option>
-        <option value="de">Deutsch (de)</option>
-        <option value="fr">Français (fr)</option>
-        <option value="pt">Português (pt)</option>
-        <option value="it">Italiano (it)</option>
-        <option value="uk">Українська (uk)</option>
-        <option value="pl">Polski (pl)</option>
-        <option value="tr">Türkçe (tr)</option>
-        <option value="zh">中文 (zh)</option>
-        <option value="ja">日本語 (ja)</option>
-        <option value="ko">한국어 (ko)</option>
-    </select>
-</div>
-
 <div class="container">
-    <h1>Выбери вселенную<br>для исследования</h1>
+    <h1>
+        <span>SOTIIO · USER STORY</span>
+        Describe your universe
+    </h1>
 
-    <input id="subject" class="giant-input"
-           placeholder="Например: Halo, Marvel, Dune, Cyberpunk..." />
+    <div class="giant-input-wrap">
+        <label for="subjectInput">Вселенная / исследуемая тема</label>
+        <div class="giant-input-row">
+            <input id="subjectInput" class="giant-input" type="text"
+                   placeholder="Например, &laquo;Перенастройка компетентностной модели КИБ&raquo;" />
+            <select id="langSelect" class="lang-select">
+                <option value="ru">Ответ на русском</option>
+                <option value="en">Answer in English</option>
+            </select>
+        </div>
+        <div class="status" id="status"></div>
+    </div>
 
-    <button id="submit" class="primary-btn">Отправить</button>
+    <button id="submitBtn" class="primary-btn">Запустить вселенную</button>
 </div>
 
-<div id="status" class="status"></div>
-
-<div class="loading-overlay" id="loadingOverlay">
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
-    <div class="loading-text">Создаём вашу карту знаний...</div>
-    <div class="loading-details">Это может занять от 3 до 7 минут</div>
-    <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+    <div class="loading-text">Генерируем карту...</div>
+    <div class="loading-details" id="loadingDetails">
+        Это может занять несколько минут — мы строим вселенную из вашей истории.
     </div>
-    <div class="timer" id="timer">Прошло: 0:00</div>
-    <div class="loading-details" id="loadingDetails">Инициализация процесса...</div>
 </div>
 
 <script>
-(function() {
-    const subjectInput   = document.getElementById("subject");
+(function(){
+    const subjectInput   = document.getElementById("subjectInput");
     const langSelect     = document.getElementById("langSelect");
-    const submitBtn      = document.getElementById("submit");
+    const submitBtn      = document.getElementById("submitBtn");
     const statusEl       = document.getElementById("status");
     const loadingOverlay = document.getElementById("loadingOverlay");
     const loadingDetails = document.getElementById("loadingDetails");
-    const progressFill   = document.getElementById("progressFill");
-    const timerEl        = document.getElementById("timer");
 
     let currentMapId = null;
     let startTime    = null;
@@ -235,7 +218,7 @@
         statusEl.style.color = color || "#ccc";
     }
 
-    function two(n) { return String(n).padStart(2, "0"); }
+    function two(n) { return String(n).padStart(2,"0"); }
 
     function mapIdFromNow() {
         const d  = new Date();
@@ -244,39 +227,39 @@
         const hh = two(d.getHours());
         const dd = two(d.getDate());
         const MM = two(d.getMonth() + 1);
-        const yy = two(d.getFullYear() % 100);
-        return `${ss}${mm}${hh}${dd}${MM}${yy}`;
-    }
-
-    function updateTimer() {
-        if (!startTime) return;
-        const now = new Date();
-        const diff = Math.floor((now - startTime) / 1000);
-        const minutes = Math.floor(diff / 60);
-        const seconds = diff % 60;
-        timerEl.textContent = `Прошло: ${minutes}:${two(seconds)}`;
-        const progress = Math.min((diff / 600) * 100, 100); // 10 минут = 100%
-        progressFill.style.width = progress + "%";
+        const YYYY = d.getFullYear();
+        return `map_${YYYY}${MM}${dd}_${hh}${mm}${ss}`;
     }
 
     function startOverlay() {
         startTime = new Date();
         loadingOverlay.classList.add("active");
         if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(updateTimer, 1000);
-        updateTimer();
+        timerInterval = setInterval(() => {
+            const diffMs = new Date() - startTime;
+            const sec = Math.floor(diffMs / 1000);
+            loadingDetails.textContent =
+                `Прошло ${sec} сек. — собираем карту вселенной…`;
+        }, 1000);
     }
 
     function stopOverlay() {
-        if (timerInterval) clearInterval(timerInterval);
         loadingOverlay.classList.remove("active");
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
     }
 
-    function safeParseTextResponse(response) {
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        return response.text().then(text => {
-            try { return text ? JSON.parse(text) : []; }
-            catch { throw new Error("Невалидный JSON ответ от сервера"); }
+    function safeParseTextResponse(resp) {
+        return resp.text().then(text => {
+            if (!text) return {};
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.warn("Не удалось распарсить JSON, вернули сырой текст:", e);
+                return { raw: text };
+            }
         });
     }
 
@@ -312,12 +295,8 @@
             body: JSON.stringify(payload)
         })
         .then(() => {
-            loadingDetails.textContent = "Запрос на создание карты отправлен...";
-        })
-        .catch(err => {
-            console.warn("Ошибка при отправке:", err);
-        })
-        .finally(() => {
+            say("Вселенная запускается. Ждем генерации карты…", "#FFCC80");
+
             const pollInterval = 15000;   // 15 сек
             const initialDelay = 120000;  // 2 минуты
 
@@ -353,7 +332,7 @@
                             if (window.parent && window.parent !== window) {
                                 const send = () => {
                                     window.parent.postMessage(
-                                      { type: "map:jsmind", payload: nodeTree },
+                                      { type: "map:jsmind", map_id: currentMapId, payload: nodeTree },
                                       "*"
                                     );
                                 };
@@ -373,7 +352,7 @@
                         }
                     })
                     .catch(err => {
-                        stopOverlay();
+                        console.warn("Ошибка при получении jsMind карты:", err);
                         say("Ошибка при получении jsMind карты: " + err.message, "crimson");
                         submitBtn.disabled = false;
                     });
@@ -391,20 +370,22 @@
                     })
                     .then(safeParseTextResponse)
                     .then(data => {
-                      // если бек сказал "ещё считаю" — ждём и опрашиваем снова
+                      const secondsPassed = Math.floor((new Date() - startTime) / 1000);
+
                       if (data && data.status === "pending") {
+                        loadingDetails.textContent =
+                          `Прошло ${secondsPassed} сек. — карта (Pixi) ещё не готова, проверяем снова через 15 секунд...`;
                         setTimeout(pollPixi, pollInterval);
                         return;
                       }
-                  
-                      // n8n может вернуть либо массив, либо объект
+
                       const pixiMap = Array.isArray(data) ? data[0] : data;
                   
                       // БЕЗ проверок формата — просто отправляем,
                       // нормализация будет внутри pixi.html
                       if (window.parent && window.parent !== window) {
                         window.parent.postMessage(
-                          { type: "map:pixi", payload: pixiMap },
+                          { type: "map:pixi", map_id: currentMapId, payload: pixiMap },
                           "*"
                         );
                       }
@@ -416,12 +397,20 @@
 
                 pollJsMind();
                 pollPixi();
+
             }, initialDelay);
+        })
+        .catch(err => {
+            stopOverlay();
+            console.error("Ошибка при отправке user story:", err);
+            say("Ошибка при отправке user story: " + err.message, "crimson");
+            submitBtn.disabled = false;
         });
     }
 
     submitBtn.addEventListener("click", sendUserStory);
-    subjectInput.addEventListener("keydown", e => {
+
+    subjectInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
             sendUserStory();
