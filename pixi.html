@@ -523,6 +523,7 @@
         text,
         q,
         r,
+        label: labelText,
         selected: false,
         data: cell.data || cell,
         baseFillColor: fillColor,
@@ -574,9 +575,30 @@
                 .fill(0x34a2db, 1)
                 .stroke({ color: 0xffffff, width: 2, alpha: 1 });
 
+          // Единый путь: отправляем нормализованный payload
           if (window.parent && window.parent !== window) {
+            const raw = hexObj.data || {};
+            const node_id =
+              raw.node_id ||
+              raw.id ||
+              (raw.data && (raw.data.node_id || raw.data.id)) ||
+              null;
+            const label =
+              hexObj.label ||
+              raw.label ||
+              raw.topic ||
+              (raw.data && (raw.data.label || raw.data.topic)) ||
+              '';
+
             window.parent.postMessage(
-              { type: 'container:set', payload: hexObj.data || {} },
+              {
+                type: 'node:click',
+                payload: {
+                  node_id,
+                  label,
+                  raw
+                }
+              },
               '*'
             );
           }
