@@ -143,7 +143,7 @@
     /* Container iframe */
     aside {
       border-left: 1px solid #333;
-      background: #222;
+      background: #2c2c2c;
       overflow: hidden;
       opacity: 0;
       transition: opacity 0.2s ease;
@@ -270,17 +270,15 @@
 
   <script>
   (function(){
-    const viewerWrap     = document.getElementById('viewerWrap');
-    const modeButtons    = document.querySelectorAll('.view-toggle-btn');
-    const mainLayout     = document.getElementById('mainLayout');
+    const viewerWrap   = document.getElementById('viewerWrap');
+    const modeButtons  = document.querySelectorAll('.view-toggle-btn');
+    const mainLayout   = document.getElementById('mainLayout');
     const containerFrame = document.getElementById('containerFrame');
-    const modal          = document.getElementById('modalUS');
-    const jsmindFrame    = document.getElementById('jsmindFrame');
-    const pixiFrame      = document.getElementById('pixiFrame');
+    const modal        = document.getElementById('modalUS');
+    const jsmindFrame  = document.getElementById('jsmindFrame');
+    const pixiFrame    = document.getElementById('pixiFrame');
 
-    const META_WEBHOOK_URL = 'https://n8n.sotiio.com/webhook/get_meta';
-
-    let currentMode  = 'jsmind';
+    let currentMode = 'jsmind';
     let currentMapId = null;
 
     function setMode(mode) {
@@ -291,7 +289,6 @@
         btn.classList.toggle('active', btn.dataset.viewMode === mode);
       });
     
-      // важно: сообщаем Pixi, что iframe теперь видим, нужно пересчитать размер
       if (mode === 'pixi' && pixiFrame && pixiFrame.contentWindow) {
         try {
           pixiFrame.contentWindow.postMessage({ type: 'pixi:resize' }, '*');
@@ -307,8 +304,27 @@
 
     setMode('jsmind');
 
-    // Контейнер (правая панель)
-    function openContainer(payload) {
+    async function openContainer(payload) {
+      try {
+        const response = await fetch('https://n8n.sotiio.com/webhook/get_meta', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            map_id: payload.map_id || currentMapId,
+            node_id: payload.node_id
+          })
+        });
+
+        if (response.ok) {
+          const metaData = await response.json();
+          payload.meta = metaData;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch meta data:', error);
+      }
+
       mainLayout.classList.add('with-container');
       try {
         containerFrame.contentWindow.postMessage(
@@ -322,10 +338,8 @@
 
     function closeContainer() {
       mainLayout.classList.remove('with-container');
-      // рамки / стили выделения внутри jsmind/pixi они сами могут сбрасывать
     }
 
-    // userstory модалка
     function openUserStory(){
       document.body.style.overflow = 'hidden';
       modal.classList.add('open');
@@ -345,111 +359,38 @@
       }
     });
 
-    // ─── Helper: извлечь map_id из входящего сообщения карты ───
-    function extractMapIdFromMessage(msg) {
-      if (!msg) return null;
-      if (msg.map_id) return msg.map_id;
-      if (msg.payload && msg.payload.map_id) return msg.payload.map_id;
-      if (msg.payload && msg.payload.map && msg.payload.map.map_id) return msg.payload.map.map_id;
-      return null;
-    }
-
-    // ─── Загрузка meta по map_id + node_id и открытие контейнера ───
-    async function handleNodeClick(nodePayload) {
-      const node_id = nodePayload.node_id || nodePayload.id || null;
-      const label   = nodePayload.label || nodePayload.topic || node_id || '';
-      const raw     = nodePayload.raw != null ? nodePayload.raw : nodePayload;
-
-      // Если по какой-то причине нет map_id или node_id — просто отрисуем базу
-      if (!node_id || !currentMapId) {
-        const fallbackPayload = {
-          map_id: currentMapId || null,
-          node_id,
-          label,
-          meta: null,
-          raw
-        };
-        openContainer(fallbackPayload);
-        return;
-      }
-
-      let meta = null;
-      let metaError = null;
-
-      try {
-        const res = await fetch(META_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            map_id: currentMapId,
-            node_id: node_id
-          })
-        });
-
-        if (res.ok) {
-          meta = await res.json();
-        } else {
-          metaError = `HTTP ${res.status}`;
-        }
-      } catch (e) {
-        console.warn('Ошибка при получении meta:', e);
-        metaError = String(e);
-      }
-
-      const payload = {
-        map_id: currentMapId,
-        node_id,
-        label,
-        meta,
-        raw,
-        meta_error: metaError || undefined
-      };
-
-      openContainer(payload);
-    }
-
-    // Роутинг сообщений
     window.addEventListener('message', (ev) => {
       const msg = ev.data || {};
 
-      // из userstory -> карты (jsmind)
-      if (msg.type === 'map:jsmind') {
-        const mapId = extractMapIdFromMessage(msg);
-        if (mapId) currentMapId = mapId;
+      if (msg.type === 'map:jsmind' || msg.type === 'map:pixi') {
+        if (msg.payload && msg.payload.map_id) {
+          currentMapId = msg.payload.map_id;
+        }
+      }
 
+      if (msg.type === 'map:jsmind') {
         setMode('jsmind');
         try {
           jsmindFrame.contentWindow.postMessage(msg, '*');
         } catch (e) {
           console.warn('forward to jsmindFrame failed', e);
         }
-        return;
       }
 
-      // из userstory -> карты (pixi)
       if (msg.type === 'map:pixi') {
-        const mapId = extractMapIdFromMessage(msg);
-        if (mapId) currentMapId = mapId;
-
         try {
           pixiFrame.contentWindow.postMessage(msg, '*');
         } catch (e) {
           console.warn('forward to pixiFrame failed', e);
         }
-        return;
       }
 
-      // Единый клик по узлу (jsMind / Pixi)
-      if (msg.type === 'node:click') {
-        handleNodeClick(msg.payload || {});
-        return;
-      }
-
-      // Старый путь (на всякий случай оставим поддержку)
       if (msg.type === 'container:set') {
-        openContainer(msg.payload || {});
+        const enhancedPayload = {
+          map_id: currentMapId,
+          ...msg.payload
+        };
+        openContainer(enhancedPayload);
       }
     });
 
