@@ -14,27 +14,16 @@
       color: #e0e0e0;
     }
 
-    body {
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-    }
-
     .layout { 
-      display: grid;
-      grid-template-columns: 1fr 0px;
+      display: block;
       height: 100vh;
       position: relative;
-      transition: grid-template-columns 0.3s ease;
-    }
-
-    .layout.with-container {
-      grid-template-columns: 1fr 0px;
     }
 
     /* Viewer */
     #viewerWrap {
-      position: relative;
+      position: absolute;
+      inset: 0;
       background: #1e1e1e;
       overflow: hidden;
     }
@@ -50,33 +39,36 @@
 
     #viewerWrap.view-mode-jsmind #jsmindFrame { display: block; }
     #viewerWrap.view-mode-jsmind #pixiFrame { display: none; }
-    #viewerWrap.view-mode-pixi   #jsmindFrame { display: none; }
-    #viewerWrap.view-mode-pixi   #pixiFrame { display: block; }
+    #viewerWrap.view-mode-pixi #jsmindFrame { display: none; }
+    #viewerWrap.view-mode-pixi #pixiFrame { display: block; }
 
     /* Topbar */
     .topbar {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 10;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
     }
 
     .icon-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: none;
-      background: linear-gradient(135deg, #ff7a18, #af002d 71%);
+      width: 44px;
+      height: 44px;
+      background: #34a2db;
       color: #fff;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      font-size: 18px;
       position: relative;
     }
 
@@ -105,7 +97,8 @@
       white-space: nowrap;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.12s ease, transform 0.12s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 1000;
     }
 
     .icon-btn:hover::after {
@@ -113,50 +106,51 @@
       transform: translateX(-50%) translateY(4px);
     }
 
+    /* Toggle jsMind / Pixi */
     .view-toggle {
       display: inline-flex;
+      align-items: center;
       background: rgba(0,0,0,0.4);
       border-radius: 999px;
       padding: 4px;
-      border: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(8px);
+      border: 1px solid #333;
+      margin-left: 8px;
+      gap: 4px;
     }
 
     .view-toggle-btn {
       border: none;
-      background: transparent;
-      color: #ccc;
-      font-size: 13px;
-      padding: 6px 10px;
       border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
       cursor: pointer;
-      transition: background 0.12s ease, color 0.12s ease;
+      background: transparent;
+      color: #bbb;
+      font-family: inherit;
+      transition: background 0.15s ease, color 0.15s ease;
     }
 
     .view-toggle-btn.active {
-      background: #1d8fe1;
+      background: #34a2db;
       color: #fff;
     }
 
-    /* Container (overlay) */
+    /* Container iframe */
     aside {
-      border-left: 1px solid #333;
-      background: #2c2c2c;
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity 0.2s ease;
       position: absolute;
       top: 0;
       right: 0;
-      bottom: 0;
+      height: 100%;
       width: clamp(360px, 40vw, 880px);
+      border-left: 1px solid #333;
+      background: #2c2c2c;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
       z-index: 50;
-      pointer-events: none;
     }
 
     .layout.with-container aside {
-      opacity: 1;
-      pointer-events: auto;
+      transform: translateX(0);
     }
 
     #containerFrame {
@@ -198,81 +192,46 @@
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.65);
-      display: flex;
+      background: rgba(0,0,0,0.7);
+      display: none;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-      z-index: 200;
+      z-index: 10000;
+      padding: 4vh 4vw;
     }
 
     .modal.open {
-      opacity: 1;
-      pointer-events: auto;
+      display: flex;
     }
 
     .modal-card {
-      width: min(960px, 96vw);
-      height: min(620px, 92vh);
-      background: #262626;
-      border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.65);
-      border: 1px solid rgba(255,255,255,0.06);
+      width: min(820px, 96vw);
+      height: min(640px, 88vh);
+      background: #2c2c2c;
+      border-radius: 8px;
       overflow: hidden;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modal-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      background: linear-gradient(90deg, #1f2933, #111827);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
-
-    .modal-card-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      color: #e5e7eb;
-    }
-
-    .modal-card-close {
-      background: transparent;
-      border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #9ca3af;
-      cursor: pointer;
-      transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
-    }
-
-    .modal-card-close:hover {
-      background: rgba(55,65,81,0.75);
-      color: #f9fafb;
-      transform: translateY(-1px);
-    }
-
-    .modal-card-body {
-      flex: 1;
-      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border: 1px solid #444;
     }
 
     #userstoryFrame {
       width: 100%;
       height: 100%;
       border: 0;
+      display: block;
     }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track { background: #2c2c2c; }
+    ::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #666; }
   </style>
 </head>
 <body>
@@ -304,15 +263,7 @@
   <!-- userstory модалка по умолчанию открыта -->
   <div id="modalUS" class="modal open" aria-hidden="false">
     <div class="modal-card">
-      <div class="modal-card-header">
-        <div class="modal-card-title">User Story · генератор карты</div>
-        <button class="modal-card-close" onclick="window.UI.closeUserStory()" aria-label="Закрыть">
-          ✕
-        </button>
-      </div>
-      <div class="modal-card-body">
-        <iframe id="userstoryFrame" src="userstory.html" title="User Story"></iframe>
-      </div>
+      <iframe id="userstoryFrame" src="userstory.html" title="Форма исследования"></iframe>
     </div>
   </div>
 
@@ -330,18 +281,26 @@
 
     function setMode(mode) {
       currentMode = mode;
-      viewerWrap.classList.remove('view-mode-jsmind','view-mode-pixi');
-      viewerWrap.classList.add('view-mode-'+mode);
-      modeButtons.forEach(btn=>{
+      viewerWrap.classList.remove('view-mode-jsmind', 'view-mode-pixi');
+      viewerWrap.classList.add('view-mode-' + mode);
+      modeButtons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.viewMode === mode);
       });
+    
+      if (mode === 'pixi' && pixiFrame && pixiFrame.contentWindow) {
+        try {
+          pixiFrame.contentWindow.postMessage({ type: 'pixi:resize' }, '*');
+        } catch (e) {
+          console.warn('index: pixi:resize postMessage failed', e);
+        }
+      }
     }
 
-    modeButtons.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        setMode(btn.dataset.viewMode);
-      });
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => setMode(btn.dataset.viewMode));
     });
+
+    setMode('jsmind');
 
     function openContainer(payload) {
       mainLayout.classList.add('with-container');
@@ -350,8 +309,8 @@
           { type: 'container:set', payload },
           '*'
         );
-      } catch(e) {
-        console.error('Не удалось отправить payload в контейнер:', e);
+      } catch (err) {
+        console.warn('containerFrame postMessage failed', err);
       }
     }
 
@@ -362,18 +321,42 @@
     function openUserStory(){
       document.body.style.overflow = 'hidden';
       modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('aria-hidden','false');
     }
 
     function closeUserStory(){
-      document.body.style.overflow = '';
       modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
     }
 
-    // Обработка сообщений от iframe карт
-    window.addEventListener('message', (event)=>{
-      const msg = event.data || {};
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeContainer();
+        closeUserStory();
+      }
+    });
+
+    window.addEventListener('message', (ev) => {
+      const msg = ev.data || {};
+
+      if (msg.type === 'map:jsmind') {
+        setMode('jsmind');
+        try {
+          jsmindFrame.contentWindow.postMessage(msg, '*');
+        } catch (e) {
+          console.warn('forward to jsmindFrame failed', e);
+        }
+      }
+
+      if (msg.type === 'map:pixi') {
+        try {
+          pixiFrame.contentWindow.postMessage(msg, '*');
+        } catch (e) {
+          console.warn('forward to pixiFrame failed', e);
+        }
+      }
+
       if (msg.type === 'container:set') {
         openContainer(msg.payload || {});
       }
