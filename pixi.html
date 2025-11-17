@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Pixi viewer</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sotiio Pixi Hex Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     html,body {
       margin:0;
@@ -13,7 +13,9 @@
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
     }
 
-     #palette-panel {
+    
+    /* ───── ПАЛИТРА СЛОЁВ ───── */
+    #palette-panel {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -180,9 +182,60 @@
       color: #fff;
     }
 
-    .palette-toggle:hover {
-      background: rgba(40, 40, 40, 0.95);
-      color: #fff;
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, #333 0, #1e1e1e 55%, #050505 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      color: #f5f5f5;
+      font-size: 14px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #loading-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.15);
+      border-top-color: #f97316;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #loading-text {
+      max-width: 280px;
+      text-align: center;
+      line-height: 1.4;
+      color: #ddd;
+    }
+
+    #debug-panel {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.6);
+      color: #ccc;
+      font-size: 11px;
+      border-radius: 8px;
+      z-index: 20;
+      max-width: 320px;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -234,6 +287,12 @@
     <button class="palette-toggle">Палитра</button>
   </div>
 
+  <div id="loading-overlay" class="visible">
+    <div class="spinner"></div>
+    <div id="loading-text">Загружаем карту…</div>
+  </div>
+
+  <div id="debug-panel"></div>
 
   <script src="/PixiJS/pixi.min.js"></script>
 
@@ -244,15 +303,20 @@
       return;
     }
 
+    const DPR = window.devicePixelRatio || 1;
     const app = new PIXI.Application();
     await app.init({
       width: 1,
       height: 1,
       background: '#1e1e1e',
       antialias: true,
-      resolution: 1
+      resolution: DPR,
+      autoDensity: true
     });
     document.body.appendChild(app.canvas);
+
+    PIXI.settings.ROUND_PIXELS = true;
+
 
     const container = new PIXI.Container();
     app.stage.addChild(container);
@@ -267,305 +331,140 @@
       app.renderer.resize(w, h);
       container.x = w / 2;
       container.y = h / 2;
-
-      console.log('Pixi: resizeApp ->', w, 'x', h);
     }
 
     window.addEventListener('resize', resizeApp);
-    setTimeout(resizeApp, 200);
+    resizeApp();
 
-    let isDragging = false;
-    let lastMousePosition = null;
-    let scale = 1;
-    const minScale = 0.5;
-    const maxScale = 2;
+    const palettePanel = document.getElementById('palette-panel');
+    const paletteToggle = palettePanel.querySelector('.palette-toggle');
+    const paletteInputs = palettePanel.querySelectorAll('.palette-color');
+    let paletteCollapsed = true;
 
-    app.stage.eventMode = 'static';
-    app.stage.hitArea = app.screen;
-
-    app.stage.on('pointerdown', (event) => {
-      isDragging = true;
-      lastMousePosition = event.global.clone();
-    });
-
-    app.stage.on('pointerup', () => {
-      isDragging = false;
-      lastMousePosition = null;
-    });
-
-    app.stage.on('pointerupoutside', () => {
-      isDragging = false;
-      lastMousePosition = null;
-    });
-
-    app.stage.on('pointermove', (event) => {
-      if (!isDragging || !lastMousePosition) return;
-      const newMousePosition = event.global.clone();
-      const deltaX = newMousePosition.x - lastMousePosition.x;
-      const deltaY = newMousePosition.y - lastMousePosition.y;
-      container.x += deltaX;
-      container.y += deltaY;
-      lastMousePosition = newMousePosition;
-    });
-
-    app.canvas.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      const zoomSpeed = 0.1;
-      const zoomFactor = event.deltaY > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
-      const newScale = Math.min(maxScale, Math.max(minScale, scale * zoomFactor));
-
-      if (newScale !== scale) {
-        const mouseX = event.clientX;
-        const mouseY = event.clientY;
-        const worldPos = {
-          x: (mouseX - container.x) / scale,
-          y: (mouseY - container.y) / scale
-        };
-        scale = newScale;
-        container.scale.set(scale);
-        container.x = mouseX - worldPos.x * scale;
-        container.y = mouseY - worldPos.y * scale;
+    paletteToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      paletteCollapsed = !paletteCollapsed;
+      if (paletteCollapsed) {
+        palettePanel.classList.add('collapsed');
+      } else {
+        palettePanel.classList.remove('collapsed');
       }
-    }, { passive: false });
-
-    const SQRT3 = Math.sqrt(3);
-    const size = 42;
-
-    const axialToPixel = (q, r) => ({
-      x: size * (SQRT3 * q + SQRT3 / 2 * r),
-      y: size * (1.5 * r)
     });
 
-    const createHexPoints = (radius) => {
-      const points = [];
+    palettePanel.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      if (!paletteCollapsed) {
+        paletteCollapsed = true;
+        palettePanel.classList.add('collapsed');
+      }
+    });
+
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    const debugPanel = document.getElementById('debug-panel');
+
+    function setLoading(visible, message = '') {
+      if (visible) {
+        loadingOverlay.classList.add('visible');
+        loadingText.textContent = message || 'Загружаем карту…';
+      } else {
+        loadingOverlay.classList.remove('visible');
+      }
+    }
+
+    function setDebug(text) {
+      debugPanel.textContent = text;
+    }
+
+    function axialToPixel(q, r, size) {
+      const x = size * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r);
+      const y = size * (3 / 2 * r);
+      return { x, y };
+    }
+
+    function createHexagon(size, fillColor, lineColor) {
+      const g = new PIXI.Graphics();
+      g.lineStyle(1, lineColor, 1);
+      g.beginFill(fillColor, 1);
+
+      const angle = Math.PI / 3;
       for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 180) * (60 * i - 30);
-        points.push(
-          Math.cos(angle) * radius,
-          Math.sin(angle) * radius
-        );
+        const x = size * Math.cos(angle * i);
+        const y = size * Math.sin(angle * i);
+        if (i === 0) {
+          g.moveTo(x, y);
+        } else {
+          g.lineTo(x, y);
+        }
       }
-      return points;
-    };
+      g.closePath();
+      g.endFill();
+      return g;
+    }
 
-    const HEX_PTS = createHexPoints(size);
+    function wrapLabel(text) {
+      if (!text) return '';
 
-    const HEXES = [];
-    let selectedHex = null;
-    let centerHex = null;
+      const MAX_CHARS_SINGLE = 9;
+      const MAX_LINES = 4;
+      const MAX_WORDS_PER_LINE = 1;
+      const MAX_LINE_LENGTH_MULTI = 10;
 
-    const clearMap = () => {
-      container.removeChildren();
-      HEXES.length = 0;
-      selectedHex = null;
-      centerHex = null;
-    };
+      const words = text.split(/\s+/).filter(Boolean);
 
-    function wrapLabel(text, maxCharsSingle = 9, maxLineLenMulti = 10, maxLines = 4) {
-      const str = String(text || '').trim();
-      if (!str) return '';
-
-      const words = str.split(/\s+/).filter(Boolean);
-      const wordCount = words.length;
-
-      const cutWord = (word) => {
-        if (word.length <= maxCharsSingle) return word;
-        return word.slice(0, maxCharsSingle) + '.';
-      };
-
-      if (wordCount === 1) {
-        return cutWord(words[0]);
+      if (words.length === 1 && words[0].length > MAX_CHARS_SINGLE) {
+        let w = words[0].slice(0, MAX_CHARS_SINGLE - 1) + '…';
+        return w;
       }
 
       const lines = [];
+      let currentLine = '';
 
-      if (wordCount === 2 || wordCount === 3) {
-        for (let i = 0; i < wordCount && lines.length < maxLines; i++) {
-          lines.push(cutWord(words[i]));
-        }
-        return lines.join('\n');
-      }
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
 
-      let current = '';
+        if (lines.length >= MAX_LINES) break;
 
-      for (let i = 0; i < wordCount; i++) {
-        let w = words[i];
-
-        if (w.length > maxCharsSingle) {
-          w = cutWord(w);
+        if (MAX_WORDS_PER_LINE === 1) {
+          lines.push(word);
+          continue;
         }
 
-        if (!current) {
-          current = w;
+        if (!currentLine) {
+          currentLine = word;
+          continue;
+        }
+
+        const testLine = currentLine + ' ' + word;
+        if (testLine.length <= MAX_LINE_LENGTH_MULTI) {
+          currentLine = testLine;
         } else {
-          const candidate = current + ' ' + w;
-          if (candidate.length <= maxLineLenMulti) {
-            current = candidate;
-          } else {
-            lines.push(current);
-            if (lines.length >= maxLines) break;
-            current = w;
-          }
-        }
-
-        if (i === wordCount - 1 && current && lines.length < maxLines) {
-          lines.push(current);
-        }
-
-        if (lines.length >= maxLines) break;
-      }
-
-      if (current && lines.length < maxLines && lines[lines.length - 1] !== current) {
-        lines.push(current);
-      }
-
-      if (lines.length > maxLines) {
-        lines.length = maxLines;
-      }
-
-      for (let i = 0; i < lines.length; i++) {
-        const parts = lines[i].split(/\s+/).filter(Boolean);
-        if (parts.length === 1 && lines[i].length > maxCharsSingle) {
-          lines[i] = cutWord(parts[0]);
+          lines.push(currentLine);
+          currentLine = word;
         }
       }
 
-      return lines.join('\n');
+      if (currentLine && lines.length < MAX_LINES) {
+        lines.push(currentLine);
+      }
+
+      return lines.slice(0, MAX_LINES).join('\n');
     }
 
-    const BASE_COLORS = {
-      0: 0xff622b,
-      1: 0xd98073,
-      2: 0xffd9bf,
-      3: 0x61f29d,
-      4: 0x4991b6,
-      5: 0x6680cc,
-      6: 0xe64073
-    };
+    const HEX_SIZE = 40;
+    const hexCells = [];
 
-    function intToHexColor(intVal) {
-      let s = intVal.toString(16);
-      while (s.length < 6) s = '0' + s;
-      return '#' + s;
-    }
+    function drawHexCell(q, r, labelText, fillColor) {
+      const { x, y } = axialToPixel(q, r, HEX_SIZE);
 
-    function setupPaletteUI() {
-      const inputs = document.querySelectorAll('input.palette-color');
-      inputs.forEach(input => {
-        const sector = Number(input.dataset.sector);
-        const base = BASE_COLORS[sector] ?? 0x000000;
-        input.value = intToHexColor(base);
-
-        input.addEventListener('input', (e) => {
-          const val = e.target.value;
-          const intVal = parseInt(val.slice(1), 16);
-          if (!Number.isNaN(intVal)) {
-            BASE_COLORS[sector] = intVal;
-            if (lastCells && Array.isArray(lastCells)) {
-              buildFromCells(lastCells);
-            }
-          }
-        });
-      });
-
-      const palettePanel = document.getElementById('palette-panel');
-      const toggleButton = document.querySelector('.palette-toggle');
-      
-      toggleButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        palettePanel.classList.toggle('collapsed');
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!palettePanel.contains(e.target)) {
-          palettePanel.classList.add('collapsed');
-        }
-      });
-
-      palettePanel.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    }
-
-    setupPaletteUI();
-
-    function parseLevelVector(cell) {
-      const id = (cell && cell.data && cell.data.id) || cell.id || '';
-      const m = /^L(\d)(?:-([0-9]+))?(?:-([0-9]+))?/.exec(id);
-      let level = null;
-      let sector = null;
-      let order = null;
-
-      if (m) {
-        level = parseInt(m[1], 10);
-        if (m[2]) sector = parseInt(m[2], 10);
-        if (m[3]) order = parseInt(m[3], 10);
-      }
-
-      if (!level) {
-        const q = Number(cell.q) || 0;
-        const r = Number(cell.r) || 0;
-        const s = -q - r;
-        const radius = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-        if (radius === 0) level = 1;
-        else if (radius === 1) level = 2;
-        else if (radius === 2) level = 3;
-        else level = 4;
-      }
-
-      return { level, sector, order };
-    }
-
-    function getFillStyle(cell) {
-      const { level, sector, order } = parseLevelVector(cell);
-
-      if (level === 1) {
-        return { color: BASE_COLORS[0], alpha: 1 };
-      }
-
-      if (level === 2) {
-        const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
-        return { color: baseColor, alpha: 1 };
-      }
-
-      const baseColor = (sector && BASE_COLORS[sector]) ? BASE_COLORS[sector] : 0x000000;
-
-      if (!sector) {
-        return { color: baseColor, alpha: 0 };
-      }
-
-      if (level === 3) {
-        return { color: baseColor, alpha: 0.5 };
-      }
-
-      if (level >= 4) {
-        const idx = order || 1;
-        const isOdd = idx % 2 === 1;
-        const alpha = isOdd ? 0.2 : 0.1;
-        return { color: baseColor, alpha };
-      }
-
-      return { color: baseColor, alpha: 0 };
-    }
-
-    const createHex = (cell) => {
-      const q = Number(cell.q) || 0;
-      const r = Number(cell.r) || 0;
-      const labelText = cell.label || '';
-      const { x, y } = axialToPixel(q, r);
-
-      const { color: fillColor, alpha: fillAlpha } = getFillStyle(cell);
-
-      const graphics = new PIXI.Graphics();
-      graphics.poly(HEX_PTS, true)
-              .fill(fillColor, fillAlpha)
-              .stroke({ color: 0xffffff, width: 1, alpha: 1 });
-
+      const graphics = createHexagon(HEX_SIZE, fillColor, 0x444444);
       graphics.x = x;
       graphics.y = y;
-      graphics.eventMode = 'static';
+      graphics.interactive = true;
       graphics.cursor = 'pointer';
-      graphics.hitArea = new PIXI.Polygon(HEX_PTS);
 
       container.addChild(graphics);
 
@@ -580,6 +479,7 @@
           align: 'center'
         }
       });
+      text.resolution = DPR;
       text.anchor.set(0.5);
       text.x = x;
       text.y = y;
@@ -591,172 +491,179 @@
         q,
         r,
         selected: false,
-        data: cell.data || cell,
-        baseFillColor: fillColor,
-        baseFillAlpha: fillAlpha
+        data: null
       };
-    };
+    }
 
-    const applyBaseStyle = (hexObj) => {
-      hexObj.graphics
-        .clear()
-        .poly(HEX_PTS, true)
-        .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-        .stroke({ color: 0xffffff, width: 1, alpha: 1 });
-    };
+    function drawHexMap(nodes) {
+      container.removeChildren();
+      hexCells.length = 0;
 
-    const wireInteractions = (hexObj) => {
-      if (hexObj === centerHex) return;
-
-      hexObj.graphics.on('pointerover', () => {
-        if (!hexObj.selected) {
-          hexObj.graphics.clear()
-                .poly(HEX_PTS, true)
-                .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-                .stroke({ color: 0x34a2db, width: 2, alpha: 1 });
-        }
+      nodes.forEach((node) => {
+        const { q, r, label, fillColor } = node;
+        const cell = drawHexCell(q, r, label, fillColor);
+        cell.data = node;
+        hexCells.push(cell);
       });
 
-      hexObj.graphics.on('pointerout', () => {
-        if (!hexObj.selected) {
-          applyBaseStyle(hexObj);
+      container.x = app.renderer.width / 2;
+      container.y = app.renderer.height / 2;
+    }
+
+    function findCellByNodeId(nodeId) {
+      return hexCells.find(c => c.data && c.data.node_id === nodeId);
+    }
+
+    function updatePaletteInputs(colorsBySector) {
+      paletteInputs.forEach(input => {
+        const sector = input.dataset.sector;
+        if (sector in colorsBySector) {
+          input.value = colorsBySector[sector];
         }
       });
+    }
 
-      hexObj.graphics.on('pointertap', () => {
-        if (selectedHex && selectedHex !== hexObj) {
-          selectedHex.selected = false;
-          applyBaseStyle(selectedHex);
-        }
+    paletteInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        if (!lastCells) return;
 
-        if (hexObj.selected) {
-          hexObj.selected = false;
-          applyBaseStyle(hexObj);
-          selectedHex = null;
-        } else {
-          hexObj.selected = true;
-          selectedHex = hexObj;
-          hexObj.graphics.clear()
-                .poly(HEX_PTS, true)
-                .fill(0x34a2db, 1)
-                .stroke({ color: 0xffffff, width: 2, alpha: 1 });
+        const sector = input.dataset.sector;
+        const colorValue = input.value;
+        const colorNumber = parseInt(colorValue.replace('#', ''), 16);
 
-          // Формируем стандартный payload для контейнера
-          const payload = {
-            map_id: currentMapId,
-            node_id: hexObj.data.id,
-            label: hexObj.data.label,
-            ...hexObj.data
-          };
-
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage(
-              { type: 'container:set', payload },
-              '*'
-            );
+        lastCells.forEach(cell => {
+          if (!cell.data) return;
+          if (String(cell.data.sector) === String(sector)) {
+            cell.graphics.tint = colorNumber;
           }
-        }
+        });
       });
-    };
-
-    function normalizePixiPayload(raw) {
-      if (!raw) return { format: 'pixi_hex', cells: [] };
-
-      if (raw.format === 'pixi_hex' && Array.isArray(raw.cells)) {
-        return raw;
-      }
-
-      let obj = raw;
-
-      if (Array.isArray(obj)) {
-        obj = obj[0];
-      }
-
-      if (obj && typeof obj === 'object' && '' in obj && typeof obj[''] === 'object') {
-        obj = obj[''];
-      }
-
-      if (obj && typeof obj === 'object' && !Array.isArray(obj) && !obj.cells) {
-        const cells = Object.values(obj).map((cell) => {
-          if (!cell || typeof cell !== 'object') return null;
-          const q = Number(cell.q) || 0;
-          const r = Number(cell.r) || 0;
-          const label = cell.label || '';
-          const id = cell.id;
-
-          return {
-            q,
-            r,
-            label,
-            data: {
-              id,
-              ...(cell.data || {})
-            }
-          };
-        }).filter(Boolean);
-
-        return { format: 'pixi_hex', cells };
-      }
-
-      return raw;
-    }
-
-    function buildFromCells(cells) {
-      clearMap();
-
-      if (!cells || !cells.length) {
-        console.warn('Pixi: пустой список cells');
-        return;
-      }
-
-      lastCells = cells.slice();
-
-      console.log('Pixi: строим карту из', cells.length, 'ячеек');
-
-      cells.forEach((cell, idx) => {
-        const hex = createHex(cell);
-        HEXES.push(hex);
-
-        if (idx === 0) {
-          centerHex = hex;
-        } else {
-          wireInteractions(hex);
-        }
-      });
-
-      console.log('Pixi карта отрисована, всего сот:', HEXES.length);
-    }
-
-    function drawMap(raw) {
-      console.log('Pixi: raw payload', raw);
-      
-      // Извлекаем map_id если он есть в payload
-      if (raw && raw.map_id) {
-        currentMapId = raw.map_id;
-        // Убираем map_id из данных карты чтобы не мешал
-        const { map_id, ...mapData } = raw;
-        raw = mapData;
-      }
-      
-      const norm = normalizePixiPayload(raw);
-      console.log('Pixi: normalized payload', norm);
-      resizeApp();
-      buildFromCells(norm.cells || []);
-    }
-
-    window.PixiViewer = { setData: drawMap };
-
-    window.addEventListener('message', (ev) => {
-      const msg = ev.data || {};
-      if (msg.type === 'map:pixi') {
-        drawMap(msg.payload);
-      }
-      if (msg.type === 'pixi:resize') {
-        resizeApp();
-      }
     });
 
-    console.log('Pixi viewer готов. Ждёт { type:"map:pixi", payload: ... }');
+    let isPanning = false;
+    let lastPan = { x: 0, y: 0 };
+
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = app.screen;
+    app.stage.on('pointerdown', (e) => {
+      isPanning = true;
+      lastPan.x = e.global.x;
+      lastPan.y = e.global.y;
+      app.stage.cursor = 'grabbing';
+    });
+
+    app.stage.on('pointermove', (e) => {
+      if (!isPanning) return;
+      const dx = e.global.x - lastPan.x;
+      const dy = e.global.y - lastPan.y;
+      lastPan.x = e.global.x;
+      lastPan.y = e.global.y;
+      container.x += dx;
+      container.y += dy;
+    });
+
+    app.stage.on('pointerup', () => {
+      isPanning = false;
+      app.stage.cursor = 'default';
+    });
+
+    app.stage.on('pointerupoutside', () => {
+      isPanning = false;
+      app.stage.cursor = 'default';
+    });
+
+    window.addEventListener('wheel', (e) => {
+      const scaleFactor = 1.05;
+      const oldScale = container.scale.x;
+      const mousePos = { x: e.clientX, y: e.clientY };
+      const worldPos = {
+        x: (mousePos.x - container.x) / oldScale,
+        y: (mousePos.y - container.y) / oldScale
+      };
+
+      if (e.deltaY < 0) {
+        container.scale.x *= scaleFactor;
+        container.scale.y *= scaleFactor;
+      } else {
+        container.scale.x /= scaleFactor;
+        container.scale.y /= scaleFactor;
+      }
+
+      const newScale = container.scale.x;
+      container.x = mousePos.x - worldPos.x * newScale;
+      container.y = mousePos.y - worldPos.y * newScale;
+    }, { passive: true });
+
+    async function fetchMapData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mapId = urlParams.get('map_id');
+
+      if (!mapId) {
+        setDebug('map_id не указан в query string');
+        setLoading(false, '');
+        return null;
+      }
+
+      currentMapId = mapId;
+      setDebug(`map_id: ${mapId}`);
+
+      try {
+        setLoading(true, 'Запрашиваем карту…');
+        const resp = await fetch(`/webhook/map?map_id=${encodeURIComponent(mapId)}`);
+        if (!resp.ok) {
+          setDebug(`Ошибка загрузки: ${resp.status} ${resp.statusText}`);
+          setLoading(false, '');
+          return null;
+        }
+        const json = await resp.json();
+
+        if (!json || !Array.isArray(json.nodes)) {
+          setDebug('Некорректный формат ответа: нет nodes');
+          setLoading(false, '');
+          return null;
+        }
+
+        setLoading(false, '');
+        return json;
+      } catch (err) {
+        console.error(err);
+        setDebug('Ошибка сети при загрузке карты');
+        setLoading(false, '');
+        return null;
+      }
+    }
+
+    async function initMap() {
+      const mapData = await fetchMapData();
+      if (!mapData) return;
+
+      const nodes = mapData.nodes.map(n => ({
+        q: n.q,
+        r: n.r,
+        label: n.label,
+        fillColor: parseInt((n.fillColor || '0x555555').toString().replace('#','').replace('0x',''), 16),
+        node_id: n.node_id,
+        sector: n.sector ?? 0
+      }));
+
+      lastCells = nodes;
+
+      const colorsBySector = mapData.colorsBySector || {
+        0: '#ff9800',
+        1: '#4caf50',
+        2: '#2196f3',
+        3: '#9c27b0',
+        4: '#f44336',
+        5: '#ffeb3b',
+        6: '#607d8b'
+      };
+      updatePaletteInputs(colorsBySector);
+
+      drawHexMap(nodes);
+    }
+
+    await initMap();
+
   })();
   </script>
 </body>
