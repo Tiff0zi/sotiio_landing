@@ -14,140 +14,74 @@
     }
     
     #drawer {
-      height: 100%;
+      height: 100vh;
       width: 100%;
-      box-sizing: border-box;
-      padding: 12px 16px 16px;
+      background: #2d2d2d;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      overflow: hidden;
     }
-
-    .dw-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 4px;
-    }
-
-    .dw-header-id {
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    .dw-header-label {
-      font-size: 18px;
-      font-weight: 600;
-      color: #fff;
-    }
-
+    
     .dw-tabs {
       display: flex;
+      background: #3d3d3d;
       border-bottom: 1px solid #444;
-      gap: 4px;
     }
-
+    
     .dw-tab {
-      background: transparent;
-      border: none;
-      color: #aaa;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 13px;
-      border-radius: 6px 6px 0 0;
-      border: 1px solid transparent;
-      border-bottom: none;
-      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    }
-
-    .dw-tab.active {
-      background: #3a3a3a;
-      color: #fff;
-      border-color: #555;
-      border-bottom: 1px solid #3a3a3a;
-    }
-
-    .dw-body {
       flex: 1;
-      border-radius: 0 8px 8px 8px;
-      border: 1px solid #444;
-      background: #252525;
-      padding: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      border: 0;
+      background: transparent;
+      font-weight: 500;
+      color: #aaa;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+      transition: all 0.2s ease;
     }
-
+    
+    .dw-tab:hover {
+      background: #454545;
+      color: #fff;
+    }
+    
+    .dw-tab.active {
+      background: #2d2d2d;
+      border-bottom: 2px solid #ff622b;
+      color: #fff;
+    }
+    
+    .dw-body {
+      padding: 16px;
+      overflow: auto;
+      height: 100%;
+      background: #2d2d2d;
+    }
+    
     .tab-content {
       display: none;
-      flex: 1;
-      overflow: auto;
     }
-
+    
     .tab-content.active {
       display: block;
     }
-
-    .empty {
-      color: #777;
-      font-size: 13px;
-      padding: 8px 0;
-    }
-
-    .loading {
-      color: #6ab0ff;
-      font-size: 13px;
-      padding: 8px 0;
-    }
-
-    .error {
-      color: #ff6a6a;
-      font-size: 13px;
-      padding: 8px 0;
-      white-space: pre-wrap;
-    }
-
-    .meta-section {
-      margin-bottom: 16px;
-    }
     
-    .meta-section h3 {
-      margin: 0 0 4px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #f0f0f0;
-    }
-    
-    .meta-section small {
-      display: block;
-      margin-top: 2px;
-      font-size: 11px;
-      color: #999;
-    }
-    
-    .meta-block {
-      background: #2f2f2f;
-      border-radius: 6px;
+    pre {
+      margin: 0;
+      padding: 12px;
+      background: #3d3d3d;
       border: 1px solid #444;
-      padding: 8px 10px;
-      font-size: 13px;
-      line-height: 1.4;
+      border-radius: 6px;
       white-space: pre-wrap;
       word-break: break-word;
-    }
-
-    pre {
-      background: #1e1e1e;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin: 0;
-      font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.4;
+      font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      color: #e0e0e0;
+      max-height: 400px;
       overflow: auto;
-      border: 1px solid #444;
     }
-
+    
     table.meta {
       width: 100%;
       border-collapse: collapse;
@@ -159,68 +93,127 @@
     }
     
     table.meta th, table.meta td {
-      padding: 6px 8px;
-      font-size: 12px;
-      text-align: left;
+      padding: 12px;
       border-bottom: 1px solid #444;
+      font-size: 14px;
+      text-align: left;
     }
     
     table.meta th {
       width: 30%;
-      color: #aaa;
-      background: #363636;
-      font-weight: 500;
+      background: #454545;
+      color: #ccc;
+      font-weight: 600;
+    }
+    
+    table.meta td {
+      color: #e0e0e0;
+      background: #3d3d3d;
     }
     
     table.meta tr:last-child th,
     table.meta tr:last-child td {
       border-bottom: none;
     }
-
+    
+    .wiki-item {
+      background: #3d3d3d;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 0 0 12px;
+    }
+    
+    .wiki-item h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #ff622b;
+      font-weight: 600;
+    }
+    
+    .wiki-item div {
+      font-size: 14px;
+      color: #e0e0e0;
+      line-height: 1.5;
+    }
+    
+    .empty {
+      color: #888;
+      font-style: italic;
+      padding: 20px 0;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .loading {
+      color: #ff622b;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 14px;
+    }
+    
+    .error {
+      color: #ff4444;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 14px;
+    }
+    
+    .meta-section {
+      margin-bottom: 20px;
+    }
+    
+    .meta-section h3 {
+      color: #ff622b;
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
     .links-list {
       list-style: none;
-      margin: 0;
       padding: 0;
-      font-size: 13px;
+      margin: 0;
     }
-
+    
     .links-list li {
-      margin-bottom: 4px;
+      padding: 8px 0;
+      border-bottom: 1px solid #444;
     }
-
+    
+    .links-list li:last-child {
+      border-bottom: none;
+    }
+    
     .links-list a {
-      color: #64b5f6;
+      color: #34a2db;
       text-decoration: none;
     }
-
+    
     .links-list a:hover {
       text-decoration: underline;
     }
-
-    .wiki-item {
-      margin-bottom: 12px;
+    
+    ::-webkit-scrollbar {
+      width: 8px;
     }
-
-    .wiki-item h3 {
-      margin: 0 0 4px;
-      font-size: 14px;
-      color: #fff;
+    
+    ::-webkit-scrollbar-track {
+      background: #3d3d3d;
     }
-
-    .wiki-item div {
-      font-size: 13px;
-      color: #ddd;
-      white-space: pre-wrap;
-      word-break: break-word;
+    
+    ::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #666;
     }
   </style>
 </head>
 <body>
   <aside id="drawer" aria-hidden="false">
-    <div class="dw-header">
-      <div class="dw-header-id" id="hdr-id">map_id · node_id</div>
-      <div class="dw-header-label" id="hdr-label">Выберите узел</div>
-    </div>
     <div class="dw-tabs">
       <button class="dw-tab active" data-tab="wiki">Wiki</button>
       <button class="dw-tab" data-tab="raw">Raw Data</button>
@@ -230,7 +223,7 @@
         <div class="empty">Выберите узел на карте для просмотра деталей</div>
       </div>
       <div id="tab-raw" class="tab-content">
-        <pre id="raw-pre">Выберите узел на карте для просмотра деталей</pre>
+        <div class="empty">Выберите узел на карте для просмотра деталей</div>
       </div>
     </div>
   </aside>
@@ -258,7 +251,7 @@
         .replaceAll('<','&lt;')
         .replaceAll('>','&gt;')
         .replaceAll('"','&quot;')
-        .replaceAll("'",'&#39;');
+        .replaceAll("'","&#39;");
     }
 
     function showLoading(tabId, message = "Загрузка данных...") {
@@ -274,93 +267,25 @@
     function fetchMetaData(mapId, nodeId) {
       return fetch('https://n8n.sotiio.com/webhook/get_meta', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ map_id: mapId, node_id: nodeId })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          map_id: mapId,
+          node_id: nodeId
         })
-        .catch(err => {
-          console.error('Ошибка запроса meta-данных:', err);
-          throw err;
-        });
-    }
-
-    function renderMeta(nodeLike) {
-      const tab = document.getElementById('tab-meta');
-      if (!tab) return;
-
-      showLoading('tab-meta');
-
-      const hdrId = document.getElementById('hdr-id');
-      const hdrLabel = document.getElementById('hdr-label');
-
-      const mapId  = currentMapId || nodeLike?.map_id || '';
-      const nodeId = currentNodeId || nodeLike?.id || nodeLike?.node_id || '';
-      const label  = currentLabel || nodeLike?.label || nodeLike?.topic || nodeLike?.name || '';
-
-      hdrId.textContent = `${mapId || '—'} · ${nodeId || '—'}`;
-      hdrLabel.textContent = label || 'Без имени';
-
-      const rows = [
-        ['map_id', mapId || '—'],
-        ['node_id', nodeId || '—'],
-        ['label', label || '—'],
-      ];
-      
-      const baseHtml = `
-        <div class="meta-section">
-          <h3>Основная информация</h3>
-          <table class="meta">
-            <tbody>
-              ${rows.map(r => `<tr><th>${r[0]}</th><td>${escapeHtml(r[1])}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      // Запрашиваем дополнительные meta-данные
-      if (currentMapId && currentNodeId) {
-        fetchMetaData(currentMapId, currentNodeId)
-          .then(metaData => {
-            let metaHtml = baseHtml;
-            
-            if (metaData && Object.keys(metaData).length > 0) {
-              metaHtml += `
-                <div class="meta-section">
-                  <h3>Дополнительные данные</h3>
-                  <pre>${escapeHtml(JSON.stringify(metaData, null, 2))}</pre>
-                </div>
-              `;
-            } else {
-              metaHtml += `<div class="empty">Дополнительные meta-данные отсутствуют</div>`;
-            }
-            
-            tab.innerHTML = metaHtml;
-          })
-          .catch(error => {
-            console.error('Ошибка загрузки meta-данных:', error);
-            showError('tab-meta', `Ошибка загрузки meta-данных: ${escapeHtml(error.message)}`);
-          });
-      } else {
-        tab.innerHTML = baseHtml + `<div class="empty">Для загрузки meta-данных требуется map_id и node_id</div>`;
-      }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      });
     }
 
     function renderWiki(nodeLike) {
       const box = document.getElementById('tab-wiki');
-      showLoading('tab-wiki', 'Загрузка wiki...');
-
-      const hdrId = document.getElementById('hdr-id');
-      const hdrLabel = document.getElementById('hdr-label');
-
-      const mapId  = currentMapId || nodeLike?.map_id || '';
-      const nodeId = currentNodeId || nodeLike?.id || nodeLike?.node_id || '';
-      const label  = currentLabel || nodeLike?.label || nodeLike?.topic || nodeLike?.name || '';
-
-      hdrId.textContent = `${mapId || '—'} · ${nodeId || '—'}`;
-      hdrLabel.textContent = label || 'Без имени';
+      showLoading('tab-wiki', 'Загрузка wiki-данных...');
 
       const d = nodeLike?.data?.data || nodeLike?.data || nodeLike || {};
       
@@ -392,26 +317,111 @@
             console.error('Ошибка загрузки wiki-данных:', error);
             box.innerHTML = `<div class="error">Ошибка загрузки wiki-данных: ${error.message}</div>`;
           });
-      } else if (d && (d.wiki || d.description)) {
-        if (d.wiki) {
-          const wikiContent = typeof d.wiki === 'string' ? d.wiki : JSON.stringify(d.wiki, null, 2);
-          box.innerHTML = `
-            <div class="wiki-item">
-              <h3>Wiki информация</h3>
-              <div>${escapeHtml(wikiContent)}</div>
-            </div>
-          `;
-        } else {
-          box.innerHTML = `
-            <div class="wiki-item">
-              <h3>Описание</h3>
-              <div>${escapeHtml(d.description)}</div>
-            </div>
-          `;
-        }
       } else {
-        box.innerHTML = '<div class="empty">Для этого узла нет wiki-информации.</div>';
+        box.innerHTML = '<div class="empty">Для загрузки wiki-данных требуется map_id и node_id</div>';
       }
     }
 
-    function renderLinks(nodeLike) {
+    function renderRaw(nodeLike) {
+      const box = document.getElementById('tab-raw');
+      showLoading('tab-raw', 'Загрузка данных...');
+
+      const d = nodeLike?.data?.data || nodeLike?.data || nodeLike || {};
+      
+      // Основная информация
+      const rows = [
+        ['Map ID', currentMapId || '—'],
+        ['Node ID', currentNodeId || '—'],
+        ['Название', currentLabel || '—'],
+        ['Уровень', d.level || (d.node_id && d.node_id.startsWith('L1') ? 'Корневой' : 'Дочерний') || '—'],
+      ];
+      
+      let baseHtml = `
+        <div class="meta-section">
+          <h3>Основная информация</h3>
+          <table class="meta">
+            <tbody>
+              ${rows.map(r => `<tr><th>${r[0]}</th><td>${escapeHtml(r[1])}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      box.innerHTML = baseHtml;
+
+      // Запрашиваем дополнительные meta-данные
+      if (currentMapId && currentNodeId) {
+        fetchMetaData(currentMapId, currentNodeId)
+          .then(metaData => {
+            let fullHtml = baseHtml;
+            
+            if (metaData && Object.keys(metaData).length > 0) {
+              fullHtml += `
+                <div class="meta-section">
+                  <h3>Дополнительные данные</h3>
+                  <pre>${escapeHtml(JSON.stringify(metaData, null, 2))}</pre>
+                </div>
+              `;
+            } else {
+              fullHtml += `<div class="empty">Дополнительные meta-данные отсутствуют</div>`;
+            }
+            
+            // Полные raw данные
+            const fullData = {
+              map_id: currentMapId,
+              node_id: currentNodeId,
+              label: currentLabel,
+              ...nodeLike,
+              meta: metaData
+            };
+            
+            let fullText = '';
+            try {
+              fullText = JSON.stringify(fullData, null, 2);
+            } catch(e) {
+              fullText = String(fullData);
+            }
+            
+            fullHtml += `
+              <div class="meta-section">
+                <h3>Полные raw данные</h3>
+                <pre>${escapeHtml(fullText)}</pre>
+              </div>
+            `;
+            
+            box.innerHTML = fullHtml;
+          })
+          .catch(error => {
+            console.error('Ошибка загрузки meta-данных:', error);
+            box.innerHTML = baseHtml + `<div class="error">Ошибка загрузки meta-данных: ${error.message}</div>`;
+          });
+      } else {
+        box.innerHTML = baseHtml + `<div class="empty">Для загрузки дополнительных данных требуется map_id и node_id</div>`;
+      }
+    }
+
+    function setData(nodeLike) {
+      // Сохраняем основные идентификаторы
+      currentMapId = nodeLike.map_id || null;
+      currentNodeId = nodeLike.node_id || null;
+      currentLabel = nodeLike.label || null;
+
+      // Рендерим оставшиеся вкладки
+      renderWiki(nodeLike);
+      renderRaw(nodeLike);
+    }
+
+    // Связь с index.html
+    window.addEventListener('message', (ev) => {
+      const msg = ev.data || {};
+      if (msg.type === 'container:set') {
+        setData(msg.payload || {});
+      }
+    });
+
+    // Ручной API
+    window.ContainerAPI = { setData };
+  })();
+  </script>
+</body>
+</html>
