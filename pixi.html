@@ -582,7 +582,7 @@
       graphics.roundPixels = true; // ✱ HQ
       graphics.poly(HEX_PTS, true)
               .fill(fillColor, fillAlpha)
-              .stroke({ color: 0xf5f5f5, width: 1, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
+              .stroke({ color: 0xf5f5f5, width: 3, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
 
       graphics.x = x;
       graphics.y = y;
@@ -629,7 +629,7 @@
         .clear()
         .poly(HEX_PTS, true)
         .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-        .stroke({ color: 0xffffff, width: 1, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
+        .stroke({ color: 0xffffff, width: 3, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
     };
 
     const wireInteractions = (hexObj) => {
@@ -640,7 +640,7 @@
           hexObj.graphics.clear()
                 .poly(HEX_PTS, true)
                 .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-                .stroke({ color: 0xffffff, width: 2, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
+                .stroke({ color: 0xffffff, width: 5, alpha: 1 }); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE
         }
       });
 
