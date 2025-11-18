@@ -13,7 +13,7 @@
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
     }
 
-    #palette-panel {
+     #palette-panel {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -187,6 +187,9 @@
   </style>
 </head>
 <body>
+  <!-- Фон со свечением -->
+  <div id="pixi-background-glow"></div>
+
   <div id="palette-panel" class="collapsed">
     <div class="palette-hexagon">
       <!-- 1 (↖) -->
@@ -215,7 +218,7 @@
       <!-- 4 (→) -->
       <div class="palette-sector" data-sector="3">
         <input class="palette-color" type="color" data-sector="3" title="L2-3 →" />
-     div>
+      </div>
 
       <!-- 7 (↙) -->
       <div class="palette-sector" data-sector="5">
@@ -261,16 +264,14 @@
       height: initH,
       antialias: true,
       resolution: DPR,       // ✱ HQ: повышаем плотность пикселей
-      autoDensity: true,     // ✱ HQ: canvas подстраивается под resolution
-      backgroundAlpha: 0
+      autoDensity: true      // ✱ HQ: canvas подстраивается под resolution
       // sampleCount: 4      // если твоя сборка Pixi v8 поддерживает MSAA
     });
     document.body.appendChild(app.canvas);
 
-    // Canvas выше фона, но сам прозрачный
+    // Canvas выше фона со свечением
     app.canvas.style.position = 'relative';
     app.canvas.style.zIndex = '1';
-    app.canvas.style.background = 'transparent';
 
     // ✱ HQ: чуть сглаживаем позиционирование
     if (app.renderer) {
@@ -382,9 +383,23 @@
     let selectedHex = null;
     let centerHex = null;
 
-    // ── функция-заглушка: свечение теперь в index, тут ничего не делаем ──
+    // ── функция, двигающая центр свечения за центральной сотой ──
     function updateGlowCenter() {
-      // no-op
+      const glow = document.getElementById('pixi-background-glow');
+      if (!glow || !centerHex) return;
+
+      const global = container.toGlobal(new PIXI.Point(
+        centerHex.graphics.x,
+        centerHex.graphics.y
+      ));
+
+      glow.style.background = `radial-gradient(
+        circle at ${global.x}px ${global.y}px,
+        rgba(255,255,255,0.12) 0%,
+        rgba(255,255,255,0.04) 25%,
+        rgba(0,0,0,0.90) 70%,
+        rgba(0,0,0,1.0) 100%
+      )`;
     }
 
     const clearMap = () => {
@@ -609,7 +624,7 @@
       const text = new PIXI.Text({
         text: wrapped,
         style: {
-          fill: #1e1e1e,
+          fill: 1e1e1e,
           fontSize: 12,
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           fontWeight: '500',
