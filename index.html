@@ -10,21 +10,37 @@
       margin: 0; 
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #ffffff;
+      background: #ffffff; /* ЦВЕТ ФОНА */
       color: #e0e0e0;
     }
+
+    /* Глобальное свечение под картой (и вообще под всем) 
+    #global-glow {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.12) 0%,
+        rgba(255,255,255,0.04) 25%,
+        rgba(0,0,0,0.90) 70%,
+        rgba(0,0,0,1) 100%
+      );
+    } */
 
     .layout { 
       display: block;
       height: 100vh;
       position: relative;
+      z-index: 1; /* над свечением */
     }
 
     /* Viewer */
     #viewerWrap {
       position: absolute;
       inset: 0;
-      background: #1e1e1e;
+      background: transparent;
       overflow: hidden;
     }
 
@@ -235,6 +251,9 @@
   </style>
 </head>
 <body>
+  <!-- Глобальное свечение под обоими фреймами -->
+  <div id="global-glow"></div>
+
   <div class="layout" id="mainLayout">
     <section id="viewerWrap" class="view-mode-jsmind">
       <div class="topbar">
