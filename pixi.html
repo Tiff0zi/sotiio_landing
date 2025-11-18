@@ -582,7 +582,7 @@
       graphics.roundPixels = true; // ✱ HQ
       graphics.poly(HEX_PTS, true)
               .fill(fillColor, fillAlpha)
-              .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+              .stroke({ color: 0x1e1e1e, width: 1, alpha: 1 }); // <<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE!!!
 
       graphics.x = x;
       graphics.y = y;
@@ -601,7 +601,7 @@
           fill: 0x1e1e1e,
           fontSize: 11,
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-          fontWeight: '200',
+          fontWeight: '300',
           align: 'center',
           resolution: DPR
         }
@@ -629,7 +629,7 @@
         .clear()
         .poly(HEX_PTS, true)
         .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-        .stroke({ color: 0xffffff, width: 1, alpha: 1 });
+        .stroke({ color: 0x1e1e1e, width: 1, alpha: 1 }); // <<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE!!!
     };
 
     const wireInteractions = (hexObj) => {
@@ -640,7 +640,7 @@
           hexObj.graphics.clear()
                 .poly(HEX_PTS, true)
                 .fill(hexObj.baseFillColor, hexObj.baseFillAlpha)
-                .stroke({ color: 0x34a2db, width: 2, alpha: 1 });
+                .stroke({ color: 0xffffff, width: 2, alpha: 1 }); // <<<<<<<<<<<<<<<<<<<<<<<<<<< STROKE при выделении!!!
         }
       });
 
