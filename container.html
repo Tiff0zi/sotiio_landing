@@ -471,7 +471,7 @@
       }
     }
 
-    /* ──────────────── РЕНДЕРИНГ WIKI ──────────────── */
+        /* ──────────────── РЕНДЕРИНГ WIKI ──────────────── */
 
     function renderWiki(nodeLike) {
       const box = document.getElementById('tab-wiki');
@@ -484,10 +484,11 @@
               const meta = metaData.meta || {};
               const attributes = metaData.attributes;
               
-              // Собираем элементы для отображения
-              let wikiItems = [];   // обычные атрибуты
-              let aiWikiItem = null; // AT08
-              let notesItem = null;  // AT15
+              // Обычные атрибуты
+              let wikiItems = [];
+              // Особые атрибуты
+              let aiWikiItem = null;   // AT08
+              let notesItem = null;    // AT15
               
               const metaTypes = ['text', 'number', 'select', 'boolean', 'data'];
               
@@ -512,13 +513,13 @@
                     // Особые текстовые поля
                     if (type === 'text') {
                       if (attributeId === 'AT08') {
-                        // AI-описание (вход всегда пустой, но держим отдельным блоком)
-                        aiWikiItem = { name, value: rawValue, priority };
+                        // AI-описание
+                        aiWikiItem = { kind: 'ai', name, value: rawValue, priority };
                         return;
                       }
                       if (attributeId === 'AT15') {
-                        // Заметки пользователя (мини-редактор)
-                        notesItem = { name, value: rawValue, priority };
+                        // Заметки пользователя
+                        notesItem = { kind: 'notes', name, value: rawValue, priority };
                         return;
                       }
                     }
@@ -527,6 +528,7 @@
                     if (rawValue === '') return;
 
                     wikiItems.push({
+                      kind: 'default',
                       name,
                       value: rawValue,
                       priority
@@ -535,46 +537,56 @@
                 }
               });
               
-              // сортировка по приоритету
-              wikiItems.sort((a, b) => a.priority - b.priority);
-              
-              // отрисовка
-              if (wikiItems.length || aiWikiItem || notesItem) {
+              // Собираем единый список для сортировки по priority
+              const displayItems = [];
+
+              if (aiWikiItem)   displayItems.push(aiWikiItem);
+              if (notesItem)    displayItems.push(notesItem);
+              displayItems.push(...wikiItems);
+
+              // Сортировка по приоритету (меньше — выше)
+              displayItems.sort((a, b) => a.priority - b.priority);
+
+              if (displayItems.length) {
                 let html = '';
 
-                // --- Блок AI-описания (AT08) ---
-                if (aiWikiItem) {
-                  html += `
-                    <div class="wiki-item wiki-ai">
-                      <div class="wiki-header">
-                        <h3>${escapeHtml(aiWikiItem.name)}</h3>
-                        <button type="button" class="wiki-ai-btn">Получить описание</button>
+                displayItems.forEach(item => {
+                  if (item.kind === 'ai') {
+                    // --- Блок AI-описания (AT08) ---
+                    html += `
+                      <div class="wiki-item wiki-ai">
+                        <div class="wiki-header">
+                          <h3>${escapeHtml(item.name)}</h3>
+                          <button type="button" class="wiki-ai-btn">Получить описание</button>
+                        </div>
+                        <div class="wiki-ai-content">
+                          ${
+                            item.value
+                              ? (window.md2html && typeof window.md2html.renderMarkdown === 'function'
+                                  ? window.md2html.renderMarkdown(item.value)
+                                  : escapeHtml(item.value))
+                              : '<div class="empty">Нажмите «Получить описание», чтобы сгенерировать текст.</div>'
+                          }
+                        </div>
                       </div>
-                      <div class="wiki-ai-content">
-                        <div class="empty">Нажмите «Получить описание», чтобы сгенерировать текст.</div>
+                    `;
+                  } else if (item.kind === 'notes') {
+                    // --- Блок заметок пользователя (AT15) ---
+                    html += `
+                      <div class="wiki-item wiki-notes">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <textarea class="wiki-notes-textarea" rows="4" placeholder="Добавьте заметки...">${escapeHtml(item.value)}</textarea>
                       </div>
-                    </div>
-                  `;
-                }
-
-                // --- Блок заметок пользователя (AT15) ---
-                if (notesItem) {
-                  html += `
-                    <div class="wiki-item wiki-notes">
-                      <h3>${escapeHtml(notesItem.name)}</h3>
-                      <textarea class="wiki-notes-textarea" rows="4" placeholder="Добавьте заметки...">${escapeHtml(notesItem.value)}</textarea>
-                    </div>
-                  `;
-                }
-
-                // --- Обычные wiki-атрибуты ---
-                wikiItems.forEach(item => {
-                  html += `
-                    <div class="wiki-item">
-                      <h3>${escapeHtml(item.name)}</h3>
-                      <div>${escapeHtml(String(item.value))}</div>
-                    </div>
-                  `;
+                    `;
+                  } else {
+                    // --- Обычные wiki-атрибуты ---
+                    html += `
+                      <div class="wiki-item">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <div>${escapeHtml(String(item.value))}</div>
+                      </div>
+                    `;
+                  }
                 });
 
                 box.innerHTML = html;
@@ -595,6 +607,7 @@
         box.innerHTML = '<div class="empty">Для загрузки wiki-данных требуется map_id и node_id</div>';
       }
     }
+
 
     /* ──────────────── РЕНДЕРИНГ RAW DATA (БЕЗ ИЗМЕНЕНИЙ) ──────────────── */
 
