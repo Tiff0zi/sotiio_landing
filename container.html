@@ -585,37 +585,11 @@
         }
       }
 
-      // --- Notes (AT15) + markdown-панель + Save в Meta ---
-      const notesBox = document.querySelector('.wiki-item.wiki-notes');
-      if (notesBox) {
-        const notesTextarea = notesBox.querySelector('.wiki-notes-textarea');
-        const notesSaveBtn = notesBox.querySelector('.wiki-notes-save-btn');
-        const metaType = notesBox.getAttribute('data-type');      // "text"
-        const attrId = notesBox.getAttribute('data-attr-id');     // "AT15"
-
-        // Локальное хранение заметок (как кэш) в localStorage
-        if (notesTextarea && currentMapId && currentNodeId && window.localStorage) {
-          const key = `sotiio_notes_${currentMapId}_${currentNodeId}`;
-          const saved = localStorage.getItem(key);
-          if (saved && !notesTextarea.value) {
-            notesTextarea.value = saved;
-          }
-          notesTextarea.addEventListener('input', () => {
-            localStorage.setItem(key, notesTextarea.value);
-          });
-        }
-
-        if (notesTextarea && notesSaveBtn && metaType && attrId) {
-          notesSaveBtn.addEventListener('click', () => {
-            const val = notesTextarea.value || '';
-            saveMetaValue(metaType, attrId, val, notesSaveBtn);
-          });
-        }
-      }
-
-      // --- Edit / Save для обычных meta-данных (кроме AT08) ---
-      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"]');
+      // --- Edit / Save для обычных meta-данных и Notes (кроме AT08) ---
+      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"], .wiki-item[data-kind="notes"]');
       defaultItems.forEach(box => {
+        const isNotes = box.getAttribute('data-kind') === 'notes';
+
         const metaType = box.getAttribute('data-type');      // text/number/select/boolean/data
         const attrId = box.getAttribute('data-attr-id');
         const editBtn = box.querySelector('.wiki-edit-btn');
@@ -667,8 +641,13 @@
             cancelBtn.style.display = 'none';
           });
         });
-      });
 
+        // Если это Notes и значение пустое, и стоит флаг auto-edit, сразу открываем редактор
+        const autoEdit = box.getAttribute('data-auto-edit') === '1';
+        if (isNotes && autoEdit) {
+          editBtn.click();
+        }
+      });
 
       // --- Markdown-кнопки (B / H1 / H2 / List) для всех textarea ---
       const mdButtons = document.querySelectorAll('.wiki-md-btn');
