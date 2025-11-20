@@ -334,7 +334,7 @@
         fetchMetaData(currentMapId, currentNodeId)
           .then(metaData => {
             if (metaData && metaData.meta && metaData.attributes) {
-              const meta = metaData.meta.meta || {};
+              const meta = metaData.meta || {};
               const attributes = metaData.attributes;
               
               // Собираем все элементы для отображения
