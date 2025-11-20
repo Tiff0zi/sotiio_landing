@@ -585,11 +585,37 @@
         }
       }
 
-      // --- Edit / Save для обычных meta-данных и Notes (кроме AT08) ---
-      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"], .wiki-item[data-kind="notes"]');
-      defaultItems.forEach(box => {
-        const isNotes = box.getAttribute('data-kind') === 'notes';
+      // --- Notes (AT15) + markdown-панель + Save в Meta ---
+      const notesBox = document.querySelector('.wiki-item.wiki-notes');
+      if (notesBox) {
+        const notesTextarea = notesBox.querySelector('.wiki-notes-textarea');
+        const notesSaveBtn = notesBox.querySelector('.wiki-notes-save-btn');
+        const metaType = notesBox.getAttribute('data-type');      // "text"
+        const attrId = notesBox.getAttribute('data-attr-id');     // "AT15"
 
+        // Локальное хранение заметок (как кэш) в localStorage
+        if (notesTextarea && currentMapId && currentNodeId && window.localStorage) {
+          const key = `sotiio_notes_${currentMapId}_${currentNodeId}`;
+          const saved = localStorage.getItem(key);
+          if (saved && !notesTextarea.value) {
+            notesTextarea.value = saved;
+          }
+          notesTextarea.addEventListener('input', () => {
+            localStorage.setItem(key, notesTextarea.value);
+          });
+        }
+
+        if (notesTextarea && notesSaveBtn && metaType && attrId) {
+          notesSaveBtn.addEventListener('click', () => {
+            const val = notesTextarea.value || '';
+            saveMetaValue(metaType, attrId, val, notesSaveBtn);
+          });
+        }
+      }
+
+      // --- Edit / Save для обычных meta-данных (кроме AT08) ---
+      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"]');
+      defaultItems.forEach(box => {
         const metaType = box.getAttribute('data-type');      // text/number/select/boolean/data
         const attrId = box.getAttribute('data-attr-id');
         const editBtn = box.querySelector('.wiki-edit-btn');
@@ -641,15 +667,154 @@
             cancelBtn.style.display = 'none';
           });
         });
-
-        // Если это Notes и значение пустое, и стоит флаг auto-edit, сразу открываем редактор
-        const autoEdit = box.getAttribute('data-auto-edit') === '1';
-        if (isNotes && autoEdit) {
-          editBtn.click();
-        }
       });
 
-function renderRaw(nodeLike) {
+
+      // --- Markdown-кнопки (B / H1 / H2 / List) для всех textarea ---
+      const mdButtons = document.querySelectorAll('.wiki-md-btn');
+      mdButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!window.MarkdownTools || typeof window.MarkdownTools.applyMarkdown !== 'function') return;
+          const action = btn.getAttribute('data-md-action');
+          const container = btn.closest('.wiki-item');
+          if (!container) return;
+          const textarea = container.querySelector('textarea');
+          if (!textarea || !action) return;
+          window.MarkdownTools.applyMarkdown(textarea, action);
+        });
+      });
+    }
+
+    /* ──────────────── РЕНДЕРИНГ WIKI ──────────────── */
+
+    function renderWiki(nodeLike) {
+      const box = document.getElementById('tab-wiki');
+      showLoading('tab-wiki', 'Загрузка wiki-данных...');
+
+      if (currentMapId && currentNodeId) {
+        fetchMetaData(currentMapId, currentNodeId)
+          .then(metaData => {
+            if (metaData && metaData.meta && metaData.attributes) {
+              currentMeta = metaData.meta || {};
+              currentAttributes = metaData.attributes || null;
+              currentNodeData = nodeLike || null;
+
+              const meta = currentMeta;
+              const attributes = currentAttributes;
+              
+              let wikiItems = [];   // обычные атрибуты
+              let aiWikiItem = null;   // AT08
+              let notesItem = null;    // AT15
+              
+              const metaTypes = ['text', 'number', 'select', 'boolean', 'data'];
+              
+              metaTypes.forEach(type => {
+                const metaKey = `meta_${type}`;
+                if (meta[metaKey] && Array.isArray(meta[metaKey])) {
+                  meta[metaKey].forEach(item => {
+                    const attributeIdField = `attribute_${type}_id`;
+                    const attributeId = item[attributeIdField];
+                    if (!attributeId) return;
+
+                    const rawValue = (item.value !== undefined && item.value !== null)
+                      ? item.value
+                      : '';
+
+                    const name = getAttributeName(attributes, attributeId, type);
+                    const priority = getAttributePriority(attributes, attributeId, type);
+
+                    // не показываем meta без имени и с приоритетом = 0
+                    if (!name || priority === 0) return;
+
+                    // Особые текстовые поля
+                    if (type === 'text') {
+                      if (attributeId === 'AT08') {
+                        aiWikiItem = {
+                          kind: 'ai',
+                          metaType: type,
+                          attributeId,
+                          name,
+                          value: rawValue,
+                          priority
+                        };
+                        return;
+                      }
+                      if (attributeId === 'AT15') {
+                        notesItem = {
+                          kind: 'notes',
+                          metaType: type,
+                          attributeId,
+                          name,
+                          value: rawValue,
+                          priority
+                        };
+                        return;
+                      }
+                    }
+
+                    // Обычные wiki-поля: пустые значения не отображаем
+                    if (rawValue === '') return;
+
+                    wikiItems.push({
+                      kind: 'default',
+                      metaType: type,
+                      attributeId,
+                      name,
+                      value: rawValue,
+                      priority
+                    });
+                  });
+                }
+              });
+              
+              // Собираем единый список для сортировки по priority
+              const displayItems = [];
+              if (aiWikiItem)   displayItems.push(aiWikiItem);
+              if (notesItem)    displayItems.push(notesItem);
+              displayItems.push(...wikiItems);
+
+              displayItems.sort((a, b) => a.priority - b.priority);
+
+              if (displayItems.length) {
+                let html = '';
+                if (window.WikiTemplate && typeof window.WikiTemplate.renderItems === 'function') {
+                  html = window.WikiTemplate.renderItems(displayItems);
+                } else {
+                  // fallback, если модуль не подгрузился
+                  displayItems.forEach(item => {
+                    html += `
+                      <div class="wiki-item">
+                        <h3>${escapeHtml(item.name)}</h3>
+                        <div>${escapeHtml(String(item.value))}</div>
+                      </div>
+                    `;
+                  });
+                }
+                box.innerHTML = html;
+                setupWikiActions();
+              } else {
+                box.innerHTML = '<div class="empty">Для этого узла нет wiki-информации.</div>';
+              }
+            } else {
+              currentMeta = null;
+              box.innerHTML = '<div class="empty">Для этого узла нет wiki-информации.</div>';
+            }
+          })
+          .catch(error => {
+            currentMeta = null;
+            console.error('Ошибка загрузки wiki-данных:', error);
+            box.innerHTML = `<div class="error">Ошибка загрузки wiki-данных: ${error.message}</div>`;
+          });
+      } else {
+        currentMeta = null;
+        box.innerHTML = '<div class="empty">Для загрузки wiki-данных требуется map_id и node_id</div>';
+      }
+    }
+
+    /* ──────────────── РЕНДЕРИНГ RAW DATA (КАК БЫЛО) ──────────────── */
+
+    
+    function renderRaw(nodeLike) {
       const box = document.getElementById('tab-raw');
       showLoading('tab-raw', 'Загрузка данных...');
 
@@ -727,6 +892,8 @@ function renderRaw(nodeLike) {
       box.innerHTML = fullHtml;
     }
 
+/* ──────────────── ПУБЛИЧНЫЙ API ДЛЯ INDEX.HTML ──────────────── */
+
     function setData(nodeLike) {
       currentMapId = nodeLike.map_id || null;
       currentNodeId = nodeLike.node_id || null;
@@ -740,4 +907,17 @@ function renderRaw(nodeLike) {
       renderRaw(nodeLike);
     }
 
+    // Связь с index.html
+    window.addEventListener('message', (ev) => {
+      const msg = ev.data || {};
+      if (msg.type === 'container:set') {
+        setData(msg.payload || {});
+      }
+    });
 
+    // Ручной API
+    window.ContainerAPI = { setData };
+  })();
+  </script>
+</body>
+</html>
