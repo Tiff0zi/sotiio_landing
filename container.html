@@ -283,32 +283,107 @@
       });
     }
 
+    // Функция для получения имени атрибута по ID
+    function getAttributeName(attributes, attributeId, type) {
+      const attributeTypeMap = {
+        text: 'attributes_text',
+        number: 'attributes_number',
+        select: 'attributes_select',
+        boolean: 'attributes_boolean',
+        data: 'attributes_data'
+      };
+
+      const attributeArray = attributes[attributeTypeMap[type]];
+      if (!attributeArray) return null;
+
+      const attribute = attributeArray.find(attr => {
+        const idField = `attribute_${type}_id`;
+        return attr[idField] === attributeId;
+      });
+
+      return attribute ? attribute.name : null;
+    }
+
+    // Функция для получения приоритета атрибута по ID
+    function getAttributePriority(attributes, attributeId, type) {
+      const attributeTypeMap = {
+        text: 'attributes_text',
+        number: 'attributes_number',
+        select: 'attributes_select',
+        boolean: 'attributes_boolean',
+        data: 'attributes_data'
+      };
+
+      const attributeArray = attributes[attributeTypeMap[type]];
+      if (!attributeArray) return 999; // высокий приоритет для сортировки в конец
+
+      const attribute = attributeArray.find(attr => {
+        const idField = `attribute_${type}_id`;
+        return attr[idField] === attributeId;
+      });
+
+      return attribute ? attribute.priority : 999;
+    }
+
+    // Функция для рендеринга Wiki
     function renderWiki(nodeLike) {
       const box = document.getElementById('tab-wiki');
       showLoading('tab-wiki', 'Загрузка wiki-данных...');
 
-      const d = nodeLike?.data?.data || nodeLike?.data || nodeLike || {};
-      
       if (currentMapId && currentNodeId) {
         fetchMetaData(currentMapId, currentNodeId)
           .then(metaData => {
-            if (metaData && metaData.wiki) {
-              // Если есть wiki данные в meta
-              const wikiContent = typeof metaData.wiki === 'string' ? metaData.wiki : JSON.stringify(metaData.wiki, null, 2);
-              box.innerHTML = `
-                <div class="wiki-item">
-                  <h3>Wiki информация</h3>
-                  <div>${escapeHtml(wikiContent)}</div>
-                </div>
-              `;
-            } else if (metaData && metaData.description) {
-              // Используем description как wiki
-              box.innerHTML = `
-                <div class="wiki-item">
-                  <h3>Описание</h3>
-                  <div>${escapeHtml(metaData.description)}</div>
-                </div>
-              `;
+            if (metaData && metaData.meta && metaData.attributes) {
+              const meta = metaData.meta.meta || {};
+              const attributes = metaData.attributes;
+              
+              // Собираем все элементы для отображения
+              let wikiItems = [];
+              
+              // Обрабатываем все типы мета-данных
+              const metaTypes = ['text', 'number', 'select', 'boolean', 'data'];
+              
+              metaTypes.forEach(type => {
+                const metaKey = `meta_${type}`;
+                if (meta[metaKey] && Array.isArray(meta[metaKey])) {
+                  meta[metaKey].forEach(item => {
+                    const attributeIdField = `attribute_${type}_id`;
+                    const attributeId = item[attributeIdField];
+                    
+                    if (attributeId && item.value !== undefined && item.value !== null && item.value !== '') {
+                      const name = getAttributeName(attributes, attributeId, type);
+                      const priority = getAttributePriority(attributes, attributeId, type);
+                      
+                      if (name) {
+                        wikiItems.push({
+                          name,
+                          value: item.value,
+                          priority
+                        });
+                      }
+                    }
+                  });
+                }
+              });
+              
+              // Сортируем по приоритету
+              wikiItems.sort((a, b) => a.priority - b.priority);
+              
+              // Рендерим элементы
+              if (wikiItems.length > 0) {
+                let html = '';
+                wikiItems.forEach(item => {
+                  html += `
+                    <div class="wiki-item">
+                      <h3>${escapeHtml(item.name)}</h3>
+                      <div>${escapeHtml(String(item.value))}</div>
+                    </div>
+                  `;
+                });
+                box.innerHTML = html;
+              } else {
+                box.innerHTML = '<div class="empty">Для этого узла нет wiki-информации.</div>';
+              }
             } else {
               box.innerHTML = '<div class="empty">Для этого узла нет wiki-информации.</div>';
             }
@@ -355,18 +430,31 @@
           .then(metaData => {
             let fullHtml = baseHtml;
             
-            if (metaData && Object.keys(metaData).length > 0) {
-              fullHtml += `
-                <div class="meta-section">
-                  <h3>Дополнительные данные</h3>
-                  <pre>${escapeHtml(JSON.stringify(metaData, null, 2))}</pre>
-                </div>
-              `;
+            if (metaData) {
+              // Meta Data блок
+              if (metaData.meta) {
+                fullHtml += `
+                  <div class="meta-section">
+                    <h3>Meta Data</h3>
+                    <pre>${escapeHtml(JSON.stringify(metaData.meta, null, 2))}</pre>
+                  </div>
+                `;
+              }
+              
+              // Global Attributes блок
+              if (metaData.attributes) {
+                fullHtml += `
+                  <div class="meta-section">
+                    <h3>Global Attributes</h3>
+                    <pre>${escapeHtml(JSON.stringify(metaData.attributes, null, 2))}</pre>
+                  </div>
+                `;
+              }
             } else {
               fullHtml += `<div class="empty">Дополнительные meta-данные отсутствуют</div>`;
             }
             
-            // Полные raw данные
+            // Raw Data (переименовано с "Полные raw данные")
             const fullData = {
               map_id: currentMapId,
               node_id: currentNodeId,
@@ -384,7 +472,7 @@
             
             fullHtml += `
               <div class="meta-section">
-                <h3>Полные raw данные</h3>
+                <h3>Raw Data</h3>
                 <pre>${escapeHtml(fullText)}</pre>
               </div>
             `;
