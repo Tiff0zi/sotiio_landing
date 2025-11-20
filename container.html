@@ -586,10 +586,9 @@
       }
 
 
-      // --- Edit / Save для обычных meta-данных и Notes (кроме AT08) ---
-      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"], .wiki-item[data-kind="notes"]');
+      // --- Edit / Save для обычных meta-данных (кроме AT08) ---
+      const defaultItems = document.querySelectorAll('.wiki-item[data-kind="default"]');
       defaultItems.forEach(box => {
-        const isNotes = box.getAttribute('data-kind') === 'notes';
         const metaType = box.getAttribute('data-type');      // text/number/select/boolean/data
         const attrId = box.getAttribute('data-attr-id');
         const editBtn = box.querySelector('.wiki-edit-btn');
@@ -641,11 +640,6 @@
             cancelBtn.style.display = 'none';
           });
         });
-                // ⬇️ Вот это добавляем для Notes
-        const autoEdit = box.getAttribute('data-auto-edit') === '1';
-        if (isNotes && autoEdit) {
-          editBtn.click();
-        }
       });
 
 
