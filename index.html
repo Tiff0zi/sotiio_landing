@@ -1,325 +1,231 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sotiio — мои карты</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
+  <meta charset="utf-8" />
+  <title>Sotiio — where visualization becomes content</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    background: #f4f5fb; /* светлый фон, близко к n8n */
-    color: #111827;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: radial-gradient(circle at top, #252938 0%, #111319 45%, #05060a 100%);
+      color: #f5f5f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
 
-  .shell {
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+    .layout {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
 
-  header {
-    padding: 14px 24px;
-    border-bottom: 1px solid #d9dce8;
-    background: #ffffff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+    /* Hex honeycomb background (bottom-up) */
+    .hex-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
 
-  .logo {
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #6b7280;
-  }
+    .hex-layer {
+      position: absolute;
+      width: 180%;
+      height: 80%;
+      bottom: -10%;
+      left: -40%;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0),
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+      background-size: 36px 62px;
+      background-position: 0 0, 18px 31px;
+      opacity: 0.16;
+      filter: blur(0.3px);
+      mask-image: linear-gradient(to top, black 0%, transparent 80%);
+    }
 
-  .user-tag {
-    font-size: 13px;
-    color: #4b5563;
-  }
+    .glow {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(118,198,255,0.35) 0%, rgba(7,13,23,0) 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
 
-  main {
-    padding: 24px 24px 40px;
-    max-width: 1080px;
-    width: 100%;
-    margin: 0 auto;
-  }
+    .content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      align-items: center;
+    }
 
-  h1 {
-    font-size: 28px;
-    margin: 0 0 4px;
-    color: #111827;
-  }
+    .logo {
+      font-size: 20px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #9ea4c7;
+    }
 
-  .subtitle {
-    margin: 0 0 20px;
-    color: #6b7280;
-    font-size: 14px;
-  }
+    h1 {
+      margin: 0;
+      font-size: clamp(40px, 6vw, 70px);
+      font-weight: 800;
+      line-height: 1.05;
+    }
 
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
+    .accent {
+      background: linear-gradient(120deg, #77c3ff, #ff8a7a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
 
-  .btn-primary {
-    padding: 10px 18px;
-    border-radius: 999px;
-    border: none;
-    background: linear-gradient(135deg, #ff6a3c, #ff914d);
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 2px 6px rgba(248, 113, 113, 0.35);
-  }
+    .subtitle {
+      max-width: 520px;
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #c0c4de;
+    }
 
-  .btn-primary:hover {
-    filter: brightness(1.05);
-  }
+    .cta-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      margin-top: 8px;
+    }
 
-  .btn-primary svg {
-    width: 16px;
-    height: 16px;
-  }
+    .btn-primary {
+      padding: 18px 36px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #2ea6ff, #5f8bff);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(39,125,255,0.45);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
 
-  .status {
-    font-size: 13px;
-    color: #6b7280;
-  }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 40px rgba(39,125,255,0.6);
+      filter: brightness(1.05);
+    }
 
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
-    margin-top: 8px;
-  }
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(39,125,255,0.4);
+    }
 
-  .card {
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 14px 14px 12px;
-    border: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
-  }
+    .btn-primary svg {
+      width: 20px;
+      height: 20px;
+    }
 
-  .card h2 {
-    font-size: 16px;
-    margin: 0;
-    color: #111827;
-  }
+    .hint {
+      font-size: 13px;
+      color: #8589a3;
+    }
 
-  .card-meta {
-    font-size: 12px;
-    color: #6b7280;
-  }
+    .footer {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #5e6484;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
-  .card-footer {
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .btn-secondary {
-    border-radius: 999px;
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
-    color: #111827;
-    font-size: 13px;
-    padding: 5px 12px;
-    cursor: pointer;
-  }
-
-  .btn-secondary:hover {
-    background: #f3f4f6;
-  }
-
-  .badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #e5f3ff;
-    color: #1d4ed8;
-  }
-
-  .badge.pending {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .empty {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #6b7280;
-  }
-</style>
+    @media (max-width: 600px) {
+      .layout { padding: 24px 16px; }
+      .content { gap: 24px; }
+      .subtitle { font-size: 14px; }
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="shell">
-  <header>
-    <div class="logo">SOTIIO</div>
-    <div class="user-tag" id="userTag">User: …</div>
-  </header>
-
-  <main>
-    <h1>Ваши карты</h1>
-    <p class="subtitle">
-      Управляйте своими визуализациями. Новые пользователи попадают сюда после входа через лендинг.
-    </p>
-
-    <div class="toolbar">
-      <button class="btn-primary" onclick="goCreate()">
-        <svg viewBox="0 0 24 24">
-          <path fill="currentColor" d="M11 5v6H5v2h6v6h2v-6h6v-2h-6V5z"/>
-        </svg>
-        Создать новую карту
-      </button>
-      <div class="status" id="status">Загружаем список карт...</div>
+  <div class="layout">
+    <div class="hex-bg">
+      <div class="hex-layer"></div>
+      <div class="glow"></div>
     </div>
 
-    <section id="cards" class="cards"></section>
-    <div id="emptyState" class="empty" style="display:none;">
-      Пока карт нет. Нажмите «Создать новую карту», чтобы начать.
+    <main class="content">
+      <div class="logo">SOTIIO</div>
+      <h1>
+        Where <span class="accent">visualization</span> becomes content,<br/>
+        and content becomes <span class="accent">visualization</span>.
+      </h1>
+      <p class="subtitle">
+        Build living knowledge maps instead of static documents. Navigate complexity through hexagonal worlds of meaning.
+      </p>
+
+      <div class="cta-row">
+        <script async
+          src="https://telegram.org/js/telegram-widget.js?22"
+          data-telegram-login="sotiio_auth_bot"
+          data-size="large"
+          data-radius="999"
+          data-userpic="false"
+          data-auth-url="https://n8n.sotiio.com/webhook/telegram_auth"
+          data-request-access="write">
+        </script>
+      
+        <div class="hint">
+          Вход через Telegram. Никаких паролей на Sotiio.
+        </div>
+      </div>
+    </main>
+
+    <div class="footer">
+      Sotiio · Knowledge Maps
     </div>
-  </main>
-</div>
+  </div>
 
-<script>
-  const N8N_MAP_LIST_URL = "https://n8n.sotiio.com/webhook/get_map_list";
-  const STORAGE_KEY_USER = "sotiio_user_id";
+  <script>
+    function startLogin() {
+      // TODO: подставь реальные параметры Keycloak
+      const keycloakAuthUrl = "https://auth.sotiio.com/realms/SOTIIO/protocol/openid-connect/auth";
 
-  function initUserId() {
-    const url = new URL(window.location.href);
-    const fromQuery = url.searchParams.get("user_id");
-
-    if (fromQuery) {
-      // сохраняем user_id в localStorage
-      localStorage.setItem(STORAGE_KEY_USER, fromQuery);
-      // чистим query (?user_id=...) чтобы не торчал в адресной строке
-      url.searchParams.delete("user_id");
-      const clean = url.pathname + (url.search ? "?" + url.search : "");
-      window.history.replaceState({}, "", clean || "/login");
-      return fromQuery;
-    }
-
-    const fromStorage = localStorage.getItem(STORAGE_KEY_USER);
-    if (fromStorage) {
-      return fromStorage;
-    }
-
-    // не удалось определить user_id → уходим на лендинг
-    window.location.href = "https://sotiio.com";
-    return null; // фактически недостижимо, но для читаемости
-  }
-
-  function goCreate() {
-    window.location.href = "/userstory.html";
-  }
-
-  function goOpenMap(mapId) {
-    window.location.href = "/viewer.html?map_id=" + encodeURIComponent(mapId);
-  }
-
-  async function loadMaps() {
-    const statusEl = document.getElementById("status");
-    const cardsEl = document.getElementById("cards");
-    const emptyEl = document.getElementById("emptyState");
-    const userTag = document.getElementById("userTag");
-
-    const userId = initUserId();
-    if (!userId) return; // уже ушли на лендинг
-
-    userTag.textContent = "User: " + userId;
-
-    try {
-      statusEl.textContent = "Загружаем ваши карты...";
-      const resp = await fetch(N8N_MAP_LIST_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ user_id: userId })
+      const params = new URLSearchParams({
+        client_id: "sotiio-web",              // ← твой client_id
+        redirect_uri: "https://app.sotiio.com", // ← куда вернуть после логина
+        response_type: "code",                // или "code" с PKCE
+        scope: "openid profile",
+        kc_idp_hint: "telegram"               // если настроен отдельный IdP для Telegram
       });
 
-      const text = await resp.text();
-      let data;
-      try {
-        data = text ? JSON.parse(text) : [];
-      } catch {
-        throw new Error("Невалидный JSON от get_map_list");
-      }
-
-      const list = Array.isArray(data) ? data : (data.items || []);
-      cardsEl.innerHTML = "";
-
-      if (!list || list.length === 0) {
-        emptyEl.style.display = "block";
-        statusEl.textContent = "Карт не найдено.";
-        return;
-      }
-
-      emptyEl.style.display = "none";
-
-      list.forEach(item => {
-        const mapId = item.map_id || item.id || "unknown";
-        const title = item.title || item.name || ("Карта " + mapId);
-        const created = item.created_at || item.created || "";
-        const status = item.status || "ready";
-
-        const card = document.createElement("article");
-        card.className = "card";
-        const badgeClass = status === "pending" ? "badge pending" : "badge";
-        card.innerHTML = `
-          <h2>${escapeHtml(title)}</h2>
-          <div class="card-meta">
-            id: <code>${escapeHtml(mapId)}</code><br/>
-            ${created ? "Создана: " + escapeHtml(created) : ""}
-          </div>
-          <div class="card-footer">
-            <button class="btn-secondary" data-map-id="${mapId}">Открыть</button>
-            <span class="${badgeClass}">${escapeHtml(status)}</span>
-          </div>
-        `;
-        const btn = card.querySelector("button");
-        btn.addEventListener("click", () => goOpenMap(mapId));
-        cardsEl.appendChild(card);
-      });
-
-      statusEl.textContent = "Готово.";
-    } catch (err) {
-      console.warn(err);
-      statusEl.textContent = "Ошибка загрузки карт: " + err.message;
+      window.location.href = keycloakAuthUrl + "?" + params.toString();
     }
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  loadMaps();
-</script>
+  </script>
 </body>
 </html>
