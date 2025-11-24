@@ -58,3 +58,12 @@ https://n8n.sotiio.com/webhook/getwiki
 
 https://n8n.sotiio.com/webhook/telegram_auth
 
+# Что еще есть?
+
+- http://n8n.sotiio.com
+
+**Бэкэнд**. 
+
+- http://db.sotiio.com
+
+**Postgres**. 
