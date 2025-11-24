@@ -26,5 +26,4 @@ https://n8n.sotiio.com/webhook/us - основной вебхук создающ
     * 
 2. Загрузка карты.
 https://n8n.sotiio.com/webhook/get_jsmind
-
 https://n8n.sotiio.com/webhook/get_pixi
