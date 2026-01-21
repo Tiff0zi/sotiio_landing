@@ -386,7 +386,13 @@
       .pill,.card{transition:none}
       .imgframe img{transform:none}
     }
-  </style>
+  
+    /* Modal UX fixes */
+    .xbtn{position:relative; z-index:5; cursor:pointer;}
+    .xbtn svg{pointer-events:none;}
+    .tg-wrap{width:100%; display:flex; justify-content:center; align-items:center; min-height:44px;}
+
+</style>
 </head>
 
 <body>
@@ -498,7 +504,6 @@
       <div class="dialog-head">
         <div>
           <p class="dialog-title">Sign in</p>
-          <p class="dialog-sub">Continue with Telegram to open Sotiio.</p>
         </div>
         <button class="xbtn" type="button" data-close aria-label="Close">
           <svg viewBox="0 0 24 24"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4z"/></svg>
@@ -549,7 +554,8 @@
       }
 
       modal.addEventListener('click', (e) => {
-        if (e.target && e.target.matches('[data-close]')) closeModal();
+        const btn = e.target && e.target.closest ? e.target.closest('[data-close]') : null;
+        if (btn) closeModal();
       });
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
