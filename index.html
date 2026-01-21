@@ -47,14 +47,9 @@
     .shell{position:relative; z-index:1; height:100%; display:flex; flex-direction:column;}
 
     /* Header */
-    header{
-  flex:0 0 auto;
-  padding:16px 18px 10px;
-}
+    header{flex:0 0 auto; padding:16px 18px 10px; display:flex; justify-content:center;}
     .header-inner{
-  width: 100%;
-  max-width: var(--container);
-  margin: 0 auto;
+      width:min(var(--container), 100%);
       display:grid;
       grid-template-columns: 1fr auto;
       gap: 16px;
@@ -129,15 +124,14 @@
 
     /* Main */
     main{
-  flex:1 1 auto;
-  min-height:0;
-  padding: 0 18px 10px;
-}
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      justify-content:center;
+      padding: 0 18px 10px;
+    }
     .main-inner{
-  min-width: 0;
-  width: 100%;
-  max-width: var(--container);
-  margin: 0 auto;
+      width:min(var(--container), 100%);
       min-height:0;
       display:flex;
       flex-direction:column;
