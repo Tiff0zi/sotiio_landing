@@ -1,231 +1,556 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Sotiio — where visualization becomes content</title>
+  <title>Sotiio — Wiki + Mindmap</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4f5fb" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
+    *,*::before,*::after{box-sizing:border-box}
+    :root{
+      --bg:#f4f5fb;
+      --surface:#ffffff;
+      --surface2:rgba(255,255,255,0.78);
+      --text:#0f172a;
+      --muted:#667085;
+      --line:#e5e7eb;
+      --line2:#d9dce8;
+      --accent:#ff6a3c;
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background: radial-gradient(circle at top, #252938 0%, #111319 45%, #05060a 100%);
-      color: #f5f5f5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow: hidden;
+      --shadow-sm:0 1px 2px rgba(15,23,42,0.06);
+      --shadow-md:0 10px 28px rgba(15,23,42,0.10);
+      --shadow-lg:0 16px 44px rgba(15,23,42,0.12);
+
+      --r-14:14px;
+      --r-18:18px;
+      --r-24:24px;
+
+      --container: 1260px;
     }
 
-    .layout {
-      position: relative;
-      height: 100%;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      overflow:hidden;
     }
 
-    /* Hex honeycomb background (bottom-up) */
-    .hex-bg {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      z-index: 0;
-      pointer-events: none;
+    .bg{
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(900px 520px at 50% -140px, rgba(255,106,60,0.16), rgba(244,245,251,0) 60%),
+        radial-gradient(760px 420px at 78% 18%, rgba(100,193,184,0.10), rgba(244,245,251,0) 60%);
     }
 
-    .hex-layer {
-      position: absolute;
-      width: 180%;
-      height: 80%;
-      bottom: -10%;
-      left: -40%;
-      background-image:
-        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0),
-        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
-      background-size: 36px 62px;
-      background-position: 0 0, 18px 31px;
-      opacity: 0.16;
-      filter: blur(0.3px);
-      mask-image: linear-gradient(to top, black 0%, transparent 80%);
+    .shell{position:relative; z-index:1; height:100%; display:flex; flex-direction:column;}
+
+    /* Header */
+    header{flex:0 0 auto; padding:16px 18px 10px; display:flex; justify-content:center;}
+    .header-inner{
+      width:min(var(--container), 100%);
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items:start;
+    }
+    .brand-row{display:flex; align-items:center; gap:10px; user-select:none;}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; user-select:none;}
+    .mark{
+      width:30px;height:30px; border-radius:12px; background:var(--surface);
+      border:1px solid var(--line); box-shadow:var(--shadow-sm);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .mark svg{width:16px;height:16px; fill:var(--accent);}
+    .word{
+      font-weight:900; letter-spacing:0.22em; font-size:12px;
+      text-transform:uppercase; color:var(--muted);
     }
 
-    .glow {
-      position: absolute;
-      bottom: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 700px;
-      background: radial-gradient(circle, rgba(118,198,255,0.35) 0%, rgba(7,13,23,0) 60%);
-      opacity: 0.9;
-      pointer-events: none;
+    .headline{
+      display:flex; flex-direction:column; gap:8px;
+      padding-top:2px;
+    }
+    h1{
+      margin:0;
+      font-weight:950;
+      letter-spacing:-0.03em;
+      line-height:1.05;
+      font-size: clamp(28px, 2.6vw, 44px);
+    }
+    .accent{color:var(--accent);}
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      max-width: 80ch;
+    }
+    .sub b{color:var(--text); font-weight:900;}
+    .mini-line{
+      display:flex; align-items:center; gap:10px; color:var(--muted);
+      font-size:12px; letter-spacing:0.02em; user-select:none;
+    }
+    .dot{
+      width:6px;height:6px;border-radius:99px;
+      background: rgba(255,106,60,0.55);
+      box-shadow: 0 0 0 6px rgba(255,106,60,0.12);
+      flex:0 0 auto;
     }
 
-    .content {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-      align-items: center;
+    /* CTA button */
+    .header-cta{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-end;
+      min-width: 240px;
+      padding-top: 2px;
+    }
+    .pill{
+      height:36px; padding:0 14px; border-radius:999px;
+      border:1px solid var(--line); background:var(--surface2);
+      box-shadow:var(--shadow-sm);
+      color:var(--muted);
+      font-weight:900; letter-spacing:0.10em; text-transform:uppercase; font-size:11px;
+      text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+      transition:transform .12s ease, filter .12s ease;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+    .pill:hover{filter:brightness(1.02); transform:translateY(-1px)}
+    .pill:active{transform:translateY(0)}
+    button.pill{appearance:none; -webkit-appearance:none; border:1px solid var(--line);}
+
+    /* Main */
+    main{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      justify-content:center;
+      padding: 0 18px 10px;
+    }
+    .main-inner{
+      width:min(var(--container), 100%);
+      min-height:0;
+      display:flex;
+      flex-direction:column;
     }
 
-    .logo {
-      font-size: 20px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: #9ea4c7;
+    .triptych{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      align-items:stretch;
     }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(40px, 6vw, 70px);
-      font-weight: 800;
-      line-height: 1.05;
+    .card{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-24);
+      box-shadow: var(--shadow-lg);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      transition: transform .12s ease, filter .12s ease;
     }
+    .card:hover{filter:brightness(1.01); transform: translateY(-1px);}
+    .card:active{transform:none;}
 
-    .accent {
-      background: linear-gradient(120deg, #77c3ff, #ff8a7a);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .subtitle {
-      max-width: 520px;
-      margin: 0;
-      font-size: 16px;
-      line-height: 1.5;
-      color: #c0c4de;
-    }
-
-    .cta-row {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 18px;
-      margin-top: 8px;
-    }
-
-    .btn-primary {
-      padding: 18px 36px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
+    .card-top{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--line2);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
       gap: 10px;
-      background: linear-gradient(135deg, #2ea6ff, #5f8bff);
-      color: #fff;
-      box-shadow: 0 10px 30px rgba(39,125,255,0.45);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     }
 
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 40px rgba(39,125,255,0.6);
-      filter: brightness(1.05);
+    /* LOUZUNG */
+    .title{
+      margin:0;
+      font-size: clamp(18px, 1.6vw, 24px);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
     }
 
-    .btn-primary:active {
-      transform: translateY(0);
-      box-shadow: 0 6px 16px rgba(39,125,255,0.4);
+    /* IMAGE AREA */
+    .imgwrap{
+      position:relative;
+      flex: 1 1 auto;
+      min-height:0;
+      background: linear-gradient(180deg, rgba(244,245,251,0.55), rgba(255,255,255,0.95));
+      padding: 10px;
+      display:flex;
+    }
+    .imgframe{
+      width:100%;
+      border-radius: var(--r-18);
+      border: 1px solid rgba(229,231,235,0.95);
+      box-shadow: var(--shadow-md);
+      background: rgba(255,255,255,0.82);
+      overflow:hidden;
+      aspect-ratio: 16 / 10;
+      align-self: stretch;
+    }
+    .imgframe img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit: cover;
+      object-position: center;
+      transform: scale(1.01);
     }
 
-    .btn-primary svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .hint {
-      font-size: 13px;
-      color: #8589a3;
-    }
-
-    .footer {
-      position: absolute;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
+    .img-fallback{
+      position:absolute;
+      inset: 10px;
+      border-radius: var(--r-18);
+      border: 1px dashed rgba(102,112,133,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 16px;
+      color: var(--muted);
       font-size: 12px;
-      color: #5e6484;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      line-height: 1.45;
+      background: rgba(255,255,255,0.70);
+    }
+    .imgwrap.broken .img-fallback{display:flex;}
+    .imgwrap.broken .imgframe{display:none;}
+
+    .card-bottom{
+      padding: 10px 14px 12px;
+      border-top: 1px solid var(--line2);
+      background: rgba(255,255,255,0.76);
+    }
+    .desc{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
     }
 
-    @media (max-width: 600px) {
-      .layout { padding: 24px 16px; }
-      .content { gap: 24px; }
-      .subtitle { font-size: 14px; }
-      .btn-primary {
-        width: 100%;
-        justify-content: center;
-      }
+    footer{
+      flex:0 0 auto;
+      padding:8px 18px 14px;
+      display:flex; align-items:center; justify-content:center;
+      gap:10px;
+      color: rgba(102,112,133,0.92);
+      font-size:11px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      user-select:none;
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .modal.open{display:flex;}
+    .modal-backdrop{
+      position:absolute; inset:0;
+      background: rgba(15,23,42,0.35);
+      backdrop-filter: blur(10px);
+    }
+    .dialog{
+      position:relative;
+      width:min(520px, 100%);
+      background: rgba(255,255,255,0.86);
+      border:1px solid rgba(229,231,235,0.85);
+      border-radius: var(--r-24);
+      box-shadow: 0 26px 70px rgba(15,23,42,0.22);
+      overflow:hidden;
+    }
+    .dialog-head{
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom:1px solid rgba(217,220,232,0.9);
+      background: rgba(255,255,255,0.80);
+    }
+    .dialog-title{
+      margin:0;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      line-height:1.2;
+    }
+    .dialog-sub{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .xbtn{
+      width:34px; height:34px;
+      border-radius: 12px;
+      border:1px solid rgba(229,231,235,0.95);
+      background: rgba(255,255,255,0.82);
+      box-shadow: var(--shadow-sm);
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex:0 0 auto;
+    }
+    .xbtn svg{width:16px;height:16px; fill: rgba(102,112,133,0.9);}
+    .dialog-body{
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .dialog-actions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill.primary{
+      border-color: rgba(255,106,60,0.30);
+      background: rgba(255,106,60,0.12);
+      color: rgba(255,106,60,0.95);
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    #tgModalWrap{min-height:44px; display:flex; justify-content:flex-end;}
+    .muted{color: var(--muted);}
+
+    /* Responsive */
+    @media (max-width: 1120px){
+      html,body{height:auto; min-height:100%;}
+      body{overflow:auto;}
+      header{padding:14px 14px 10px;}
+      main{padding: 0 14px 14px;}
+      .header-inner{grid-template-columns: 1fr; }
+      .header-cta{justify-content:flex-start;}
+      .triptych{grid-template-columns: 1fr; }
+      .imgframe{aspect-ratio: 16 / 9;}
+      .card{min-height: 420px;}
+      #tgModalWrap{justify-content:flex-start;}
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .pill,.card{transition:none}
+      .imgframe img{transform:none}
     }
   </style>
 </head>
+
 <body>
-  <div class="layout">
-    <div class="hex-bg">
-      <div class="hex-layer"></div>
-      <div class="glow"></div>
-    </div>
+  <div class="bg" aria-hidden="true"></div>
 
-    <main class="content">
-      <div class="logo">SOTIIO</div>
-      <h1>
-        Where <span class="accent">visualization</span> becomes content,<br/>
-        and content becomes <span class="accent">visualization</span>.
-      </h1>
-      <p class="subtitle">
-        Build living knowledge maps instead of static documents. Navigate complexity through hexagonal worlds of meaning.
-      </p>
+  <div class="shell">
+    <header>
+      <div class="header-inner">
+        <div class="headline">
+          <div class="brand-row">
+            <a class="brand" href="https://sotiio.com" aria-label="Sotiio">
+              <span class="mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2l8 5v10l-8 5-8-5V7l8-5zm0 3.3L6.7 8.3v7.4L12 18.7l5.3-3v-7.4L12 5.3z"/></svg>
+              </span>
+              <span class="word">SOTIIO</span>
+            </a>
+          </div>
 
-      <div class="cta-row">
-        <script async
-          src="https://telegram.org/js/telegram-widget.js?22"
-          data-telegram-login="sotiio_auth_bot"
-          data-size="large"
-          data-radius="999"
-          data-userpic="false"
-          data-auth-url="https://n8n.sotiio.com/webhook/telegram_auth"
-          data-request-access="write">
-        </script>
-      
-        <div class="hint">
-          Вход через Telegram. Никаких паролей на Sotiio.
+          <h1>Create a Universe. <span class="accent">Discover a Universe</span></h1>
+          <p class="sub">
+            No longer need to choose between knowledge and visualization
+          </p>
+          <div class="mini-line"><span class="dot" aria-hidden="true"></span><span>AI built-in</span></div>
         </div>
+
+        <div class="header-cta">
+          <button class="pill" id="openModalBtn" type="button">Open app</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="main-inner">
+        <section class="triptych" aria-label="Three key visuals">
+          <article class="card">
+            <div class="card-top">
+              <h3 class="title">A Universe, Not a Map</h3>
+            </div>
+            <div class="imgwrap" data-img>
+              <div class="imgframe">
+                <img loading="eager" referrerpolicy="no-referrer"
+                     src="https://raw.githubusercontent.com/Tiff0zi/sotiio_landing/498105199d7dd8f402638f3bb0119329b136bc32/map.png"
+                     alt="A Universe, Not a Map" />
+              </div>
+              <div class="img-fallback">
+                Image didn’t load.<br>
+                If you opened this file offline, host <b>map.png</b> next to the HTML and set <code>src="map.png"</code>.
+              </div>
+            </div>
+            <div class="card-bottom">
+              <p class="desc">No more mind maps that lead to a mess</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <h3 class="title">Full Stack of Meaning</h3>
+            </div>
+            <div class="imgwrap" data-img>
+              <div class="imgframe">
+                <img loading="eager" referrerpolicy="no-referrer"
+                     src="https://raw.githubusercontent.com/Tiff0zi/sotiio_landing/498105199d7dd8f402638f3bb0119329b136bc32/set.png"
+                     alt="Full Stack of Meaning" />
+              </div>
+              <div class="img-fallback">
+                Image didn’t load.<br>
+                Host <b>set.png</b> locally and set <code>src="set.png"</code>.
+              </div>
+            </div>
+            <div class="card-bottom">
+              <p class="desc">Hundreds of items at a glance</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <h3 class="title">Knowledge Inside</h3>
+            </div>
+            <div class="imgwrap" data-img>
+              <div class="imgframe">
+                <img loading="eager" referrerpolicy="no-referrer"
+                     src="https://raw.githubusercontent.com/Tiff0zi/sotiio_landing/ec3f7e4073bad173d82950ec95d83d98ad35fa7f/wiki.png"
+                     alt="Knowledge Inside" />
+              </div>
+              <div class="img-fallback">
+                Image didn’t load.<br>
+                Host <b>wiki.png</b> locally and set <code>src="wiki.png"</code>.
+              </div>
+            </div>
+            <div class="card-bottom">
+              <p class="desc">Wiki lives inside any node</p>
+            </div>
+          </article>
+        </section>
       </div>
     </main>
 
-    <div class="footer">
-      Sotiio · Knowledge Maps
+    <footer aria-label="Footer">
+      <span>WIKI + MINDMAP = SOTIIO</span>
+    </footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" data-close></div>
+
+    <div class="dialog" role="document">
+      <div class="dialog-head">
+        <div>
+          <p class="dialog-title">Open Sotiio</p>
+          <p class="dialog-sub">Login via Telegram (recommended). Or continue to the app.</p>
+        </div>
+        <button class="xbtn" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4z"/></svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div id="tgModalWrap"></div>
+
+        <div class="dialog-actions">
+          <a class="pill" href="https://app.sotiio.com" target="_blank" rel="noopener">Open app</a>
+          <button class="pill primary" type="button" id="closeModalBtn">Close</button>
+        </div>
+
+        <div class="hint" id="tgHint"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    function startLogin() {
-      // TODO: подставь реальные параметры Keycloak
-      const keycloakAuthUrl = "https://auth.sotiio.com/realms/SOTIIO/protocol/openid-connect/auth";
+    (function(){
+      // image fallback
+      const wraps = Array.from(document.querySelectorAll('[data-img]'));
+      for (const w of wraps){
+        const img = w.querySelector('img');
+        if (!img) continue;
+        img.addEventListener('error', () => w.classList.add('broken'), { once:true });
+        img.addEventListener('load',  () => w.classList.remove('broken'), { once:true });
+      }
 
-      const params = new URLSearchParams({
-        client_id: "sotiio-web",              // ← твой client_id
-        redirect_uri: "https://app.sotiio.com", // ← куда вернуть после логина
-        response_type: "code",                // или "code" с PKCE
-        scope: "openid profile",
-        kc_idp_hint: "telegram"               // если настроен отдельный IdP для Telegram
+      // modal open/close
+      const modal = document.getElementById('modal');
+      const openBtn = document.getElementById('openModalBtn');
+      const closeBtn = document.getElementById('closeModalBtn');
+      const tgWrap = document.getElementById('tgModalWrap');
+      const tgHint = document.getElementById('tgHint');
+
+      function openModal(){
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal(){
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden','true');
+        document.body.style.overflow = '';
+      }
+
+      modal.addEventListener('click', (e) => {
+        if (e.target && e.target.matches('[data-close]')) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
       });
 
-      window.location.href = keycloakAuthUrl + "?" + params.toString();
-    }
+      openBtn.addEventListener('click', () => {
+        openModal();
+        ensureTelegramWidget();
+      });
+      closeBtn.addEventListener('click', closeModal);
+
+      // Telegram widget: only works on https origin
+      let tgInitialized = false;
+      function ensureTelegramWidget(){
+        if (tgInitialized) return;
+        tgInitialized = true;
+
+        if (window.location.protocol !== 'https:') {
+          tgWrap.innerHTML = '<div class="hint muted">Telegram login works only on https:// (your current origin is ' + window.location.protocol + ').</div>';
+          tgHint.textContent = 'Deploy the landing on your domain (https) to enable Telegram login here.';
+          return;
+        }
+
+        // Inject Telegram widget script inside modal
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = "https://telegram.org/js/telegram-widget.js?22";
+        s.setAttribute("data-telegram-login", "sotiio_auth_bot");
+        s.setAttribute("data-size", "large");
+        s.setAttribute("data-radius", "999");
+        s.setAttribute("data-userpic", "false");
+        s.setAttribute("data-auth-url", "https://n8n.sotiio.com/webhook/telegram_auth");
+        s.setAttribute("data-request-access", "write");
+        tgWrap.appendChild(s);
+
+        tgHint.textContent = 'If you see “Bot domain invalid”, add this landing domain to your Telegram bot allowed domains.';
+      }
+    })();
   </script>
 </body>
 </html>
