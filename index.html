@@ -357,16 +357,14 @@
       line-height:1.45;
     }
     .tg-wrap{min-height:44px; display:flex; justify-content:flex-end; align-items:center;}
-
-    .auth-status{
-      margin: 10px 0 0;
+    .tg-hint{
+      display:none;
+      margin:10px 2px 0;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
+      font-size:12px;
+      line-height:1.45;
     }
-    .dialog.busy .auth-row{opacity:0.65; pointer-events:none;}
-    .dialog.busy .xbtn{opacity:0.7; pointer-events:auto;}
-
+    .tg-hint.is-visible{display:block;}
 
     .muted{color: var(--muted);}
 
@@ -415,7 +413,7 @@
         </div>
 
         <div class="header-cta">
-          <button class="pill" id="openModalBtn" type="button">Get started</button>
+          <button class="pill" id="openModalBtn" type="button">Sign in</button>
         </div>
       </div>
     </header>
@@ -499,8 +497,8 @@
       
       <div class="dialog-head">
         <div>
-          <p class="dialog-title">Sign in to Sotiio</p>
-          <p class="dialog-sub">Use Telegram to sign in. You’ll be redirected to the app after authorization.</p>
+          <p class="dialog-title">Sign in</p>
+          <p class="dialog-sub">Continue with Telegram to open Sotiio.</p>
         </div>
         <button class="xbtn" type="button" data-close aria-label="Close">
           <svg viewBox="0 0 24 24"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4z"/></svg>
@@ -511,11 +509,12 @@
         <div class="auth-row">
           <div class="auth-copy">
             <p class="auth-title">Continue with Telegram</p>
-            <p class="auth-sub">Recommended. You’ll be redirected to Sotiio after authorization.</p>
+            <p class="auth-sub">You’ll be redirected to the app after authorization.</p>
           </div>
           <div id="tgModalWrap" class="tg-wrap" aria-label="Telegram login"></div>
-          <p id="authStatus" class="auth-status" hidden>Finishing sign‑in…</p>
         </div>
+
+        <p id="tgHint" class="tg-hint"></p>
 <div class="hint" id="tgHint"></div>
       </div>
     </div>
@@ -549,42 +548,7 @@
         document.body.style.overflow = '';
       }
 
-      
-
-      // Telegram widget callback (no extra redirect hop → smoother UX)
-      // The backend must verify the hash server-side and establish a session.
-      async function onTelegramAuth(user){
-        try{
-          const dialog = document.querySelector('.dialog');
-          const status = document.getElementById('authStatus');
-          if (dialog) dialog.classList.add('busy');
-          if (status){ status.hidden = false; status.textContent = 'Finishing sign‑in…'; }
-
-          // Send auth payload to backend (POST JSON). Backend should respond with {redirect:"https://app.sotiio.com"} or 204.
-          const resp = await fetch('https://n8n.sotiio.com/webhook/telegram_auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(user),
-            credentials: 'include',
-          });
-
-          // If backend returns a redirect URL, follow it. Otherwise go to app.
-          let redirect = 'https://app.sotiio.com';
-          const ct = resp.headers.get('content-type') || '';
-          if (ct.includes('application/json')) {
-            const data = await resp.json();
-            if (data && typeof data.redirect === 'string' && data.redirect.startsWith('http')) redirect = data.redirect;
-          }
-          window.location.href = redirect;
-        }catch(err){
-          const status = document.getElementById('authStatus');
-          if (status){ status.hidden = false; status.textContent = 'Login failed. Please try again.'; }
-          const dialog = document.querySelector('.dialog');
-          if (dialog) dialog.classList.remove('busy');
-          console.error(err);
-        }
-      }
-modal.addEventListener('click', (e) => {
+      modal.addEventListener('click', (e) => {
         if (e.target && e.target.matches('[data-close]')) closeModal();
       });
       document.addEventListener('keydown', (e) => {
@@ -595,7 +559,6 @@ modal.addEventListener('click', (e) => {
         openModal();
         ensureTelegramWidget();
       });
-
       // Telegram widget: only works on https origin
       let tgInitialized = false;
       function ensureTelegramWidget(){
@@ -604,7 +567,8 @@ modal.addEventListener('click', (e) => {
 
         if (window.location.protocol !== 'https:') {
           tgWrap.innerHTML = '<div class="hint muted">Telegram login works only on https:// (your current origin is ' + window.location.protocol + ').</div>';
-          tgHint.textContent = 'Telegram login requires https. You can still continue to the app.';
+          tgHint.textContent = 'Telegram login requires https. Please open this page on your https domain.';
+        tgHint.classList.add('is-visible');
           return;
         }
 
@@ -616,13 +580,14 @@ modal.addEventListener('click', (e) => {
         s.setAttribute("data-size", "large");
         s.setAttribute("data-radius", "18");
         s.setAttribute("data-userpic", "false");
-        s.setAttribute("data-onauth", "onTelegramAuth(user)");
-                s.setAttribute("data-request-access", "write");
+        s.setAttribute("data-auth-url", "https://n8n.sotiio.com/webhook/telegram_auth");
+        s.setAttribute("data-request-access", "write");
         s.setAttribute("data-lang", "en");
         tgWrap.innerHTML = "";
         tgWrap.appendChild(s);
 
-        tgHint.textContent = 'If Telegram shows “Bot domain invalid”, add this landing domain to the bot’s allowed domains (BotFather → /setdomain).' ;
+        tgHint.textContent = 'If you see “Bot domain invalid”, add this landing domain in BotFather: /setdomain.';
+      tgHint.classList.add('is-visible');
       }
     })();
   </script>
