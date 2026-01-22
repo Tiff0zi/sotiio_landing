@@ -47,7 +47,7 @@
     .shell{position:relative; z-index:1; height:100%; display:flex; flex-direction:column;}
 
     /* Header */
-    header{flex:0 0 auto; padding:16px 18px 10px; display:flex; justify-content:center;}
+    header{flex:0 0 auto; padding:16px 18px 18px; display:flex; justify-content:center;}
     .header-inner{
       width:min(var(--container), 100%);
       display:grid;
@@ -128,7 +128,7 @@
       min-height:0;
       display:flex;
       justify-content:center;
-      padding: 0 18px 10px;
+      padding: 8px 18px 10px;
     }
     .main-inner{
       width:min(var(--container), 100%);
@@ -161,15 +161,16 @@
     .card:active{transform:none;}
 
     .card-top{
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid var(--line2);
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(10px);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 10px;
-    }
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--line2);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(10px);
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap: 6px;
+}
 
     /* LOUZUNG */
     .title{
@@ -179,6 +180,14 @@
       letter-spacing: -0.02em;
       line-height: 1.15;
     }
+.card-sub{
+  margin:0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
 
     /* IMAGE AREA */
     .imgwrap{
@@ -225,18 +234,6 @@
     }
     .imgwrap.broken .img-fallback{display:flex;}
     .imgwrap.broken .imgframe{display:none;}
-
-    .card-bottom{
-      padding: 10px 14px 12px;
-      border-top: 1px solid var(--line2);
-      background: rgba(255,255,255,0.76);
-    }
-    .desc{
-      margin:0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
-    }
 
     footer{
       flex:0 0 auto;
@@ -373,7 +370,7 @@
       html,body{height:auto; min-height:100%;}
       body{overflow:auto;}
       header{padding:14px 14px 10px;}
-      main{padding: 0 14px 14px;}
+      main{padding: 8px 14px 14px;}
       .header-inner{grid-template-columns: 1fr; }
       .header-cta{justify-content:flex-start;}
       .triptych{grid-template-columns: 1fr; }
@@ -430,6 +427,7 @@
           <article class="card">
             <div class="card-top">
               <h3 class="title">A Universe, Not a Map</h3>
+              <p class="card-sub">No more mind maps that lead to a mess</p>
             </div>
             <div class="imgwrap" data-img>
               <div class="imgframe">
@@ -442,14 +440,13 @@
                 If you opened this file offline, host <b>map.png</b> next to the HTML and set <code>src="map.png"</code>.
               </div>
             </div>
-            <div class="card-bottom">
-              <p class="desc">No more mind maps that lead to a mess</p>
-            </div>
+
           </article>
 
           <article class="card">
             <div class="card-top">
               <h3 class="title">Full Stack of Meaning</h3>
+              <p class="card-sub">Hundreds of items at a glance</p>
             </div>
             <div class="imgwrap" data-img>
               <div class="imgframe">
@@ -462,14 +459,13 @@
                 Host <b>set.png</b> locally and set <code>src="set.png"</code>.
               </div>
             </div>
-            <div class="card-bottom">
-              <p class="desc">Hundreds of items at a glance</p>
-            </div>
+
           </article>
 
           <article class="card">
             <div class="card-top">
               <h3 class="title">Knowledge Inside</h3>
+              <p class="card-sub">Wiki lives inside any node</p>
             </div>
             <div class="imgwrap" data-img>
               <div class="imgframe">
@@ -482,9 +478,7 @@
                 Host <b>wiki.png</b> locally and set <code>src="wiki.png"</code>.
               </div>
             </div>
-            <div class="card-bottom">
-              <p class="desc">Wiki lives inside any node</p>
-            </div>
+
           </article>
         </section>
       </div>
