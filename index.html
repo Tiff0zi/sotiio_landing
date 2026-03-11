@@ -327,7 +327,7 @@
       font-size: 12px;
       line-height: 1.45;
     }
-    #tgModalWrap{min-height:44px; display:flex; justify-content:flex-end;}
+    #googleAuthWrap{min-height:44px; display:flex; justify-content:flex-end;}
 
     .auth-row{
       display:flex;
@@ -353,15 +353,39 @@
       font-size:12px;
       line-height:1.45;
     }
-    .tg-wrap{min-height:44px; display:flex; justify-content:flex-end; align-items:center;}
-    .tg-hint{
+    .google-auth-wrap{min-height:44px; display:flex; justify-content:flex-end; align-items:center;}
+    .google-auth-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height:44px;
+      padding:0 18px;
+      border:1px solid rgba(17,24,39,0.10);
+      border-radius:999px;
+      background:#fff;
+      color:#111827;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:-0.01em;
+      text-decoration:none;
+      box-shadow:0 8px 24px rgba(17,24,39,0.08);
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .google-auth-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 12px 28px rgba(17,24,39,0.12);
+      border-color:rgba(17,24,39,0.16);
+    }
+    .google-auth-btn svg{flex:0 0 auto;}
+    .auth-hint{
       display:none;
       margin:10px 2px 0;
       color: var(--muted);
       font-size:12px;
       line-height:1.45;
     }
-    .tg-hint.is-visible{display:block;}
+    .auth-hint.is-visible{display:block;}
 
     .muted{color: var(--muted);}
 
@@ -376,7 +400,7 @@
       .triptych{grid-template-columns: 1fr; }
       .imgframe{aspect-ratio: 16 / 9;}
       .card{min-height: 420px;}
-      .tg-wrap{justify-content:flex-start;}
+      .google-auth-wrap{justify-content:flex-start;}
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -387,7 +411,7 @@
     /* Modal UX fixes */
     .xbtn{position:relative; z-index:5; cursor:pointer;}
     .xbtn svg{pointer-events:none;}
-    .tg-wrap{width:100%; display:flex; justify-content:center; align-items:center; min-height:44px;}
+    .google-auth-wrap{width:100%; display:flex; justify-content:center; align-items:center; min-height:44px;}
 
 </style>
 </head>
@@ -507,20 +531,35 @@
       <div class="dialog-body">
         <div class="auth-row">
           <div class="auth-copy">
-            <p class="auth-title">Continue with Telegram</p>
-            <p class="auth-sub">You’ll be redirected to the app after authorization.</p>
+            <p class="auth-title">Continue with Google</p>
+            <p class="auth-sub">You’ll be redirected straight to Google, then back to the app.</p>
           </div>
-          <div id="tgModalWrap" class="tg-wrap" aria-label="Telegram login"></div>
+          <div id="googleAuthWrap" class="google-auth-wrap" aria-label="Google login">
+            <a
+              id="googleAuthBtn"
+              class="google-auth-btn"
+              href="https://auth.sotiio.com/realms/sotiio/protocol/openid-connect/auth?client_id=sotiio_frontend&amp;redirect_uri=https%3A%2F%2Fn8n.sotiio.com%2Fwebhook%2Fkeycloak_auth&amp;response_type=code&amp;scope=openid&amp;kc_idp_hint=google"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                <path fill="#EA4335" d="M9 7.364v3.491h4.851c-.213 1.123-.852 2.074-1.811 2.713l2.928 2.272c1.705-1.571 2.687-3.883 2.687-6.64 0-.639-.057-1.254-.164-1.836H9z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.468-.805 5.957-2.16l-2.928-2.272c-.812.545-1.852.867-3.029.867-2.33 0-4.304-1.573-5.009-3.686H.963v2.316A9 9 0 0 0 9 18z"/>
+                <path fill="#4A90E2" d="M3.991 10.749A5.412 5.412 0 0 1 3.711 9c0-.607.103-1.197.28-1.749V4.935H.963A9 9 0 0 0 0 9c0 1.451.348 2.824.963 4.065l3.028-2.316z"/>
+                <path fill="#FBBC05" d="M9 3.578c1.322 0 2.509.455 3.444 1.349l2.582-2.582C13.464.891 11.426 0 9 0A9 9 0 0 0 .963 4.935l3.028 2.316C4.696 5.151 6.67 3.578 9 3.578z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </a>
+          </div>
         </div>
 
-        <p id="tgHint" class="tg-hint"></p>
-<div class="hint" id="tgHint"></div>
+        <p id="authHint" class="auth-hint"></p>
       </div>
     </div>
   </div>
 
   <script>
     (function(){
+      const GOOGLE_LOGIN_URL = "https://auth.sotiio.com/realms/sotiio/protocol/openid-connect/auth?client_id=sotiio_frontend&redirect_uri=https%3A%2F%2Fn8n.sotiio.com%2Fwebhook%2Fkeycloak_auth&response_type=code&scope=openid&kc_idp_hint=google";
+
       // image fallback
       const wraps = Array.from(document.querySelectorAll('[data-img]'));
       for (const w of wraps){
@@ -533,8 +572,8 @@
       // modal open/close
       const modal = document.getElementById('modal');
       const openBtn = document.getElementById('openModalBtn');
-            const tgWrap = document.getElementById('tgModalWrap');
-      const tgHint = document.getElementById('tgHint');
+      const authHint = document.getElementById('authHint');
+      const googleAuthBtn = document.getElementById('googleAuthBtn');
 
       function openModal(){
         modal.classList.add('open');
@@ -555,38 +594,18 @@
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
       });
 
+      if (googleAuthBtn) googleAuthBtn.href = GOOGLE_LOGIN_URL;
+
       openBtn.addEventListener('click', () => {
         openModal();
-        ensureTelegramWidget();
-      });
-      // Telegram widget: only works on https origin
-      let tgInitialized = false;
-      function ensureTelegramWidget(){
-        if (tgInitialized) return;
-        tgInitialized = true;
-
         if (window.location.protocol !== 'https:') {
-          tgWrap.innerHTML = '<div class="hint muted">Telegram login works only on https:// (your current origin is ' + window.location.protocol + ').</div>';
-          tgHint.textContent = 'Telegram login requires https. Please open this page on your https domain.';
-        tgHint.classList.add('is-visible');
-          return;
+          authHint.textContent = 'Google login requires https. Please open this page on your https domain.';
+          authHint.classList.add('is-visible');
+        } else {
+          authHint.textContent = '';
+          authHint.classList.remove('is-visible');
         }
-
-        // Inject Telegram widget script inside modal
-        const s = document.createElement('script');
-        s.async = true;
-        s.src = "https://telegram.org/js/telegram-widget.js?22";
-        s.setAttribute("data-telegram-login", "sotiio_auth_bot");
-        s.setAttribute("data-size", "large");
-        s.setAttribute("data-radius", "18");
-        s.setAttribute("data-userpic", "false");
-        s.setAttribute("data-auth-url", "https://n8n.sotiio.com/webhook/telegram_auth");
-        s.setAttribute("data-request-access", "write");
-        s.setAttribute("data-lang", "en");
-        tgWrap.innerHTML = "";
-        tgWrap.appendChild(s);
-      tgHint.classList.add('is-visible');
-      }
+      });
     })();
   </script>
 </body>
