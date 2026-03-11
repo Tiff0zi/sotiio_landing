@@ -348,16 +348,19 @@
       gap:12px;
       margin:0 auto;
     }
-    .auth-provider-btn{
+    .auth-provider-btn,
+    .telegram-shell{
       width:100%;
       height:68px;
+      border-radius:999px;
+    }
+    .auth-provider-btn{
       display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:12px;
       padding:0 24px;
       border:1px solid rgba(17,24,39,0.10);
-      border-radius:999px;
       background:#fff;
       color:#111827;
       font-size:17px;
@@ -366,24 +369,62 @@
       text-decoration:none;
       box-shadow:0 8px 24px rgba(17,24,39,0.08);
       transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+      position:relative;
+      overflow:hidden;
     }
     .auth-provider-btn:hover{transform:translateY(-1px); box-shadow:0 12px 28px rgba(17,24,39,0.12); border-color:rgba(17,24,39,0.16);}
     .auth-provider-btn svg{flex:0 0 auto;}
-    .telegram-slot{
+    .telegram-shell{
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 8px 24px rgba(17,24,39,0.08);
+      background:linear-gradient(180deg,#79b7f3 0%, #5ca0e8 100%);
+      border:1px solid rgba(17,24,39,0.08);
+    }
+    .telegram-shell::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      box-shadow:0 12px 28px rgba(17,24,39,0.12);
+      opacity:0;
+      transition:opacity .16s ease;
+      pointer-events:none;
+    }
+    .telegram-shell:hover::before{opacity:1;}
+    .telegram-ui{
+      position:absolute;
+      inset:0;
       display:flex;
       align-items:center;
       justify-content:center;
-      width:100%;
-      min-height:68px;
+      gap:12px;
+      padding:0 24px;
+      color:#fff;
+      font-size:17px;
+      font-weight:800;
+      letter-spacing:-0.01em;
+      pointer-events:none;
+      z-index:1;
+    }
+    .telegram-hitbox{
+      position:absolute;
+      inset:0;
+      z-index:2;
       overflow:hidden;
       border-radius:999px;
+      opacity:.015;
+      filter:grayscale(1);
     }
-    .telegram-slot iframe,
-    .telegram-slot > span,
-    .telegram-slot > div{
+    .telegram-hitbox iframe,
+    .telegram-hitbox > span,
+    .telegram-hitbox > div,
+    .telegram-hitbox script{
       width:100% !important;
+      height:100% !important;
       max-width:100% !important;
       min-width:100% !important;
+      min-height:100% !important;
     }
 
     .auth-hint{
@@ -565,7 +606,15 @@
               </svg>
               <span>Log in with Yandex</span>
             </a>
-            <div id="tgModalWrap" class="telegram-slot" aria-label="Telegram login"></div>
+            <div class="telegram-shell" aria-label="Telegram login">
+              <div class="telegram-ui">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#ffffff" d="M21.944 4.517a1.5 1.5 0 0 0-1.87-.9L3.307 9.737a1.5 1.5 0 0 0 .098 2.84l4.313 1.316 1.61 5.042a1.5 1.5 0 0 0 2.705.343l2.205-3.086 4.113 3.017a1.5 1.5 0 0 0 2.345-.889l2.202-12.193a1.5 1.5 0 0 0-.954-1.61Zm-3.666 3.125-7.205 6.392-.794 2.663-.962-3.012a1.5 1.5 0 0 0-.996-.987l-2.757-.842 12.714-4.214Zm-.549 8.516-3.25-2.383a1.5 1.5 0 0 0-2.054.292l-.638.893.436-1.464a1.5 1.5 0 0 0 .445-.244l7.217-6.403-2.156 9.309Z"/>
+                </svg>
+                <span>Log in with Telegram</span>
+              </div>
+              <div id="tgModalWrap" class="telegram-hitbox" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
 
@@ -641,8 +690,8 @@
         s.async = true;
         s.src = "https://telegram.org/js/telegram-widget.js?22";
         s.setAttribute("data-telegram-login", "sotiio_auth_bot");
-        s.setAttribute("data-size", "large");
-        s.setAttribute("data-radius", "18");
+        s.setAttribute("data-size", "medium");
+        s.setAttribute("data-radius", "999");
         s.setAttribute("data-userpic", "false");
         s.setAttribute("data-auth-url", "https://n8n.sotiio.com/webhook/telegram_auth");
         s.setAttribute("data-request-access", "write");
