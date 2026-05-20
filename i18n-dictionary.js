@@ -7,11 +7,11 @@ window.SOTIIO_I18N = [
     "text": [
       {
         "lang": "English",
-        "value": "Sotiio — Wiki + Mindmap"
+        "value": "Sotiio — Wiki & Mindmap"
       },
       {
         "lang": "Russian",
-        "value": "Sotiio — Wiki + Mindmap"
+        "value": "Sotiio — Wiki & Mindmap"
       }
     ]
   },
@@ -55,11 +55,11 @@ window.SOTIIO_I18N = [
     "text": [
       {
         "lang": "English",
-        "value": "Create a Universe."
+        "value": "Discover a Universe."
       },
       {
         "lang": "Russian",
-        "value": "Создавай вселенные."
+        "value": "Изучай вселенные."
       }
     ]
   },
@@ -71,11 +71,11 @@ window.SOTIIO_I18N = [
     "text": [
       {
         "lang": "English",
-        "value": "Discover a Universe"
+        "value": "Create a Universe"
       },
       {
         "lang": "Russian",
-        "value": "Открывай вселенные"
+        "value": "Создавай вселенные"
       }
     ]
   },
@@ -91,7 +91,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Теперь знание и визуализация работают вместе"
+        "value": "Больше не нужно выбирать между каонтентом и визуализацией"
       }
     ]
   },
@@ -107,7 +107,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "AI внутри"
+        "value": "AI"
       }
     ]
   },
@@ -155,7 +155,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Вселенная, а не карта"
+        "value": "Больше чем карты - это вселенные!"
       }
     ]
   },
@@ -171,7 +171,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Больше никаких mind map, которые расползаются в хаос"
+        "value": "Больше никакого хаоса и визуального шума"
       }
     ]
   },
@@ -219,7 +219,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Полный стек смысла"
+        "value": "Полный стек знаний в одном месте"
       }
     ]
   },
@@ -251,7 +251,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Полный стек смысла"
+        "value": "Полный стек знаний в одном месте"
       }
     ]
   },
@@ -283,7 +283,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Знание внутри"
+        "value": "Знания внутри"
       }
     ]
   },
@@ -299,7 +299,7 @@ window.SOTIIO_I18N = [
       },
       {
         "lang": "Russian",
-        "value": "Wiki живёт внутри каждого узла"
+        "value": "Вики-контент - ядро каждого элемента карты"
       }
     ]
   },
@@ -359,11 +359,11 @@ window.SOTIIO_I18N = [
     "text": [
       {
         "lang": "English",
-        "value": "WIKI + MINDMAP = SOTIIO"
+        "value": "WIKI & MINDMAP = SOTIIO"
       },
       {
         "lang": "Russian",
-        "value": "WIKI + MINDMAP = SOTIIO"
+        "value": "WIKI & MINDMAP = SOTIIO"
       }
     ]
   },
