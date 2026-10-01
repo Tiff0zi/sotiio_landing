@@ -494,5 +494,181 @@ window.SOTIIO_I18N = [
         "value": "Для входа через Google и Telegram нужен https. Открой страницу на своём https-домене."
       }
     ]
+  },
+  {
+    "key": "landing.spaces.auth_aria_label",
+    "file": "spaces.js",
+    "note": "aria-label формы входа в корпоративное пространство",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Sign in"
+      },
+      {
+        "lang": "Russian",
+        "value": "Вход"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.username",
+    "file": "spaces.js",
+    "note": "Подпись поля логина",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Username"
+      },
+      {
+        "lang": "Russian",
+        "value": "Логин"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.password",
+    "file": "spaces.js",
+    "note": "Подпись поля пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Password"
+      },
+      {
+        "lang": "Russian",
+        "value": "Пароль"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.submit",
+    "file": "spaces.js",
+    "note": "Кнопка входа",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Sign in"
+      },
+      {
+        "lang": "Russian",
+        "value": "Войти"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.submitting",
+    "file": "spaces.js",
+    "note": "Кнопка входа во время запроса",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Signing in…"
+      },
+      {
+        "lang": "Russian",
+        "value": "Входим…"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.required",
+    "file": "spaces.js",
+    "note": "Ошибка незаполненной формы",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Enter your username and password."
+      },
+      {
+        "lang": "Russian",
+        "value": "Введите логин и пароль."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.invalid_credentials",
+    "file": "spaces.js",
+    "note": "Ошибка неверных данных входа",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Incorrect username or password."
+      },
+      {
+        "lang": "Russian",
+        "value": "Неверный логин или пароль."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.forbidden",
+    "file": "spaces.js",
+    "note": "Ошибка отсутствия доступа к пространству",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "You do not have access to this space."
+      },
+      {
+        "lang": "Russian",
+        "value": "У пользователя нет доступа к этому пространству."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.not_found",
+    "file": "spaces.js",
+    "note": "Ошибка отсутствующего пространства",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Space not found."
+      },
+      {
+        "lang": "Russian",
+        "value": "Пространство не найдено."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.generic",
+    "file": "spaces.js",
+    "note": "Общая ошибка входа",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Could not sign in. Try again."
+      },
+      {
+        "lang": "Russian",
+        "value": "Не удалось выполнить вход. Попробуйте ещё раз."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.error.unavailable",
+    "file": "spaces.js",
+    "note": "Ошибка недоступного сервиса авторизации",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "The authentication service is temporarily unavailable."
+      },
+      {
+        "lang": "Russian",
+        "value": "Сервис авторизации временно недоступен."
+      }
+    ]
   }
 ];
