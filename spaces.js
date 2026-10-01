@@ -209,7 +209,7 @@
         return;
       }
 
-      // Never accept an arbitrary redirect URL from the response. Reloading the
+      // Never accept an arbitrary redirect URL from the response. Reloading the 
       // same origin lets the router re-check the new session and serve the app.
       window.location.replace(`${window.location.origin}/`);
     } catch (_) {
