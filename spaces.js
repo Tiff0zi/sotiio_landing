@@ -25,7 +25,8 @@
   }
 
   function initializeSpaceLogin() {
-    if (!getSpaceSlug()) return;
+    const spaceSlug = getSpaceSlug();
+    if (!spaceSlug) return;
 
     const i18n = window.SotiioLandingI18n;
     const t = (key, fallback) =>
@@ -145,7 +146,15 @@
       t("landing.spaces.auth_aria_label", "Sign in")
     );
     buttonsWrap.innerHTML = `
-      <form class="corporate-auth-form" id="corporateAuthForm" novalidate>
+      <form
+        class="corporate-auth-form"
+        id="corporateAuthForm"
+        action="https://n8n.sotiio.com/webhook/keycloak_auth"
+        method="post"
+        accept-charset="UTF-8"
+        novalidate
+      >
+        <input id="corporateRealm" name="realm" type="hidden">
         <label class="corporate-auth-field">
           <span id="corporateUsernameLabel"></span>
           <input
@@ -178,6 +187,7 @@
     `;
 
     const form = document.getElementById("corporateAuthForm");
+    const realmInput = document.getElementById("corporateRealm");
     const usernameInput = document.getElementById("corporateUsername");
     const passwordInput = document.getElementById("corporatePassword");
     const usernameLabel = document.getElementById("corporateUsernameLabel");
@@ -185,6 +195,7 @@
     const submitButton = form.querySelector(".corporate-auth-submit");
     const status = form.querySelector(".corporate-auth-status");
 
+    realmInput.value = spaceSlug;
     usernameLabel.textContent = t("landing.spaces.username", "Username");
     passwordLabel.textContent = t("landing.spaces.password", "Password");
     submitButton.textContent = t("landing.spaces.submit", "Sign in");
@@ -203,13 +214,12 @@
       return t("landing.spaces.error.generic", "Could not sign in. Try again.");
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
+    form.addEventListener("submit", (event) => {
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
 
       if (!username || !password) {
+        event.preventDefault();
         status.textContent = t(
           "landing.spaces.error.required",
           "Enter your username and password."
@@ -220,37 +230,20 @@
       status.textContent = "";
       submitButton.disabled = true;
       submitButton.textContent = t("landing.spaces.submitting", "Signing in…");
-
-      try {
-        const response = await fetch("/__auth/login", {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "content-type": "application/json",
-            accept: "application/json"
-          },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          status.textContent = errorMessage(response.status, data);
-          return;
-        }
-
-        window.location.replace(`${window.location.origin}/`);
-      } catch (_) {
-        status.textContent = t(
-          "landing.spaces.error.unavailable",
-          "The authentication service is temporarily unavailable."
-        );
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = t("landing.spaces.submit", "Sign in");
-      }
     });
+
+    const authError = new URLSearchParams(window.location.search).get("auth_error");
+    if (authError) {
+      status.textContent = errorMessage(
+        authError === "invalid_credentials" ? 401 : 500,
+        {}
+      );
+      if (openButton) openButton.click();
+
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("auth_error");
+      window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+    }
   }
 
   if (document.readyState === "loading") {
