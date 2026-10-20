@@ -670,5 +670,197 @@ window.SOTIIO_I18N = [
         "value": "Сервис авторизации временно недоступен."
       }
     ]
+  },
+  {
+    "key": "landing.spaces.recovery.button",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Forgot password?"
+      },
+      {
+        "lang": "Russian",
+        "value": "Забыли пароль?"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.back",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Back to sign in"
+      },
+      {
+        "lang": "Russian",
+        "value": "Вернуться ко входу"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.title",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Reset password"
+      },
+      {
+        "lang": "Russian",
+        "value": "Восстановление пароля"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.intro",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Enter the email linked to your account in this space. We will send you a link to set a new password."
+      },
+      {
+        "lang": "Russian",
+        "value": "Введите email, указанный в вашей учётной записи этого пространства. На него придёт ссылка для задания нового пароля."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.email",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Email"
+      },
+      {
+        "lang": "Russian",
+        "value": "Email"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.submit",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Send reset link"
+      },
+      {
+        "lang": "Russian",
+        "value": "Отправить ссылку"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.submitting",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Sending…"
+      },
+      {
+        "lang": "Russian",
+        "value": "Отправляем…"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.cooldown",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "You can try again in a minute"
+      },
+      {
+        "lang": "Russian",
+        "value": "Повторить можно через минуту"
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.invalid_email",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Enter a valid email address."
+      },
+      {
+        "lang": "Russian",
+        "value": "Введите корректный email."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.rate_limit",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Too many requests. Please try again later."
+      },
+      {
+        "lang": "Russian",
+        "value": "Слишком много запросов. Попробуйте позже."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.accepted",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "If this email is linked to an account in this space, you will receive a password reset link. Check your inbox and spam folder."
+      },
+      {
+        "lang": "Russian",
+        "value": "Если этот email связан с учётной записью в данном пространстве, на него придёт ссылка для сброса пароля. Проверьте входящие и папку «Спам»."
+      }
+    ]
+  },
+  {
+    "key": "landing.spaces.recovery.error",
+    "file": "spaces.js",
+    "note": "Восстановление пароля",
+    "page": "landing",
+    "text": [
+      {
+        "lang": "English",
+        "value": "Could not submit the request. Please try again later."
+      },
+      {
+        "lang": "Russian",
+        "value": "Не удалось отправить запрос. Попробуйте позже."
+      }
+    ]
   }
 ];
